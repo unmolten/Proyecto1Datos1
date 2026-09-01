@@ -1,0 +1,14 @@
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\bin\Debug\net10.0\Proyecto1Cliente.exe
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\bin\Debug\net10.0\Proyecto1Cliente.deps.json
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\bin\Debug\net10.0\Proyecto1Cliente.runtimeconfig.json
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\bin\Debug\net10.0\Proyecto1Cliente.dll
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\bin\Debug\net10.0\Proyecto1Cliente.pdb
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\Proyecto1Cliente.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\Proyecto1Cliente.AssemblyInfoInputs.cache
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\Proyecto1Cliente.AssemblyInfo.cs
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\Proyecto1Cliente.csproj.CoreCompileInputs.cache
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\Proyecto1Cliente.dll
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\refint\Proyecto1Cliente.dll
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\Proyecto1Cliente.pdb
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\Proyecto1Cliente.genruntimeconfig.cache
+C:\Users\Gabriel\Coding\AyEdD\Proyecto1Cliente\obj\Debug\net10.0\ref\Proyecto1Cliente.dll
