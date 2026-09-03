@@ -1,0 +1,185 @@
+[gd_scene format=3 uid="uid://c22xjrevjf4up"]
+
+[ext_resource type="Texture2D" uid="uid://dnw4h8pfuq1hs" path="res://sprites/Monopoly.png" id="2_rvslj"]
+
+[sub_resource type="GDScript" id="GDScript_elqb8"]
+script/source = "extends Node2D
+
+var board: Board
+var game_client: GameClient
+var consola: MockServerConsole
+
+var jugadores_demo := [
+	{\"id\": \"JUGADOR1\", \"color\": Color(\"#1E88E5\")},  # azul
+	{\"id\": \"JUGADOR2\", \"color\": Color(\"#FB8C00\")},  # naranja
+	{\"id\": \"JUGADOR3\", \"color\": Color(\"#43A047\")},  # verde
+	{\"id\": \"JUGADOR4\", \"color\": Color(\"#8E24AA\")},  # morado
+]
+
+func _ready() -> void:
+	board = Board.new()
+	add_child(board)
+	board.position = Vector2(120, 60)
+
+	game_client = GameClient.new()
+	add_child(game_client)
+	game_client.inicializar(board)
+
+	_crear_jugadores_demo()
+	
+	# DEBUG:
+	consola = MockServerConsole.new()
+	add_child(consola)
+	consola.mensaje_enviado.connect(_on_mensaje_mock)
+
+	# Cuando el servidor real ya exista y tenga protocolo acordado,
+	# descomentar esto:
+	# game_client.conectar_a_servidor(\"127.0.0.1\", 5000)
+
+func _crear_jugadores_demo() -> void:
+	for i in jugadores_demo.size():
+		var datos = jugadores_demo[i]
+		var token := PlayerToken.new()
+		board.add_child(token)
+		token.inicializar(datos.id, i, datos.color, board, 0)
+		game_client.registrar_jugador(datos.id, token)
+
+	# Los 4 arrancan en la casilla 0, así que se reparten de una
+	game_client.reacomodar_todo()
+
+func _on_mensaje_mock(mensaje: String) -> void:
+	game_client.procesar_mensaje(mensaje)
+"
+
+[node name="Main" type="Node2D" unique_id=1573359381]
+script = SubResource("GDScript_elqb8")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1528952713]
+
+[node name="Visual" type="Node2D" parent="." unique_id=1962545263]
+
+[node name="Sprite2D" type="Sprite2D" parent="Visual" unique_id=168898157]
+scale = Vector2(1.8, 1.8)
+texture = ExtResource("2_rvslj")
+
+[node name="Markers" type="Node2D" parent="Visual" unique_id=989243110]
+
+[node name="Casilla_0" type="Marker2D" parent="Visual/Markers" unique_id=585015236]
+position = Vector2(-333, 338)
+
+[node name="Casilla_1" type="Marker2D" parent="Visual/Markers" unique_id=783434924]
+position = Vector2(-345, 241)
+
+[node name="Casilla_2" type="Marker2D" parent="Visual/Markers" unique_id=2076047660]
+position = Vector2(-345, 182)
+
+[node name="Casilla_3" type="Marker2D" parent="Visual/Markers" unique_id=221018351]
+position = Vector2(-345, 120)
+
+[node name="Casilla_4" type="Marker2D" parent="Visual/Markers" unique_id=2048922702]
+position = Vector2(-345, 63)
+
+[node name="Casilla_5" type="Marker2D" parent="Visual/Markers" unique_id=42058054]
+position = Vector2(-345, 0)
+
+[node name="Casilla_6" type="Marker2D" parent="Visual/Markers" unique_id=1113614546]
+position = Vector2(-345, -60)
+
+[node name="Casilla_7" type="Marker2D" parent="Visual/Markers" unique_id=1421698615]
+position = Vector2(-345, -119)
+
+[node name="Casilla_8" type="Marker2D" parent="Visual/Markers" unique_id=279907801]
+position = Vector2(-345, -177)
+
+[node name="Casilla_9" type="Marker2D" parent="Visual/Markers" unique_id=1363688104]
+position = Vector2(-345, -237)
+
+[node name="Casilla_10" type="Marker2D" parent="Visual/Markers" unique_id=2108777304]
+position = Vector2(-374, -375)
+
+[node name="Casilla_11" type="Marker2D" parent="Visual/Markers" unique_id=977117255]
+position = Vector2(-238, -348)
+
+[node name="Casilla_12" type="Marker2D" parent="Visual/Markers" unique_id=1773238742]
+position = Vector2(-177, -348)
+
+[node name="Casilla_13" type="Marker2D" parent="Visual/Markers" unique_id=939266940]
+position = Vector2(-118, -348)
+
+[node name="Casilla_14" type="Marker2D" parent="Visual/Markers" unique_id=1204188526]
+position = Vector2(-59, -348)
+
+[node name="Casilla_15" type="Marker2D" parent="Visual/Markers" unique_id=1433000060]
+position = Vector2(0, -348)
+
+[node name="Casilla_16" type="Marker2D" parent="Visual/Markers" unique_id=342765651]
+position = Vector2(60, -348)
+
+[node name="Casilla_17" type="Marker2D" parent="Visual/Markers" unique_id=515305030]
+position = Vector2(119, -348)
+
+[node name="Casilla_18" type="Marker2D" parent="Visual/Markers" unique_id=883773139]
+position = Vector2(179, -348)
+
+[node name="Casilla_19" type="Marker2D" parent="Visual/Markers" unique_id=2122869762]
+position = Vector2(236, -348)
+
+[node name="Casilla_20" type="Marker2D" parent="Visual/Markers" unique_id=659550163]
+position = Vector2(330, -334)
+
+[node name="Casilla_21" type="Marker2D" parent="Visual/Markers" unique_id=109674960]
+position = Vector2(348, -237)
+
+[node name="Casilla_22" type="Marker2D" parent="Visual/Markers" unique_id=546497215]
+position = Vector2(348, -177)
+
+[node name="Casilla_23" type="Marker2D" parent="Visual/Markers" unique_id=1943267703]
+position = Vector2(348, -119)
+
+[node name="Casilla_24" type="Marker2D" parent="Visual/Markers" unique_id=280086698]
+position = Vector2(348, -59)
+
+[node name="Casilla_25" type="Marker2D" parent="Visual/Markers" unique_id=1450367863]
+position = Vector2(348, 0)
+
+[node name="Casilla_26" type="Marker2D" parent="Visual/Markers" unique_id=970051515]
+position = Vector2(348, 58)
+
+[node name="Casilla_27" type="Marker2D" parent="Visual/Markers" unique_id=607276824]
+position = Vector2(348, 119)
+
+[node name="Casilla_28" type="Marker2D" parent="Visual/Markers" unique_id=1248137819]
+position = Vector2(348, 177)
+
+[node name="Casilla_29" type="Marker2D" parent="Visual/Markers" unique_id=619490250]
+position = Vector2(348, 237)
+
+[node name="Casilla_30" type="Marker2D" parent="Visual/Markers" unique_id=575242229]
+position = Vector2(333, 329)
+
+[node name="Casilla_31" type="Marker2D" parent="Visual/Markers" unique_id=1348727985]
+position = Vector2(239, 341)
+
+[node name="Casilla_32" type="Marker2D" parent="Visual/Markers" unique_id=429543027]
+position = Vector2(178, 341)
+
+[node name="Casilla_33" type="Marker2D" parent="Visual/Markers" unique_id=638996319]
+position = Vector2(119, 341)
+
+[node name="Casilla_34" type="Marker2D" parent="Visual/Markers" unique_id=1243652607]
+position = Vector2(60, 341)
+
+[node name="Casilla_35" type="Marker2D" parent="Visual/Markers" unique_id=69295151]
+position = Vector2(0, 341)
+
+[node name="Casilla_36" type="Marker2D" parent="Visual/Markers" unique_id=1426023468]
+position = Vector2(-58, 341)
+
+[node name="Casilla_37" type="Marker2D" parent="Visual/Markers" unique_id=1050085397]
+position = Vector2(-119, 341)
+
+[node name="Casilla_38" type="Marker2D" parent="Visual/Markers" unique_id=104254776]
+position = Vector2(-176, 341)
+
+[node name="Casilla_39" type="Marker2D" parent="Visual/Markers" unique_id=1585261043]
+position = Vector2(-237, 342)

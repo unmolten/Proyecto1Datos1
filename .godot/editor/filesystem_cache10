@@ -1,0 +1,14 @@
+78098b89c88a74ebe8c20117b8754620
+::res://::1788407425
+README.md::TextFile::-1::1788130591::0::1::::<><><>0<>0<><>::
+::res://scenes/::1788398435
+Main.tscn::PackedScene::6725091807994034947::1788398435::0::1::::<><><>0<>0<><>::uid://dfbplnl44ddk8::::res://scripts/main.gd<>uid://dnw4h8pfuq1hs::::res://sprites/Monopoly.png
+::res://scripts/::1788131634
+board.gd::GDScript::3060896061131750931::1788130591::0::1::::Board<>Node2D<><>0<>0<><>::
+game_client.gd::GDScript::8133723874317962235::1788131634::0::1::::GameClient<>Node<><>0<>0<><>::
+main.gd::GDScript::7513201746800878921::1788131566::0::1::::<>Node2D<><>0<>0<><>::
+mock_server_console.gd::GDScript::7272994641273429032::1788130591::0::1::::MockServerConsole<>CanvasLayer<><>0<>0<><>::
+player_token.gd::GDScript::3071542837759185659::1788130591::0::1::::PlayerToken<>Node2D<><>0<>0<><>::
+server_message.gd::GDScript::1954184755871411115::1788130591::0::1::::ServerMessage<>RefCounted<><>0<>0<><>::
+::res://sprites/::1788397375
+Monopoly.png::CompressedTexture2D::8118908379007784968::1788319146::1788397375::1::::<><><>0<>0<>77d9a966451b399ec707a426679ce937<>res://.godot/imported/Monopoly.png-2162f016199d6feb3fe2e55555c57327.ctex::
