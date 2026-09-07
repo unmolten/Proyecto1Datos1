@@ -1,3 +1,0 @@
-1.10001.1000.3.06/09/2026-07:53:07.Pago al banco.Jugador1.Jugador 2.Jugador1 ha pagado 1000 al banco
-1.1000.3.06/09/2026-07:53:59.Pago al banco.Jugador1.Jugador 2.Jugador1 ha pagado 1000 al banco
-1.1000.3.06/09/2026-08:02:14.Pago al banco.Jugador1.Jugador 2.Jugador1 ha pagado 1000 al banco

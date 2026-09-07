@@ -36,7 +36,6 @@ class Transaccion
         this.jugadorOrigen = jugadorOrigen;
         this.jugadorDestino = jugadorDestino;
         this.descripcion = this.GenerarDescripcion();
-        Console.WriteLine(this.descripcion);
 
         AlmacenarTransaccion();
     }
@@ -84,16 +83,48 @@ class Transaccion
     public void AlmacenarTransaccion()
     {
         string rutaArchivo = "../../../Almacenamiento.txt"; //Se suben 3 directorios para crearlo en la ubicacion de este archivo. Cambiar ruta de ser requerido
-        string contenido = $"{transaccionID}.{monto}.{turno}.{fechaYHora}.{tipo}.{jugadorOrigen}.{jugadorDestino}.{descripcion}"; //La informacion se almacena con separador de punto. EVITAR NOMBRES Y DATOS QUE PUEDAN CONTENER UN PUNTO
+        string contenido = $"{transaccionID}.{fechaYHora}.{turno}.{tipo}.{monto}.{jugadorOrigen}.{jugadorDestino}.{descripcion}"; //La informacion se almacena con separador de punto. EVITAR NOMBRES Y DATOS QUE PUEDAN CONTENER UN PUNTO
 
         try
         {
             File.AppendAllText(rutaArchivo, contenido + "\n");
-            Console.WriteLine($"Se ha escrito la informacion en {rutaArchivo}");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error al almacenar la transacción: {ex.Message}");
+        }
+    }
+
+    //Metodo para imprimir la informacion en un archivo de texto con formato para usuario final
+    public static void ImprimirTransacciones()
+    {
+        string rutaAlmacenamiento = "../../../Almacenamiento.txt";
+        string rutaReporte = "../../../Reporte.txt";
+        //string encabezado = "En este archivo se encuentra la informacion";
+
+        try
+        {
+            string[] lineas = File.ReadAllLines(rutaAlmacenamiento);
+
+            foreach (var linea in lineas)
+            {
+                string[] datos = linea.Split("."); //Separa los datos de las lineas por un punto
+                
+                File.AppendAllText(rutaReporte, "\n--------------------------\n");
+                File.AppendAllText(rutaReporte, "ID: " + datos[0] + '\n');
+                File.AppendAllText(rutaReporte, "Fecha: " + datos[1] + '\n');
+                File.AppendAllText(rutaReporte, "Turno: " + datos[2] + '\n');
+                File.AppendAllText(rutaReporte, "Tipo: " + datos[3] + '\n');
+                File.AppendAllText(rutaReporte, "Monto: " + datos[4] + '\n');
+                File.AppendAllText(rutaReporte, "Origen: " + datos[5] + '\n');
+                File.AppendAllText(rutaReporte, "Destino: " + datos[6] + '\n');
+                File.AppendAllText(rutaReporte, "Descripcion: " + datos[7] + '\n');
+                File.AppendAllText(rutaReporte, "\n--------------------------\n");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al leer las transacciones: {ex.Message}");
         }
     }
 }

@@ -1,1 +1,3 @@
-1.1000.3.07/09/2026-01:26:30.Pago al banco.Jugador1.Jugador 2.Jugador1 ha pagado 1000 al banco
+1.07/09/2026-02:59:29.3.Pago al banco.1000.Jugador1.Jugador 2.Jugador1 ha pagado 1000 al banco
+2.07/09/2026-02:59:29.5.Pago de alquiler.2000.Carlos.Sofia.Carlos ha pagado 2000 a Sofia por el alquiler de la propiedad PROPIEDAD
+3.07/09/2026-02:59:29.7.Ganancia por evento.4000.Maria.Destino.Maria ha ganado 4000 por el evento EVENTO
