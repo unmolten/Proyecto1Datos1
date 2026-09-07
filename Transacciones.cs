@@ -1,10 +1,18 @@
 /*
 En este archivo se manejan las transacciones de la partida
 incluyendo instanciacion de las mismas, Almacenamiento e
-impresion 
+impresion
+
+Esta pensado para manejar los datos que tambien se mostraran
+al usuario final. O sea, ninguna clase deberia aceptar datos
+como el ID del jugador sino el nombre como tal de este mismo,
+o no un ID de propiedad sino su nombre real.
 */
 
 using Microsoft.VisualBasic;
+using System.IO;
+
+
 
 class Transaccion
 {
@@ -27,8 +35,10 @@ class Transaccion
         this.tipo = tipo;
         this.jugadorOrigen = jugadorOrigen;
         this.jugadorDestino = jugadorDestino;
-        this.descripcion = GenerarDescripcion();
+        this.descripcion = this.GenerarDescripcion();
         Console.WriteLine(this.descripcion);
+
+        AlmacenarTransaccion();
     }
 
     // Metodo para autogenerar descripciones segun el tipo
@@ -38,7 +48,7 @@ class Transaccion
         string mensajeDescripcion;
         
 
-        //Mensajes en mayuscula deben ser reemplazados por el nombre de la propiedad correspondiente
+        //Mensajes en mayuscula deben ser reemplazados por el dato correspondiente
         switch (this.tipo)
         {
             case "Compra de propiedad":
@@ -69,13 +79,24 @@ class Transaccion
 
         return mensajeDescripcion;
     }
-}
 
-
-class PRUEBA //Esta clase es meramente de prueba, debe ser eliminada para su funcionamiento final
-{
-    static void Main(string[] args)
+    //Método para almacenar la transacción en el archivo Almacenamiento.txt
+    public void AlmacenarTransaccion()
     {
-        Transaccion trans1 = new Transaccion(1000, 3, "Pago al banco", "Jugador1", "Jugador 2", "ETC");
+        string rutaArchivo = "Almacenamiento.txt"; //Cambiar ruta de ser requerido
+        string contenido = $"{transaccionID}.{monto}.{turno}.{fechaYHora}.{tipo}.{jugadorOrigen}.{jugadorDestino}.{descripcion}";
+
+        try
+        {
+            using (StreamWriter sw = new StreamWriter(rutaArchivo, true))
+            {
+                sw.WriteLine(contenido);
+                Console.WriteLine("Se ha escrito el contenido");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al almacenar la transacción: {ex.Message}");
+        }
     }
 }
