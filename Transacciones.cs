@@ -22,11 +22,11 @@ class Transaccion
     private int turno; //Turno en el que el jugador genero la transaccion
     private string fechaYHora; //Fecha con formato "dd/MM/yyyy//hh:mm:ss"
     private string tipo; //Tipo de transaccion (predefinida)
-    private string jugadorOrigen;
-    private string jugadorDestino;
+    private string jugadorOrigen; // NOMBRE del jugador de origen. 
+    private string jugadorDestino; // NOMBRE del jugador destinado
     private string descripcion; //Descripcion autogenerada segun el tipo de transaccion
 
-    public Transaccion(int monto, int turno, string tipo, string jugadorOrigen, string jugadorDestino, string descripcion)
+    public Transaccion(int monto, int turno, string tipo, string jugadorOrigen, string jugadorDestino)
     {
         this.transaccionID = Interlocked.Increment(ref refID);
         this.monto = monto;
@@ -83,16 +83,13 @@ class Transaccion
     //Método para almacenar la transacción en el archivo Almacenamiento.txt
     public void AlmacenarTransaccion()
     {
-        string rutaArchivo = "Almacenamiento.txt"; //Cambiar ruta de ser requerido
-        string contenido = $"{transaccionID}.{monto}.{turno}.{fechaYHora}.{tipo}.{jugadorOrigen}.{jugadorDestino}.{descripcion}";
+        string rutaArchivo = "../../../Almacenamiento.txt"; //Se suben 3 directorios para crearlo en la ubicacion de este archivo. Cambiar ruta de ser requerido
+        string contenido = $"{transaccionID}.{monto}.{turno}.{fechaYHora}.{tipo}.{jugadorOrigen}.{jugadorDestino}.{descripcion}"; //La informacion se almacena con separador de punto. EVITAR NOMBRES Y DATOS QUE PUEDAN CONTENER UN PUNTO
 
         try
         {
-            using (StreamWriter sw = new StreamWriter(rutaArchivo, true))
-            {
-                sw.WriteLine(contenido);
-                Console.WriteLine("Se ha escrito el contenido");
-            }
+            File.AppendAllText(rutaArchivo, contenido + "\n");
+            Console.WriteLine($"Se ha escrito la informacion en {rutaArchivo}");
         }
         catch (Exception ex)
         {
