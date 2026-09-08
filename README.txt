@@ -1,5 +1,7 @@
 Como correr la UI:
 
+- Descomprima el zip
+
 - Abra el "mock server de prueba.py"
 
 - Abra el "MonopolyGodotClient.exe"
