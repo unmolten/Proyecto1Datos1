@@ -1,0 +1,37 @@
+Marrones:
+Casa de tierra
+Cueva provisional
+
+Celestes:
+Pillager Outpust
+Villa
+Mansion
+
+Moradas:
+Mineshaft
+Spawner de zombies
+Geoda de amatista
+
+Naranjas:
+Runa oceánica
+Barco hundido
+Monumento oceánico
+
+Rojas:
+Templo de jungla
+Templo del desierto
+Trial Chamber
+
+Amarillas:
+Ancient City
+Portal al nether
+Stronghold
+
+Verdes:
+Fosil del nether
+Nether Fortress
+Bastion
+
+Azul oscuro:
+End City
+Isla del End
