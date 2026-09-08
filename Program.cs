@@ -5,15 +5,15 @@
     public static void Main()
     {
         Program program = new Program();
-        program.HeadLista.InsertFirst("Nodo1");
-        int numNodes = 0;
-        int num = 1;
-        while (numNodes != 24)
+
+        program.HeadLista.InsertFirst("Head");
+
+        for (int i = 1; i <= 24; i++)
         {
-            program.HeadLista.InsertAfter(num);
-            num++;
-            numNodes++;
+            program.HeadLista.InsertAfterHead(i);
         }
+        program.HeadLista.MakeCircular();
+        program.HeadLista.PrintCircular();
     }
 }
 
