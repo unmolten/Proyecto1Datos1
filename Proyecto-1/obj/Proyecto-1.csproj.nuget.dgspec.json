@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto-1\\Proyecto-1.csproj": {}
+    "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto-1\\Proyecto-1.csproj": {
+    "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto-1\\Proyecto-1.csproj",
+        "projectUniqueName": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj",
         "projectName": "Proyecto-1",
-        "projectPath": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto-1\\Proyecto-1.csproj",
+        "projectPath": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj",
         "packagesPath": "C:\\Users\\Gabriel\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto-1\\obj\\",
+        "outputPath": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config"

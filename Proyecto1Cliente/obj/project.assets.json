@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Gabriel\\coding\\AyEdD\\Proyecto1Cliente\\Proyecto1Cliente.csproj",
+      "projectUniqueName": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto1Cliente\\Proyecto1Cliente.csproj",
       "projectName": "Proyecto1Cliente",
-      "projectPath": "C:\\Users\\Gabriel\\coding\\AyEdD\\Proyecto1Cliente\\Proyecto1Cliente.csproj",
+      "projectPath": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto1Cliente\\Proyecto1Cliente.csproj",
       "packagesPath": "C:\\Users\\Gabriel\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Gabriel\\coding\\AyEdD\\Proyecto1Cliente\\obj\\",
+      "outputPath": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto1Cliente\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config"
