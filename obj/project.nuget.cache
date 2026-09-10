@@ -1,8 +1,27 @@
 {
   "version": 2,
-  "dgSpecHash": "wUdnDUFHYyo=",
+  "dgSpecHash": "dKYBwjYoeYY=",
   "success": true,
   "projectFilePath": "/home/fabricio/Proyecto1/Proyecto1.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/home/fabricio/.nuget/packages/runtime.android-arm.runtime.native.system.io.ports/10.0.12/runtime.android-arm.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.android-arm64.runtime.native.system.io.ports/10.0.12/runtime.android-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.android-x64.runtime.native.system.io.ports/10.0.12/runtime.android-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.android-x86.runtime.native.system.io.ports/10.0.12/runtime.android-x86.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.linux-arm.runtime.native.system.io.ports/10.0.12/runtime.linux-arm.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.linux-arm64.runtime.native.system.io.ports/10.0.12/runtime.linux-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.linux-bionic-arm64.runtime.native.system.io.ports/10.0.12/runtime.linux-bionic-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.linux-bionic-x64.runtime.native.system.io.ports/10.0.12/runtime.linux-bionic-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.linux-musl-arm.runtime.native.system.io.ports/10.0.12/runtime.linux-musl-arm.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.linux-musl-arm64.runtime.native.system.io.ports/10.0.12/runtime.linux-musl-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.linux-musl-x64.runtime.native.system.io.ports/10.0.12/runtime.linux-musl-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.linux-x64.runtime.native.system.io.ports/10.0.12/runtime.linux-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.maccatalyst-arm64.runtime.native.system.io.ports/10.0.12/runtime.maccatalyst-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.maccatalyst-x64.runtime.native.system.io.ports/10.0.12/runtime.maccatalyst-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.native.system.io.ports/10.0.12/runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.osx-arm64.runtime.native.system.io.ports/10.0.12/runtime.osx-arm64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/runtime.osx-x64.runtime.native.system.io.ports/10.0.12/runtime.osx-x64.runtime.native.system.io.ports.10.0.12.nupkg.sha512",
+    "/home/fabricio/.nuget/packages/system.io.ports/10.0.12/system.io.ports.10.0.12.nupkg.sha512"
+  ],
   "logs": []
 }

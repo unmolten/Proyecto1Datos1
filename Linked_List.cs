@@ -1,9 +1,12 @@
+/* Lista enlazada que mantiene referencias al primer nodo (head) y al ultimo
+nodo (tail). Tambien puede convertirse en una lista circular. */
 class LinkedList
 {
     private Node? head;
     private int size;
     private Node? tail;
 
+    // Crea una lista vacia.
     public LinkedList()
     {
         this.head = null;
@@ -11,16 +14,20 @@ class LinkedList
         this.size = 0;
     }
 
+    // Indica si la lista no contiene nodos.
     public Boolean IsEmpty()
     {
         return this.head == null;
     }
 
+    // Devuelve la cantidad actual de nodos.
     public int Size()
     {
         return this.size;
     }
 
+    /* Recalcula tail recorriendo la lista. Se usa cuando se modifica el enlace
+    interno y la lista todavia no esta circular. */
     private void UpdateTail()
     {
         if (this.head == null)
@@ -39,6 +46,7 @@ class LinkedList
         }
     }
 
+    // Inserta un nodo al principio de la lista.
     public void InsertFirst(Object data)
     {
         Node newNode = new Node(data);
@@ -55,6 +63,8 @@ class LinkedList
         Console.WriteLine("Nodo insertado al inicio: " + newNode.GetData());
     }
 
+    /* Inserta un nodo inmediatamente despues de head.
+     Si la lista esta vacia, el dato se convierte en el primer nodo. */
     public void InsertAfterHead(Object data)
     {
         if (this.head == null)
@@ -72,6 +82,7 @@ class LinkedList
         Console.WriteLine("Nodo insertado despues del head: " + newNode.GetData());
     }
 
+    // Inserta un nodo al final de la lista.
     public void InsertEnd(Object data)
     {
         Node newNode = new Node(data);
@@ -93,6 +104,9 @@ class LinkedList
         this.size++;
     }
 
+    /// <summary>
+    /// Elimina y devuelve el primer nodo. Devuelve null si la lista esta vacia.
+    /// </summary>
     public Node? DeleteFirst()
     {
         if (this.head != null)
@@ -118,6 +132,8 @@ class LinkedList
         }
     }
 
+    /* Imprime una lista lineal. El recorrido usa size para evitar depender de
+    /// null cuando la lista fue convertida en circular.*/
     public void PrintList()
     {
         if (this.head == null)
@@ -143,6 +159,7 @@ class LinkedList
         Console.WriteLine("null");
     }
 
+    // Hace que tail apunte nuevamente a head, formando una lista circular.
     public void MakeCircular()
     {
         if (this.head != null)
@@ -155,6 +172,7 @@ class LinkedList
         }
     }
 
+    // Imprime exactamente size nodos para evitar un ciclo infinito.
     public void PrintCircular()
     {
         if (this.head == null)
@@ -174,6 +192,8 @@ class LinkedList
         } while (visited < this.size);
     }
 
+    /* Devuelve el dato ubicado en una posicion basada en cero.
+    Por ejemplo, la posicion 4 corresponde al quinto nodo.*/
     public Object GetDataNode(int position)
     {
         if (this.head == null)
