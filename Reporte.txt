@@ -1,0 +1,36 @@
+
+--------------------------
+ID: 1
+Fecha: 07/09/2026-02:59:29
+Turno: 3
+Tipo: Pago al banco
+Monto: 1000
+Origen: Jugador1
+Destino: Jugador 2
+Descripcion: Jugador1 ha pagado 1000 al banco
+
+--------------------------
+
+--------------------------
+ID: 2
+Fecha: 07/09/2026-02:59:29
+Turno: 5
+Tipo: Pago de alquiler
+Monto: 2000
+Origen: Carlos
+Destino: Sofia
+Descripcion: Carlos ha pagado 2000 a Sofia por el alquiler de la propiedad PROPIEDAD
+
+--------------------------
+
+--------------------------
+ID: 3
+Fecha: 07/09/2026-02:59:29
+Turno: 7
+Tipo: Ganancia por evento
+Monto: 4000
+Origen: Maria
+Destino: Destino
+Descripcion: Maria ha ganado 4000 por el evento EVENTO
+
+--------------------------
