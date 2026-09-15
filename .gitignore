@@ -1,3 +1,6 @@
+#Datos no necesarios para la parte de godot
 .godot/
+
+# .NET productos de hacer build
 bin/
 obj/
