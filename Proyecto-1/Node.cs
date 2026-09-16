@@ -1,14 +1,17 @@
-// Representa un nodo de la lista enlazada.
-// Guarda un dato y una referencia al siguiente nodo.
+// Representa un nodo de una lista circular doblemente enlazada.
+// Guarda un dato, una referencia al siguiente nodo y una referencia al nodo anterior.
 public class Node(Object data)
 {
     // El dato puede ser cualquier objeto: texto, numeros u otra clase.
     private Object data = data;
 
-    // Puede ser null cuando el nodo es el ultimo de una lista no circular.
+    // Referencia al siguiente nodo en la lista circular.
     private Node? next;
 
-    // Devuelve el dato almacenado en el nodo.</summary>
+    // Referencia al nodo anterior en la lista circular.
+    private Node? previous;
+
+    // Devuelve el dato almacenado en el nodo.
     public Object GetData()
     {
         return this.data;
@@ -30,5 +33,29 @@ public class Node(Object data)
     public void SetNext(Node? node)
     {
         this.next = node;
+    }
+
+    // Devuelve el nodo anterior o null si no existe.
+    public Node? GetPrevious()
+    {
+        return this.previous;
+    }
+
+    // Define la referencia al nodo anterior.
+    public void SetPrevious(Node? node)
+    {
+        this.previous = node;
+    }
+
+    // Devuelve el nodo anterior (alias de GetPrevious).
+    public Node? GetPrev()
+    {
+        return this.previous;
+    }
+
+    // Define la referencia al nodo anterior (alias de SetPrevious).
+    public void SetPrev(Node? node)
+    {
+        this.previous = node;
     }
 }

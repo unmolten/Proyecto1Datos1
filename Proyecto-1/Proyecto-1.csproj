@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="9.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Plantilla base en desarrollo; excluida de la compilacion para evitar conflicto con la definicion actual de Jugador -->
+    <Compile Remove="JuegoMonopoly.cs" />
+    <None Include="JuegoMonopoly.cs" />
+  </ItemGroup>
+
+</Project>

@@ -1,12 +1,13 @@
-/* Lista enlazada que mantiene referencias al primer nodo (head) y al ultimo
-nodo (tail). Tambien puede convertirse en una lista circular. */
-class LinkedList
+// Lista circular doblemente enlazada que mantiene referencias al primer nodo (head),
+// al ultimo nodo (tail) y a la cantidad de elementos (size).
+// Cada nodo apunta tanto a su siguiente como a su anterior de forma circular.
+public class LinkedList
 {
     private Node? head;
     private int size;
     private Node? tail;
 
-    // Crea una lista vacia.
+    // Crea una lista circular vacia.
     public LinkedList()
     {
         this.head = null;
@@ -26,8 +27,19 @@ class LinkedList
         return this.size;
     }
 
-    /* Recalcula tail recorriendo la lista. Se usa cuando se modifica el enlace
-    interno y la lista todavia no esta circular. */
+    // Devuelve la referencia al primer nodo (head).
+    public Node? GetHead()
+    {
+        return this.head;
+    }
+
+    // Devuelve la referencia al ultimo nodo (tail).
+    public Node? GetTail()
+    {
+        return this.tail;
+    }
+
+    // Actualiza tail recorriendo la lista si fuera necesario.
     private void UpdateTail()
     {
         if (this.head == null)
@@ -36,35 +48,45 @@ class LinkedList
             return;
         }
 
-        Node? current = this.head;
-        this.tail = this.head;
+        Node current = this.head;
+        int visited = 0;
 
-        while (current != null && current.GetNext() != null)
+        while (current.GetNext() != null && current.GetNext() != this.head && visited < this.size)
         {
-            current = current.GetNext();
-            this.tail = current;
+            current = current.GetNext()!;
+            visited++;
         }
+
+        this.tail = current;
     }
 
-    // Inserta un nodo al principio de la lista.
+    // Inserta un nodo al principio de la lista manteniendo la circularidad doble.
     public void InsertFirst(Object data)
     {
         Node newNode = new Node(data);
-        newNode.SetNext(this.head);
-        this.head = newNode;
-        this.size++;
 
-        if (this.tail == null)
+        if (this.head == null)
         {
-            this.tail = this.head;
+            newNode.SetNext(newNode);
+            newNode.SetPrevious(newNode);
+            this.head = newNode;
+            this.tail = newNode;
+        }
+        else
+        {
+            newNode.SetNext(this.head);
+            newNode.SetPrevious(this.tail);
+            this.tail!.SetNext(newNode);
+            this.head.SetPrevious(newNode);
+            this.head = newNode;
         }
 
-        UpdateTail();
+        this.size++;
         Console.WriteLine("Nodo insertado al inicio: " + newNode.GetData());
     }
 
-    /* Inserta un nodo inmediatamente despues de head.
-     Si la lista esta vacia, el dato se convierte en el primer nodo. */
+    // Inserta un nodo inmediatamente despues de head.
+    // Si la lista esta vacia, el dato se convierte en el primer nodo.
     public void InsertAfterHead(Object data)
     {
         if (this.head == null)
@@ -73,67 +95,105 @@ class LinkedList
             return;
         }
 
-        Node? nextAfterHead = this.head.GetNext();
+        Node nextAfterHead = this.head.GetNext()!;
         Node newNode = new Node(data);
+
         newNode.SetNext(nextAfterHead);
+        newNode.SetPrevious(this.head);
         this.head.SetNext(newNode);
+        nextAfterHead.SetPrevious(newNode);
+
+        if (this.head == this.tail)
+        {
+            this.tail = newNode;
+        }
+
         this.size++;
-        UpdateTail();
         Console.WriteLine("Nodo insertado despues del head: " + newNode.GetData());
     }
 
-    // Inserta un nodo al final de la lista.
+    // Inserta un nodo al final de la lista manteniendo la circularidad doble.
     public void InsertEnd(Object data)
     {
         Node newNode = new Node(data);
 
         if (this.head == null)
         {
+            newNode.SetNext(newNode);
+            newNode.SetPrevious(newNode);
             this.head = newNode;
             this.tail = newNode;
             this.size++;
             return;
         }
 
-        if (this.tail != null)
-        {
-            this.tail.SetNext(newNode);
-        }
-
+        newNode.SetNext(this.head);
+        newNode.SetPrevious(this.tail);
+        this.tail!.SetNext(newNode);
+        this.head.SetPrevious(newNode);
         this.tail = newNode;
         this.size++;
     }
 
-    /// <summary>
-    /// Elimina y devuelve el primer nodo. Devuelve null si la lista esta vacia.
-    /// </summary>
+    // Elimina y devuelve el primer nodo. Devuelve null si la lista esta vacia.
     public Node? DeleteFirst()
     {
-        if (this.head != null)
-        {
-            Node temp = this.head;
-            this.head = this.head.GetNext();
-            this.size--;
-
-            if (this.size == 0)
-            {
-                this.tail = null;
-            }
-            else
-            {
-                UpdateTail();
-            }
-
-            return temp;
-        }
-        else
+        if (this.head == null)
         {
             return null;
         }
+
+        Node temp = this.head;
+
+        if (this.head == this.tail)
+        {
+            this.head = null;
+            this.tail = null;
+            this.size = 0;
+        }
+        else
+        {
+            this.head = this.head.GetNext();
+            this.head!.SetPrevious(this.tail);
+            this.tail!.SetNext(this.head);
+            this.size--;
+        }
+
+        temp.SetNext(null);
+        temp.SetPrevious(null);
+        return temp;
     }
 
-    /* Imprime una lista lineal. El recorrido usa size para evitar depender de
-    /// null cuando la lista fue convertida en circular.*/
+    // Elimina y devuelve el ultimo nodo. Devuelve null si la lista esta vacia.
+    public Node? DeleteLast()
+    {
+        if (this.head == null)
+        {
+            return null;
+        }
+
+        Node temp = this.tail!;
+
+        if (this.head == this.tail)
+        {
+            this.head = null;
+            this.tail = null;
+            this.size = 0;
+        }
+        else
+        {
+            this.tail = this.tail!.GetPrevious();
+            this.tail!.SetNext(this.head);
+            this.head.SetPrevious(this.tail);
+            this.size--;
+        }
+
+        temp.SetNext(null);
+        temp.SetPrevious(null);
+        return temp;
+    }
+
+    // Imprime la lista mostrando los enlaces bidireccionales hasta completar una vuelta.
     public void PrintList()
     {
         if (this.head == null)
@@ -152,27 +212,24 @@ class LinkedList
                 break;
             }
 
-            Console.Write(current.GetData() + " -> ");
+            Console.Write(current.GetData() + " <-> ");
             current = current.GetNext();
         }
 
-        Console.WriteLine("null");
+        Console.WriteLine("(circular: head)");
     }
 
-    // Hace que tail apunte nuevamente a head, formando una lista circular.
+    // Asegura que tail y head se encuentren conectados bidireccionalmente.
     public void MakeCircular()
     {
-        if (this.head != null)
+        if (this.head != null && this.tail != null)
         {
-            UpdateTail();
-            if (this.tail != null)
-            {
-                this.tail.SetNext(this.head);
-            }
+            this.tail.SetNext(this.head);
+            this.head.SetPrevious(this.tail);
         }
     }
 
-    // Imprime exactamente size nodos para evitar un ciclo infinito.
+    // Imprime exactamente size nodos para recorrer el ciclo hacia adelante una vez.
     public void PrintCircular()
     {
         if (this.head == null)
@@ -192,8 +249,28 @@ class LinkedList
         } while (visited < this.size);
     }
 
-    /* Devuelve el dato ubicado en una posicion basada en cero.
-    Por ejemplo, la posicion 4 corresponde al quinto nodo.*/
+    // Imprime exactamente size nodos en sentido contrario usando los enlaces previos.
+    public void PrintCircularReverse()
+    {
+        if (this.tail == null)
+        {
+            Console.WriteLine("Lista vacia");
+            return;
+        }
+
+        Node current = this.tail;
+        int visited = 0;
+
+        do
+        {
+            Console.WriteLine(current.GetData());
+            current = current.GetPrevious() ?? this.tail;
+            visited++;
+        } while (visited < this.size);
+    }
+
+    // Devuelve el dato ubicado en una posicion basada en cero.
+    // Por ejemplo, la posicion 4 corresponde al quinto nodo.
     public Object GetDataNode(int position)
     {
         if (this.head == null)
