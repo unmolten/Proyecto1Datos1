@@ -43,15 +43,43 @@ public class JuegoMonopoly
     // Inicializa las casillas iniciales del tablero en la lista enlazada y la hace circular.
     private void InicializarTablero()
     {
+
+//    public Propiedad(int posicion, string nombre, string tipo, int precioCompra, int alquilerBase, Jugador propietario, string colorGrupo)
+//    : base(posicion, nombre, tipo)
+
         // TODO: Modificar, agregar o personalizar las casillas del tablero a su gusto
-        this.tablero.InsertEnd(new Casilla(0, "Salida (GO)", "Salida"));
-        this.tablero.InsertEnd(new Casilla(1, "Avenida Mediterráneo", "Propiedad", 60, 10));
-        this.tablero.InsertEnd(new Casilla(2, "Avenida Báltica", "Propiedad", 60, 10));
-        this.tablero.InsertEnd(new Casilla(3, "Cárcel / De Visita", "Carcel"));
-        this.tablero.InsertEnd(new Casilla(4, "Avenida Vermont", "Propiedad", 100, 15));
-        this.tablero.InsertEnd(new Casilla(5, "Parada Libre", "ParadaLibre"));
-        this.tablero.InsertEnd(new Casilla(6, "Avenida Virginia", "Propiedad", 160, 22));
-        this.tablero.InsertEnd(new Casilla(7, "Paseo Tablado", "Propiedad", 400, 50));
+        this.tablero.InsertEnd(new CasillaEspecial(0, "Salida (GO)", "Salida"));
+        this.tablero.InsertEnd(new Propiedad(1, "Casa de tierra", "Propiedad", 60, 5));
+        this.tablero.InsertEnd(new Propiedad(2, "Cueva provisional", "Propiedad", 60, 5));
+        this.tablero.InsertEnd(new CasillaEvento(3, "Arca Comunal", "ArcaComunal"));
+        this.tablero.InsertEnd(new Propiedad(4, "Tren de la aldea", "Propiedad", 200, 25));
+        this.tablero.InsertEnd(new Propiedad(5, "Puesto de saqueador", "Propiedad", 100, 10));
+        this.tablero.InsertEnd(new Propiedad(6, "Aldea esmeraldil", "Propiedad", 100, 10));
+        this.tablero.InsertEnd(new CasillaEspecial(7, "Impuesto sobre la renta", "Impuesto"));
+        this.tablero.InsertEnd(new CasillaEspecial(8, "Carcel", "Carcel"));
+        this.tablero.InsertEnd(new Propiedad(9, "Geoda de amatista", "Propiedad", 140, 15));
+        this.tablero.InsertEnd(new Propiedad(10, "Mina de oro", "Propiedad", 140, 15));
+        this.tablero.InsertEnd(new CasillaEvento(11, "Fortuna", "Fortuna"));
+        this.tablero.InsertEnd(new Propiedad(12, "Tren a las minas", "Propiedad", 200, 25));
+        this.tablero.InsertEnd(new Propiedad(13, "Runa oceanica", "Propiedad", 180, 20));
+        this.tablero.InsertEnd(new Propiedad(14, "Barco hundido", "Propiedad", 180, 20));
+        this.tablero.InsertEnd(new Propiedad(15, "Monumento oceanico", "Propiedad", 200, 24));
+        this.tablero.InsertEnd(new CasillaEspecial(16, "Parada Libre", "ParadaLibre"));
+        this.tablero.InsertEnd(new Propiedad(17, "Templo del desierto", "Propiedad", 220, 20));
+        this.tablero.InsertEnd(new CasillaEvento(18, "Arca Comunal", "ArcaComunal"));
+        this.tablero.InsertEnd(new Propiedad(19, "Trial Chamber", "Propiedad", 220, 20));
+        this.tablero.InsertEnd(new Propiedad(20, "Tren a los portales", "Propiedad", 200, 25));
+        this.tablero.InsertEnd(new Propiedad(21, "Ciudad Antigua", "Propiedad", 240, 25));
+        this.tablero.InsertEnd(new Propiedad(22, "Portal al Nether", "Propiedad", 240, 25));
+        this.tablero.InsertEnd(new Propiedad(23, "Portal al End", "Propiedad", 260, 28));
+        this.tablero.InsertEnd(new CasillaEspecial(24, "Vaya a la carcel", "VayaALaCarcel"));
+        this.tablero.InsertEnd(new Propiedad(25, "Charco de lava", "Propiedad", 280, 30));
+        this.tablero.InsertEnd(new Propiedad(26, "Fortaleza del Nether", "Propiedad", 280, 30));
+        this.tablero.InsertEnd(new Propiedad(27, "Bastion del Nether", "Propiedad", 300, 32));
+        this.tablero.InsertEnd(new Propiedad(28, "Tren a los portales", "Propiedad", 200, 25));
+        this.tablero.InsertEnd(new Propiedad(29, "Ciudad del End", "Propiedad", 350, 35));
+        this.tablero.InsertEnd(new CasillaEvento(30, "Fortuna", "Fortuna"));
+        this.tablero.InsertEnd(new Propiedad(31, "Barco del End", "Propiedad", 350, 35));        
 
         // LISTA CIRCULAR: Conecta la cola con la cabeza para que el tablero dé vueltas continuas
         this.tablero.MakeCircular();

@@ -48,7 +48,8 @@ public class Propiedad : Casilla
 
     string ColorGrupo { get; set; }
 
-    public Propiedad(int posicion, string nombre, string tipo, int precioCompra, int alquilerBase, Jugador propietario, string colorGrupo) : base(posicion, nombre, tipo)
+    public Propiedad(int posicion, string nombre, string tipo, int precioCompra, int alquilerBase, Jugador propietario, string colorGrupo)
+    : base(posicion, nombre, tipo)
     {
         this.PrecioCompra = precioCompra;
         this.AlquilerBase = alquilerBase;
@@ -79,7 +80,7 @@ public class Propiedad : Casilla
 }
 public class CasillaEvento : Casilla
 {
-    string tipoEvento
+    string tipoEvento;
     public CasillaEvento(int posicion, string nombre, string tipo) : base(posicion, nombre, tipo)
     {
         
