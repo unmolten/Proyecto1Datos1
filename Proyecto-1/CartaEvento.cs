@@ -1,0 +1,13 @@
+/*
+CartaEvento es la plantilla utilizada para simular las cartas
+de evento de Monopoly
+
+NOTA: DADA LA ARQUITECTURA QUE PIDE DE "LAS CARTAS QUE SALGAN DEBEN IR A LA ULTIMA POSICION"
+ESTO IMPLICARIA UTILIZAR UNA LISTA. POR ELLO, CADA VEZ QUE INICIE UNA PARTIDA, DEBERIA RANDOMIZARSE
+LAS POSICIONES.
+*/
+
+class CartaEvento
+{
+    
+}
