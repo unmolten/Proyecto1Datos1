@@ -23,7 +23,7 @@ import threading
 
 # Informacion del IP y puerto
 HOST = "127.0.0.1"
-PORT = 9999
+PORT = 6767
 
 # Lista donde se guardan las conexiones de los clientes conectados
 clients = []
