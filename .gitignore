@@ -1,6 +1,53 @@
-#Datos no necesarios para la parte de godot
-.godot/
+# ==========================================
+# .NET / C#
+# ==========================================
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.useros_prompt
+*.suo
+*.userprefs
+*.pidb
+*.booproj
+*.sln.docstates
 
-# .NET productos de hacer build
-bin/
-obj/
+# NuGet Packages
+*.nupkg
+**/packages/*
+!**/packages/build/
+
+# ==========================================
+# Godot Engine
+# ==========================================
+.godot/
+*.translation
+
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.venv/
+venv/
+ENV/
+env/
+
+# ==========================================
+# IDEs & Editores (Visual Studio, VS Code, Rider)
+# ==========================================
+.vs/
+.idea/
+*.swp
+*~
+*.lock
+
+# ==========================================
+# Archivos del Sistema Operativo
+# ==========================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
