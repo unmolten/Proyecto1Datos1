@@ -19,7 +19,8 @@ public abstract class Casilla
     // - "Impuesto": Descuenta una tarifa fija al jugador.
     // - "ParadaLibre": Casilla neutral donde no ocurre penalización ni cobro.
     // - "VayaALaCarcel": Arresta al jugador y lo teletransporta al nodo de la Cárcel.
-    // - "Suerte": Otorga eventos aleatorios (premios, multas, saltos).
+    // - "Fortuna": Otorga eventos aleatorios (premios, multas, saltos).
+    // - "ArcaComunal": Otorga eventos aleatorios (premios, multas, saltos).
     public string Tipo { get; set; }
 
     // Constructor para inicializar una casilla con sus atributos básicos.
@@ -29,6 +30,12 @@ public abstract class Casilla
         this.Nombre = nombre;
         this.Tipo = tipo;
     }
+
+    // Metodo virtual, para las clases heredadas ocurre:
+    // Propiedad: Verifica si la propiedad tiene o no dueno y permite comprar o cobrar un alquiler respectivamente
+    // CasillaEvento: Permite obtener alguna instancia de CartaEvento segun su tipo ("Fortuna"/"ArcaComunal")
+    // CasillaEspecial: Ejecuta una accion especifica para las casillas segun su tipo
+    public virtual void Accion() {}
 }
 public class Propiedad : Casilla
 {
@@ -59,10 +66,25 @@ public class Propiedad : Casilla
     }
 
     // Verifica si la casilla tiene un propietario.
-    public bool TienePropietario()
+    private bool TienePropietario()
     {
         return this.Propietario != null;
     }
+
+    public override void Accion()
+    {
+        if (TienePropietario())
+        {
+            int montoAlquiler;
+            montoAlquiler = AlquilerBase;   
+        }
+        else
+        {
+            //preguntar si desea comprar la propiedad
+        }
+    }
+
+    // 
 
     // Representación en texto formateado de la casilla para mostrar en la consola.
     public override string ToString()
@@ -86,7 +108,7 @@ public class CasillaEvento : Casilla
         
     }
 
-    public void ObtenerEvento()
+    public override void Accion()
     {
         
     }
@@ -95,6 +117,11 @@ public class CasillaEspecial : Casilla
 {
     
     public CasillaEspecial(int posicion, string nombre, string tipo) : base(posicion, nombre, tipo)
+    {
+        
+    }
+
+    public override void Accion()
     {
         
     }
