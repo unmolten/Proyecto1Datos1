@@ -6,6 +6,7 @@ class_name NetworkClient
 ##   jugador/<id>/activar
 ##   jugador/<id>/desactivar
 ##   jugador/<id>/mover/casilla/<n>
+##   jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>   (5 = hotel)
 ## Se usa StreamPeerTCP para establecer una conexión TCP con el servidor
 
 ## Señal de tipo string con el mensaje recibido.
@@ -191,6 +192,20 @@ func _handle_message(raw: String) -> void:
 		## de la casilla deseada
 		var casilla_index := int(parts[4])
 		game_board.move_player_to_casilla(player_id, casilla_index)
+		
+	## Si el tamaño de las partes es mayor o igual a 6 e incluye "comprarcasa" en la
+	## tercera parte y "casilla" en la quinta parte:
+	## jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>
+	## (por ahora no se valida nada, solo se muestra la cantidad de casas/hotel
+	## indicada en esa casilla, sin importar el id del jugador)
+	elif parts.size() >= 6 and parts[2] == "comprarcasa" and parts[4] == "casilla":
+		
+		## Nivel de casas (1 a 4) u hotel (5)
+		var level := int(parts[3])
+		
+		## Casilla donde se deben mostrar las casas/hotel
+		var casilla_index := int(parts[5])
+		game_board.set_house_level(casilla_index, level)
 		
 	## Si no se reconoció el mensaje aquí arriba, tira un warning
 	else:

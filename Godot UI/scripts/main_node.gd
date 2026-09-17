@@ -27,6 +27,10 @@ class_name GameBoard
 ## (MODIFICABLE)
 @export var player_sprites: Array[Texture2D] = []
 
+## Escena que se utiliza para mostrar las casas/hotel de una propiedad
+## (la escena HouseMarker.tscn)
+@export var house_scene: PackedScene
+
 
 ## Colores que se utilizarán para las fichas si no se les asignó una textura.
 ## El índice 0 corresponde al jugador 1, el 1 al jugador 2, etc
@@ -84,6 +88,10 @@ var player_casilla: Dictionary = {}
 ## Ejemplo: casilla_occupants[15] = [1, 3]
 ## significa que los jugadores 1 y 3 están en la casilla 15.
 var casilla_occupants: Dictionary = {}
+
+## Diccionario que guarda el HouseMarker (casas/hotel) que ya se creó
+## para cada casilla. Ejemplo: house_markers[5] = nodo HouseMarker de la casilla 5
+var house_markers: Dictionary = {}
 
 
 # ============================================================
@@ -368,3 +376,98 @@ func _update_casilla_arrangement(casilla_index: int) -> void:
 
 		## Mueve visualemente al jugador a la posicion
 		players[id].move_to(target)
+
+
+# -------------- CASAS / HOTELES --------------
+
+
+## Esta función calcula, para una casilla dada, dónde debe ir su grupo de
+## casas/hotel y si deben acomodarse en horizontal o en vertical.
+## Devuelve un diccionario vacío si la casilla no pertenece a ninguna
+## de las cuatro filas de propiedades.
+##
+## Offsets (siempre hacia el centro del tablero) y orientación:
+##   Casillas 1 a 7   -> +90 en X   -> se acomodan en VERTICAL
+##   Casillas 9 a 15  -> +95.93 en Y -> se acomodan en HORIZONTAL
+##   Casillas 17 a 23 -> -90 en X   -> se acomodan en VERTICAL
+##   Casillas 25 a 31 -> -84 en Y   -> se acomodan en HORIZONTAL
+func _get_house_placement(casilla_index: int) -> Dictionary:
+
+	# Verifica que la casilla exista dentro del arreglo
+	if casilla_index < 0 or casilla_index >= casillas.size():
+		return {}
+
+	## Posición local de la casilla (dentro del contenedor "Casillas")
+	var base_pos: Vector2 = casillas[casilla_index].position
+
+	var anchor: Vector2
+	var horizontal: bool
+
+	if casilla_index >= 1 and casilla_index <= 7:
+		anchor = base_pos + Vector2(90, 0)
+		horizontal = false
+
+	elif casilla_index >= 9 and casilla_index <= 15:
+		anchor = base_pos + Vector2(0, 95.93)
+		horizontal = true
+
+	elif casilla_index >= 17 and casilla_index <= 23:
+		anchor = base_pos + Vector2(-90, 0)
+		horizontal = false
+
+	elif casilla_index >= 25 and casilla_index <= 31:
+		anchor = base_pos + Vector2(0, -84)
+		horizontal = true
+
+	# Si la casilla no cae en ninguna de las filas de propiedades
+	# (por ejemplo, una esquina, un ferrocarril, arca o fortuna)
+	else:
+		return {}
+
+	return {"position": anchor, "horizontal": horizontal}
+
+
+## Esta función es llamada cuando NetworkClient recibe:
+## "jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>" (POR AHORA, SIN VALIDAR NADA,
+## simplemente muestra la cantidad de casas u hotel indicado en esa casilla)
+##
+## level: 1, 2, 3 o 4 = esa cantidad de casas | 5 = hotel (reemplaza las casas)
+func set_house_level(casilla_index: int, level: int) -> void:
+
+	## Calcula dónde y cómo debe ir el marcador de casas para esta casilla
+	var placement: Dictionary = _get_house_placement(casilla_index)
+
+	# Si la casilla no admite casas (esquina, ferrocarril, arca, fortuna, etc.)
+	if placement.is_empty():
+		push_warning("La casilla %d no admite casas/hotel" % casilla_index)
+		return
+
+	# Si no se asignó la escena de casas en el Inspector, no se puede continuar
+	if house_scene == null:
+		push_error("No se asignó house_scene en el Inspector de Board")
+		return
+
+	## Contenedor donde viven las casillas (ahí mismo se agregan las casas)
+	var container: Node = get_node(casillas_container_path)
+
+	## Nombre único que tendrá el nodo de casas de esta casilla
+	var node_name := "Casas_%d" % casilla_index
+
+	var marker: HouseMarker
+
+	# Si ya existe un marcador de casas para esta casilla, lo reutiliza
+	if house_markers.has(casilla_index):
+		marker = house_markers[casilla_index]
+
+	# Si no existe todavía, lo crea e instancia por primera vez
+	else:
+		marker = house_scene.instantiate()
+		marker.name = node_name
+		container.add_child(marker)
+		house_markers[casilla_index] = marker
+
+	## Ubica el marcador en la posición calculada
+	marker.position = placement["position"]
+
+	## Le dice cuántas casas/hotel mostrar y en qué dirección acomodarse
+	marker.set_level(level, placement["horizontal"])

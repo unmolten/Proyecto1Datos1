@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cbiynp5qwwjnl"]
+
+[ext_resource type="Script" uid="uid://c107v4atsokix" path="res://scripts/house_marker.gd" id="1_house"]
+
+[node name="HouseMarker" type="Node2D" unique_id=663245410]
+script = ExtResource("1_house")

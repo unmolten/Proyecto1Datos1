@@ -13,6 +13,9 @@ escribir comandos en esta terminal, por ejemplo:
     jugador/2/activar
     jugador/2/mover/casilla/3
     jugador/1/desactivar
+    jugador/1/comprarcasa/1/casilla/5
+    jugador/1/comprarcasa/2/casilla/5
+    jugador/1/comprarcasa/5/casilla/5   (5 = pone el hotel y quita las 4 casas)
 """
 
 # Usa socket para la conexion TCP
@@ -142,7 +145,8 @@ def main() -> None:
     print(f"Mock server escuchando en {HOST}:{PORT}")
 
     # Mostramos los comandos que se pueden escribir para probar Godot
-    print("Comandos: jugador/<id>/activar | jugador/<id>/desactivar | jugador/<id>/mover/casilla/<n>")
+    print("Comandos: jugador/<id>/activar | jugador/<id>/desactivar | jugador/<id>/mover/casilla/<n> | "
+          "jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>")
 
     # Mostramos cómo cerrar el servidor
     print("Escribe 'salir' para terminar.\n")
