@@ -26,10 +26,13 @@ public enum TipoEfectoCarta
     PerderDinero,         // El jugador paga un monto al banco
     PagarACadaJugador,    // Quien roba la carta paga un monto a cada uno de los demas jugadores
     CobrarDeCadaJugador,  // Cada uno de los demas jugadores le paga un monto a quien robo la carta
+    PerderDineroPorPropiedad,  // El jugador paga un monto multiplicado por la cantidad de propiedades que tiene
+    PerderDineroPorConstruccion, // El jugador paga MontoPorCasa por cada casa y MontoPorHotel por cada hotel que tenga
     MoverACasilla,        // El jugador se mueve directo a la casilla de indice CasillaDestino
     MoverCasillas,        // El jugador avanza o retrocede +- CantidadCasillas
     IrACarcel,            // El jugador va directo a la carcel, sin cobrar salida
-    SalirDeCarcelGratis   // El jugador se queda con esta carta hasta que la use para salir de la carcel
+    SalirDeCarcelGratis,   // El jugador se queda con esta carta hasta que la use para salir de la carcel
+    TomarOtraCarta // El jugador toma otra carta de uno de los dos mazos de cartas de arca comunal o fortuna
 }
 
 // Carta de evento (Fortuna o Arca Comunal)
@@ -45,6 +48,14 @@ public class CartaEvento
     // efecto de la carta no involucra dinero
     public int Monto { get; set; }
 
+    // Costo POR CADA casa que el jugador tenga construida, solo se usa si el
+    // Tipo es PerderDineroPorConstruccion, 0 si no aplica
+    public int MontoPorCasa { get; set; }
+ 
+    // Costo POR CADA hotel que el jugador tenga construido, solo se usa si el
+    // Tipo es PerderDineroPorConstruccion, 0 si no aplica
+    public int MontoPorHotel { get; set; }
+
     // Casilla de destino, solo se usa si el Tipo es MoverACasilla
     // Se deja en -1 si no aplica
     public int CasillaDestino { get; set; }
@@ -54,14 +65,28 @@ public class CartaEvento
     // Se deja en 0 si no aplica
     public int CantidadCasillas { get; set; }
 
+    // true si ademas del efecto de Tipo, la carta hace que el jugador
+    // pierda su siguiente turno, se puede combinar con cualquier Tipo
+    // (por ejemplo: pagar dinero y perder turno, o moverse y perder turno)
+    public bool PierdeTurno { get; set; }
+
+    // Numero de mazo al que robar las tarjetas (1 para Fortuna, 2 Arca),
+    // 0 si no aplica
+    public int Mazo { get; set; }
+
     // Famosisimo constructor
-    public CartaEvento(string descripcion, TipoEfectoCarta tipo, int monto = 0, int casillaDestino = -1, int cantidadCasillas = 0)
+    public CartaEvento(string descripcion, TipoEfectoCarta tipo, int monto = 0, int casillaDestino = -1, int cantidadCasillas = 0,
+    int montoPorCasa = 0, int montoPorHotel = 0, bool pierdeTurno = false, int mazo = 0)
     {
         this.Descripcion = descripcion;
         this.Tipo = tipo;
         this.Monto = monto;
         this.CasillaDestino = casillaDestino;
         this.CantidadCasillas = cantidadCasillas;
+        this.MontoPorCasa = montoPorCasa;
+        this.MontoPorHotel = montoPorHotel;
+        this.PierdeTurno = pierdeTurno;
+        this.Mazo = mazo;
     }
 
     // Representacion en texto de la carta (lo que se le manda al jugador)

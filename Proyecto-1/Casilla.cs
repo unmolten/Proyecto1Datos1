@@ -55,6 +55,8 @@ public class Propiedad : Casilla
 
     string ColorGrupo { get; set; }
 
+    int CantidadCasas { get; set; }   // 0 a 5
+
     public Propiedad(int posicion, string nombre, string tipo, int precioCompra, int alquilerBase, Jugador propietario, string colorGrupo)
     : base(posicion, nombre, tipo)
     {
@@ -99,6 +101,8 @@ public class Propiedad : Casilla
             return $"[{this.Posicion}] {this.Nombre} ({this.Tipo})";
         }
     }
+
+    public int NumeroCasas() {return CantidadCasas;}
 }
 public class CasillaEvento : Casilla
 {

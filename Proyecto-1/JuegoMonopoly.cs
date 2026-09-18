@@ -76,7 +76,7 @@ public class JuegoMonopoly
         this.tablero.InsertEnd(new Propiedad(25, "Charco de lava", "Propiedad", 280, 30));
         this.tablero.InsertEnd(new Propiedad(26, "Fortaleza del Nether", "Propiedad", 280, 30));
         this.tablero.InsertEnd(new Propiedad(27, "Bastion del Nether", "Propiedad", 300, 32));
-        this.tablero.InsertEnd(new Propiedad(28, "Tren a los portales", "Propiedad", 200, 25));
+        this.tablero.InsertEnd(new Propiedad(28, "Tren a las Farlands", "Propiedad", 200, 25));
         this.tablero.InsertEnd(new Propiedad(29, "Ciudad del End", "Propiedad", 350, 35));
         this.tablero.InsertEnd(new CasillaEvento(30, "Fortuna", "Fortuna"));
         this.tablero.InsertEnd(new Propiedad(31, "Barco del End", "Propiedad", 350, 35));        
