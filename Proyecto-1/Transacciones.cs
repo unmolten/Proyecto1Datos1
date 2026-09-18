@@ -22,12 +22,13 @@ class Transaccion
     private int turno; //Turno en el que el jugador genero la transaccion
     private string fechaYHora; //Fecha con formato "dd/MM/yyyy//hh:mm:ss"
     private string tipo; //Tipo de transaccion (predefinida)
-    private string jugadorOrigen; // NOMBRE del jugador de origen. 
-    private string jugadorDestino; // NOMBRE del jugador destinado
+    private Jugador? jugadorOrigen; // NOMBRE del jugador de origen. USAR NULL SI PROVIENE DEL BANCO
+    private Jugador? jugadorDestino; // NOMBRE del jugador destinado. USAR NULL SI VA AL BANCO
     private string descripcion; //Descripcion autogenerada segun el tipo de transaccion
 
-    public Transaccion(int monto, int turno, string tipo, string jugadorOrigen, string jugadorDestino)
-    {
+    public Transaccion(int monto, int turno, string tipo, Jugador jugadorOrigen, Jugador jugadorDestino)
+    {   
+        //Datos iniciales
         this.transaccionID = Interlocked.Increment(ref refID);
         this.monto = monto;
         this.turno = turno;
@@ -37,7 +38,96 @@ class Transaccion
         this.jugadorDestino = jugadorDestino;
         this.descripcion = this.GenerarDescripcion();
 
-        AlmacenarTransaccion();
+        // Procesar los datos
+        this.ProcesarTransaccion();
+
+        // Almacenar la transaccion tras procesarla
+        this.AlmacenarTransaccion();
+    }
+
+    // Metodo para procesar la transaccion dentro del juego
+
+    private void ProcesarTransaccion()
+    {
+        switch (this.tipo)
+        {
+            case "Compra de propiedad":
+
+                if (jugadorOrigen == null)
+                {
+                    Console.WriteLine("ERROR: Intento de comprar propiedad cuando jugadorOrigen es null");
+                    return;
+                }
+
+                jugadorOrigen.Balance -= monto;
+
+                break;
+            case "Pago de alquiler":
+
+                if (jugadorOrigen == null || jugadorDestino == null)
+                {
+                    Console.WriteLine("ERROR: Intento de pagar alquiler cuando jugadorOrigen o jugadorDestino es null");
+                    return;
+                }
+
+                jugadorOrigen.Balance -= monto;
+                jugadorDestino.Balance += monto;
+                break;
+            case "Pago al banco":
+
+                if (jugadorOrigen == null)
+                {
+                    Console.WriteLine("ERROR: Intento de pagar al banco cuando jugadorOrigen es null");
+                    return;
+                }
+
+                jugadorOrigen.Balance -= monto;
+                break;
+            case "Pago entre jugadores":
+
+                if (jugadorOrigen == null || jugadorDestino == null)
+                {
+                    Console.WriteLine("ERROR: Intento de pago entre jugadores cuando jugadorOrigen o jugadorDestino es null");
+                    return;
+                }
+
+                jugadorOrigen.Balance -= monto;
+                jugadorDestino.Balance += monto;
+                break;
+            case "Ganancia por evento":
+                
+                if (jugadorOrigen == null)
+                {
+                    Console.WriteLine("ERROR: Intento de ganancia por evento cuando jugadorOrigen es null");
+                    return;
+                }
+
+                jugadorOrigen.Balance += monto;
+                break;
+            case "Perdida por evento":
+
+                if (jugadorOrigen == null)
+                {
+                    Console.WriteLine("ERROR: Intento de perdida por evento cuando jugadorOrigen es null");
+                    return;
+                }
+
+                jugadorOrigen.Balance -= monto;
+                break;
+            case "Premio por pasar por inicio":
+
+                if (jugadorOrigen == null)
+                {
+                    Console.WriteLine("ERROR: Intento de premio por pasar por inicio cuando jugadorOrigen es null");
+                    return;
+                }
+
+                jugadorOrigen.Balance += monto;
+                break;
+            default:
+                Console.WriteLine("ERROR: Tipo de transaccion no reconocido");
+                break;
+        }
     }
 
     // Metodo para autogenerar descripciones segun el tipo
