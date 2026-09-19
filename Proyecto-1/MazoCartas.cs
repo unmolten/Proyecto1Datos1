@@ -17,7 +17,6 @@ Uso esperado desde donde se maneje la partida :
 */
 
 using System;
-using System.Collections.Generic;
 
 public static class MazoCartas
 {
@@ -52,137 +51,122 @@ public static class MazoCartas
     // Construye el mazo de Fortuna con todas sus cartas random
     public static LinkedList CrearMazoFortuna()
     {
-        List<CartaEvento> cartas = new List<CartaEvento>
-        {
-            new CartaEvento("¡No te acerques! Un Warden acecha, retrocede lentamente 2 casillas.",
-            TipoEfectoCarta.MoverCasillas, cantidadCasillas: -2),
+        LinkedList mazo = new LinkedList();
 
-            new CartaEvento("¡Corre! Una horda de Zombies, corres 4 casillas.",
-            TipoEfectoCarta.MoverCasillas, cantidadCasillas: 4),
+        mazo.InsertEnd(new CartaEvento("¡No te acerques! Un Warden acecha, retrocede lentamente 2 casillas.",
+            TipoEfectoCarta.MoverCasillas, cantidadCasillas: -2));
 
-            new CartaEvento("¡Descanso! Ve a Parada Libre y pierde un turno, si pasas por Salida, cobra el dinero.",
-            TipoEfectoCarta.MoverACasilla, casillaDestino: 16, pierdeTurno: true),
+        mazo.InsertEnd(new CartaEvento("¡Corre! Una horda de Zombies, corres 4 casillas.",
+            TipoEfectoCarta.MoverCasillas, cantidadCasillas: 4));
 
-            new CartaEvento("¡Están cruzando la dimensión! Ve al Portal al Nether, si pasas por Salida, cobra el dinero.",
-            TipoEfectoCarta.MoverACasilla, casillaDestino: 22),
+        mazo.InsertEnd(new CartaEvento("¡Descanso! Ve a Parada Libre y pierde un turno, si pasas por Salida, cobra el dinero.",
+            TipoEfectoCarta.MoverACasilla, casillaDestino: 16, pierdeTurno: true));
 
-            new CartaEvento("¡Moriste! Te toma un turno completo recuperar tus cosas y pierdes 100 esmeraldas en el camino.",
-            TipoEfectoCarta.PerderDinero, monto: 100, pierdeTurno: true),
+        mazo.InsertEnd(new CartaEvento("¡Están cruzando la dimensión! Ve al Portal al Nether, si pasas por Salida, cobra el dinero.",
+            TipoEfectoCarta.MoverACasilla, casillaDestino: 22));
 
-            new CartaEvento("¡Muy muy lejano! Ve al tren a las Farlands, si pasas por Salida, cobra el dinero.",
-            TipoEfectoCarta.MoverACasilla, casillaDestino: 28),
+        mazo.InsertEnd(new CartaEvento("¡Moriste! Te toma un turno completo recuperar tus cosas y pierdes 100 esmeraldas en el camino.",
+            TipoEfectoCarta.PerderDinero, monto: 100, pierdeTurno: true));
 
-            new CartaEvento("¡Visita a los infortunados! Ve a la Cárcel de visita, si pasas por Salida, cobra el dinero.",
-            TipoEfectoCarta.MoverACasilla, casillaDestino: 8),
+        mazo.InsertEnd(new CartaEvento("¡Muy muy lejano! Ve al tren a las Farlands, si pasas por Salida, cobra el dinero.",
+            TipoEfectoCarta.MoverACasilla, casillaDestino: 28));
 
-            new CartaEvento("¡Es muy tarde! Pasa la noche en la Aldea Esmeraldil, si pasas por Salida, cobra el dinero.",
-            TipoEfectoCarta.MoverACasilla, casillaDestino: 6),
+        mazo.InsertEnd(new CartaEvento("¡Visita a los infortunados! Ve a la Cárcel de visita, si pasas por Salida, cobra el dinero.",
+            TipoEfectoCarta.MoverACasilla, casillaDestino: 8));
 
-            new CartaEvento("¡De turismo! Toma el Tren a las minas, si pasas por Salida, cobra el dinero.",
-            TipoEfectoCarta.MoverACasilla, casillaDestino: 12),
+        mazo.InsertEnd(new CartaEvento("¡Es muy tarde! Pasa la noche en la Aldea Esmeraldil, si pasas por Salida, cobra el dinero.",
+            TipoEfectoCarta.MoverACasilla, casillaDestino: 6));
 
-            new CartaEvento("¡Primera clase! Visita el Barco del End, si pasas por Salida, cobra el dinero.",
-            TipoEfectoCarta.MoverACasilla, casillaDestino: 31),
+        mazo.InsertEnd(new CartaEvento("¡De turismo! Toma el Tren a las minas, si pasas por Salida, cobra el dinero.",
+            TipoEfectoCarta.MoverACasilla, casillaDestino: 12));
 
-            new CartaEvento("¡Segunda oportunidad! Toma otra carta de Fortuna.",
-            TipoEfectoCarta.TomarOtraCarta, mazo: 1),
+        mazo.InsertEnd(new CartaEvento("¡Primera clase! Visita el Barco del End, si pasas por Salida, cobra el dinero.",
+            TipoEfectoCarta.MoverACasilla, casillaDestino: 31));
 
-            new CartaEvento("¡Cambio de ritmo! Toma una carta de Arca Comunal.",
-            TipoEfectoCarta.TomarOtraCarta, mazo: 2),
+        mazo.InsertEnd(new CartaEvento("¡Segunda oportunidad! Toma otra carta de Fortuna.",
+            TipoEfectoCarta.TomarOtraCarta, mazo: 1));
 
-            new CartaEvento("¡Fuiste tú! Te acusan de explotar con dinamita las pertenencias de los demás, ve a la cárcel, no cobras Salida.",
-            TipoEfectoCarta.IrACarcel),
+        mazo.InsertEnd(new CartaEvento("¡Cambio de ritmo! Toma una carta de Arca Comunal.",
+            TipoEfectoCarta.TomarOtraCarta, mazo: 2));
 
-            new CartaEvento("¡Para ti! Obtienes una carta de salir de la cárcel gratis.",
-            TipoEfectoCarta.SalirDeCarcelGratis),
-        };
+        mazo.InsertEnd(new CartaEvento("¡Fuiste tú! Te acusan de explotar con dinamita las pertenencias de los demás, ve a la cárcel, no cobras Salida.",
+            TipoEfectoCarta.IrACarcel));
 
-        return ConstruirMazoRandomizado(cartas);
+        mazo.InsertEnd(new CartaEvento("¡Para ti! Obtienes una carta de salir de la cárcel gratis.",
+            TipoEfectoCarta.SalirDeCarcelGratis));
+
+        return ConstruirMazoRandomizado(mazo);
     }
 
     // Construye el mazo de Arca Comunal con todas sus cartas random
     public static LinkedList CrearMazoArcaComunal()
     {
-        List<CartaEvento> cartas = new List<CartaEvento>
-        {
-            new CartaEvento("¡Héroe de la aldea! Acabaste con los asaltos, los aldeanos te dan 100 esmeraldas.",
-            TipoEfectoCarta.GanarDinero, monto: 100),
+        LinkedList mazo = new LinkedList();
+
+        mazo.InsertEnd(new CartaEvento("¡Héroe de la aldea! Acabaste con los asaltos, los aldeanos te dan 100 esmeraldas.",
+            TipoEfectoCarta.GanarDinero, monto: 100));
             
-            new CartaEvento("¡Robaste nuestras cosas! Vaya directo a la cárcel sin cobrar Salida.",
-            TipoEfectoCarta.IrACarcel),
+        mazo.InsertEnd(new CartaEvento("¡Robaste nuestras cosas! Vaya directo a la cárcel sin cobrar Salida.",
+            TipoEfectoCarta.IrACarcel));
             
-            new CartaEvento("¡Impuestos! Has pasado mucho tiempo en las minas, le debes 25 esmeraldas a cada jugador.",
-            TipoEfectoCarta.PagarACadaJugador, monto: 25),
+        mazo.InsertEnd(new CartaEvento("¡Impuestos! Has pasado mucho tiempo en las minas, le debes 25 esmeraldas a cada jugador.",
+            TipoEfectoCarta.PagarACadaJugador, monto: 25));
             
-            new CartaEvento("¡Creepers! Paga 25 esmeraldas por cada propiedad adquirida para reparar los daños.",
-            TipoEfectoCarta.PerderDineroPorPropiedad, monto: 25),
+        mazo.InsertEnd(new CartaEvento("¡Creepers! Paga 25 esmeraldas por cada propiedad adquirida para reparar los daños.",
+            TipoEfectoCarta.PerderDineroPorPropiedad, monto: 25));
             
-            new CartaEvento("¡Están en llamas! Paga 25 por cada casa y 100 por cada hotel para reparar los daños.",
-            TipoEfectoCarta.PerderDineroPorConstruccion, montoPorCasa: 25, montoPorHotel: 100),
+        mazo.InsertEnd(new CartaEvento("¡Están en llamas! Paga 25 por cada casa y 100 por cada hotel para reparar los daños.",
+            TipoEfectoCarta.PerderDineroPorConstruccion, montoPorCasa: 25, montoPorHotel: 100));
             
-            new CartaEvento("¡Prestacion de servicios! Por tu ayuda recolectando recursos, todos te pagan 25 esmeraldas.",
-            TipoEfectoCarta.CobrarDeCadaJugador, monto: 25),
+        mazo.InsertEnd(new CartaEvento("¡Prestacion de servicios! Por tu ayuda recolectando recursos, todos te pagan 25 esmeraldas.",
+            TipoEfectoCarta.CobrarDeCadaJugador, monto: 25));
 
-            new CartaEvento("¡Un diamante! Encuentras un diamante en el suelo, lo vendes por 50 esmeraldas.",
-            TipoEfectoCarta.GanarDinero, monto: 50),
+        mazo.InsertEnd(new CartaEvento("¡Un diamante! Encuentras un diamante en el suelo, lo vendes por 50 esmeraldas.",
+            TipoEfectoCarta.GanarDinero, monto: 50));
 
-            new CartaEvento("¡Feliz cumpleaños! Hoy cumples años, todos te regalan 20 esmeraldas.",
-            TipoEfectoCarta.CobrarDeCadaJugador, monto: 20),
+        mazo.InsertEnd(new CartaEvento("¡Feliz cumpleaños! Hoy cumples años, todos te regalan 20 esmeraldas.",
+            TipoEfectoCarta.CobrarDeCadaJugador, monto: 20));
 
-            new CartaEvento("¡Estafa! Un aldeano te vende un cartón pintado como diamante, perdiste 50 esmeraldas.",
-            TipoEfectoCarta.PerderDinero, monto: 50),
+        mazo.InsertEnd(new CartaEvento("¡Estafa! Un aldeano te vende un cartón pintado como diamante, perdiste 50 esmeraldas.",
+            TipoEfectoCarta.PerderDinero, monto: 50));
 
-            new CartaEvento("¡Veterinario! Tu lobo necesita una operacion, gastas 150 esmeraldas.",
-            TipoEfectoCarta.PerderDinero, monto: 150),
+        mazo.InsertEnd(new CartaEvento("¡Veterinario! Tu lobo necesita una operacion, gastas 150 esmeraldas.",
+            TipoEfectoCarta.PerderDinero, monto: 150));
 
-            new CartaEvento("¡Michi! Tu gato te trajo un pescado y 25 esmeraldas mientras dormias.",
-            TipoEfectoCarta.GanarDinero, monto: 25),
+        mazo.InsertEnd(new CartaEvento("¡Michi! Tu gato te trajo un pescado y 25 esmeraldas mientras dormias.",
+            TipoEfectoCarta.GanarDinero, monto: 25));
 
-            new CartaEvento("¡Mira qué estilo! Compras una nueva armadura, gastas 50 esmeraldas.",
-            TipoEfectoCarta.PerderDinero, monto: 50),
+        mazo.InsertEnd(new CartaEvento("¡Mira qué estilo! Compras una nueva armadura, gastas 50 esmeraldas.",
+            TipoEfectoCarta.PerderDinero, monto: 50));
 
-            new CartaEvento("¡Lotería! Ganas un concurso de comer pastel, te dan 20 esmeraldas.",
-            TipoEfectoCarta.GanarDinero, monto: 20),
+        mazo.InsertEnd(new CartaEvento("¡Lotería! Ganas un concurso de comer pastel, te dan 20 esmeraldas.",
+            TipoEfectoCarta.GanarDinero, monto: 20));
 
-            new CartaEvento("¡Caridad! Te regalan 150 esmeraldas.",
-            TipoEfectoCarta.GanarDinero, monto: 150),
+        mazo.InsertEnd(new CartaEvento("¡Caridad! Te regalan 150 esmeraldas.",
+            TipoEfectoCarta.GanarDinero, monto: 150));
 
-            new CartaEvento("¡Para ti! Obtienes una carta de salir de la cárcel gratis.",
-            TipoEfectoCarta.SalirDeCarcelGratis),
-        };
+        mazo.InsertEnd(new CartaEvento("¡Para ti! Obtienes una carta de salir de la cárcel gratis.",
+            TipoEfectoCarta.SalirDeCarcelGratis));
 
-        return ConstruirMazoRandomizado(cartas);
+        return ConstruirMazoRandomizado(mazo);
     }
 
-    // Recibe la lista de cartas ya creadas, las mezcla (por fisher yates) y
+    // Recibe la lista enlazada de cartas ya creadas, las mezcla (por Fisher-Yates) y
     // arma con ellas una LinkedList circular lista para usarse como mazo
-    private static LinkedList ConstruirMazoRandomizado(List<CartaEvento> cartas)
+    private static LinkedList ConstruirMazoRandomizado(LinkedList mazo)
     {
-        // Randomiza el orden (este es el fisher yates, comienza desde el final
-        // de la lista, elije un elemento random de la lista para intercambiarlo
-        // a la posicion final donde comenzó el for. Se intercambian y se pasa a
-        // la siguiente iteracion, lo que significa que la carta que haya quedado
-        // de ultima seguirá de ultima fija)
-        for (int i = cartas.Count - 1; i > 0; i--)
+        // Randomiza el orden mediante Fisher-Yates intercambiando los datos en los nodos
+        for (int i = mazo.Size() - 1; i > 0; i--)
         {
             // Elije una posicion random
             int j = random.Next(i + 1);
 
-            (cartas[i], cartas[j]) = (cartas[j], cartas[i]);
+            Node nodoI = mazo.GetNodeAt(i);
+            Node nodoJ = mazo.GetNodeAt(j);
 
-            // Esta parte es para evitar hacer:
-            // CartaEvento temp = cartas[i];
-            // cartas[i] = cartas[j];
-            // cartas[j] = temp;
-            // es lo mismo, pero mas corto y eficiente
-        }
-
-        // Arma la lista enlazada circular con el orden ya randomizado
-        LinkedList mazo = new LinkedList();
-
-        foreach (CartaEvento carta in cartas)
-        {
-            mazo.InsertEnd(carta);
+            object temp = nodoI.GetData();
+            nodoI.SetData(nodoJ.GetData());
+            nodoJ.SetData(temp);
         }
 
         mazo.MakeCircular();

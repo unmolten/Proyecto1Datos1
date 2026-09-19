@@ -193,6 +193,63 @@ public class LinkedList
         return temp;
     }
 
+    // Elimina la primera aparicion del dato especificado en la lista circular.
+    // Devuelve true si el elemento fue encontrado y eliminado; false en caso contrario.
+    public bool Delete(Object data)
+    {
+        if (this.head == null)
+        {
+            return false;
+        }
+
+        // Si el dato esta en la cabeza
+        if (object.Equals(this.head.GetData(), data))
+        {
+            DeleteFirst();
+            return true;
+        }
+
+        // Si el dato esta en la cola
+        if (object.Equals(this.tail!.GetData(), data))
+        {
+            DeleteLast();
+            return true;
+        }
+
+        // Busca en los nodos intermedios
+        Node current = this.head.GetNext()!;
+        int visited = 1;
+
+        while (current != this.head && visited < this.size)
+        {
+            if (object.Equals(current.GetData(), data))
+            {
+                Node prev = current.GetPrevious()!;
+                Node next = current.GetNext()!;
+
+                prev.SetNext(next);
+                next.SetPrevious(prev);
+
+                current.SetNext(null);
+                current.SetPrevious(null);
+
+                this.size--;
+                return true;
+            }
+
+            current = current.GetNext()!;
+            visited++;
+        }
+
+        return false;
+    }
+
+    // Elimina la primera aparicion del dato especificado (alias de Delete).
+    public bool Remove(Object data)
+    {
+        return Delete(data);
+    }
+
     // Imprime la lista mostrando los enlaces bidireccionales hasta completar una vuelta.
     public void PrintList()
     {
