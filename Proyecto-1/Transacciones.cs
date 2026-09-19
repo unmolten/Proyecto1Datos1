@@ -16,8 +16,8 @@ using System.IO;
 
 class Transaccion
 {
-    private const string rutaAlmacenamiento = "../../../Almacenamiento.txt";
-    private const string rutaReporte = "../../../Reporte.txt";
+    private const string rutaAlmacenamiento = "../../../Almacenamiento.txt"; // Se suben 3 directorios para crearlo en Proyecto1Datos1/Proyecto-1. Cambiar ruta de ser requerido
+    private const string rutaReporte = "../../../Reporte.txt"; // Cambiar ruta de ser requerido;
     private static int refID = 0; //ID de referencia para cada instancia
     private int transaccionID; //ID propio de cada instancia
     private int monto; //Monto transferido de jugadorOrigen a jugadorDestino
@@ -188,13 +188,8 @@ class Transaccion
 
     // -- Metodos estaticos para manejar el historial de transacciones --
 
-    
-    //Permite anadir una transaccion manualmente
-    public static void AgregarTransaccion()
-    {
-        
-    }
-    //Metodo estatico para buscar transacciones en el archivo historial.txt
+
+    // Metodo estatico para buscar transacciones en el archivo historial.txt:
     //      atributo: Es el atributo al cual se va a realizar la busqueda (solo jugadorOrigen, jugadorDestino y tipo), si es null, imprime todas las transacciones
     //      valor: Valor el cual sera buscado en el atributo. Se ignora si atributo es null
     //      ordenar: Orden en el que se mostraran las transacciones. Puede ser:
@@ -204,9 +199,7 @@ class Transaccion
     //      imprimirYEsperar: Si es true, imprime la informacion en la terminal y espera a que el usuario presione enter para continuar. De lo contrario imprime toda la informacion en terminal sin esperar.
     public static void BuscarTransaccion(string atributo, string valor, string ordenar = "AntiguoAReciente", bool imprimirYEsperar = false)
     {
-        string[] lineas = File.ReadAllLines(rutaAlmacenamiento);
 
-        
     }
 
     //Metodo para imprimir la informacion en un archivo de texto con formato para usuario final
