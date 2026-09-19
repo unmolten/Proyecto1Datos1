@@ -3,14 +3,15 @@ using System.IO;
 
 // PLANTILLA BASE: JuegoMonopoly
 // 
-// Esta clase sirve como una estructura limpia y básica (template) para que el equipo
-// pueda implementar e iterar las reglas completas de Monopoly más adelante.
+// Esta clase coordina el juego de Monopoly en el servidor, conectando las casillas,
+// los mazos de eventos, las transacciones y las listas enlazadas.
 // 
 // Conexión con Listas Enlazadas:
 // - El tablero es una lista enlazada circular ('LinkedList' + 'MakeCircular()').
 // - Los jugadores avanzan en el tablero de nodo en nodo con 'jugador.Posicion = jugador.Posicion.GetNext()'.
 // - Cada jugador tiene su propia lista enlazada ('jugador.Propiedades') para guardar sus compras.
 // - Los jugadores conectados se almacenan en una lista enlazada ('LinkedList').
+// - Los mazos de cartas (Fortuna y Arca Comunal) son listas enlazadas circulares que rotan al robar.
 public class JuegoMonopoly
 {
     // Patrón Singleton: Una única instancia para coordinar el juego en el servidor
@@ -23,63 +24,67 @@ public class JuegoMonopoly
     // Lista de jugadores conectados al servidor (Lista Enlazada)
     private LinkedList jugadores;
 
-    // Contador para asignar IDs a los nuevos jugadores
+    // Mazos de cartas de eventos (Listas Enlazadas Circulares)
+    private LinkedList mazoFortuna;
+    private LinkedList mazoArcaComunal;
+
+    // Contador de turnos y asignador de IDs
+    public int TurnoActual { get; set; } = 1;
     private int contadorJugadores = 1;
 
     // Generador de números aleatorios para los dados
     private Random random = new Random();
 
-    // Getters para acceder al tablero y los jugadores
+    // Getters para acceder al tablero, jugadores y mazos
     public LinkedList Tablero => this.tablero;
     public LinkedList Jugadores => this.jugadores;
+    public LinkedList MazoFortuna => this.mazoFortuna;
+    public LinkedList MazoArcaComunal => this.mazoArcaComunal;
 
     public JuegoMonopoly()
     {
         this.tablero = new LinkedList();
         this.jugadores = new LinkedList();
+        this.mazoFortuna = MazoCartas.CrearMazoFortuna();
+        this.mazoArcaComunal = MazoCartas.CrearMazoArcaComunal();
         InicializarTablero();
     }
 
-    // Inicializa las casillas iniciales del tablero en la lista enlazada y la hace circular.
+    // Inicializa las casillas del tablero en la lista enlazada circular con sus clases polimórficas.
     private void InicializarTablero()
     {
-
-//    public Propiedad(int posicion, string nombre, string tipo, int precioCompra, int alquilerBase, Jugador propietario, string colorGrupo)
-//    : base(posicion, nombre, tipo)
-
-        // TODO: Modificar, agregar o personalizar las casillas del tablero a su gusto
         this.tablero.InsertEnd(new CasillaEspecial(0, "Salida (GO)", "Salida"));
-        this.tablero.InsertEnd(new Propiedad(1, "Casa de tierra", "Propiedad", 60, 5));
-        this.tablero.InsertEnd(new Propiedad(2, "Cueva provisional", "Propiedad", 60, 5));
+        this.tablero.InsertEnd(new Propiedad(1, "Casa de tierra", "Propiedad", 60, 5, colorGrupo: "Marron"));
+        this.tablero.InsertEnd(new Propiedad(2, "Cueva provisional", "Propiedad", 60, 5, colorGrupo: "Marron"));
         this.tablero.InsertEnd(new CasillaEvento(3, "Arca Comunal", "ArcaComunal"));
-        this.tablero.InsertEnd(new Propiedad(4, "Tren de la aldea", "Propiedad", 200, 25));
-        this.tablero.InsertEnd(new Propiedad(5, "Puesto de saqueador", "Propiedad", 100, 10));
-        this.tablero.InsertEnd(new Propiedad(6, "Aldea esmeraldil", "Propiedad", 100, 10));
+        this.tablero.InsertEnd(new Propiedad(4, "Tren de la aldea", "Propiedad", 200, 25, colorGrupo: "Tren"));
+        this.tablero.InsertEnd(new Propiedad(5, "Puesto de saqueador", "Propiedad", 100, 10, colorGrupo: "Celeste"));
+        this.tablero.InsertEnd(new Propiedad(6, "Aldea esmeraldil", "Propiedad", 100, 10, colorGrupo: "Celeste"));
         this.tablero.InsertEnd(new CasillaEspecial(7, "Impuesto sobre la renta", "Impuesto"));
         this.tablero.InsertEnd(new CasillaEspecial(8, "Carcel", "Carcel"));
-        this.tablero.InsertEnd(new Propiedad(9, "Geoda de amatista", "Propiedad", 140, 15));
-        this.tablero.InsertEnd(new Propiedad(10, "Mina de oro", "Propiedad", 140, 15));
+        this.tablero.InsertEnd(new Propiedad(9, "Geoda de amatista", "Propiedad", 140, 15, colorGrupo: "Rosa"));
+        this.tablero.InsertEnd(new Propiedad(10, "Mina de oro", "Propiedad", 140, 15, colorGrupo: "Rosa"));
         this.tablero.InsertEnd(new CasillaEvento(11, "Fortuna", "Fortuna"));
-        this.tablero.InsertEnd(new Propiedad(12, "Tren a las minas", "Propiedad", 200, 25));
-        this.tablero.InsertEnd(new Propiedad(13, "Runa oceanica", "Propiedad", 180, 20));
-        this.tablero.InsertEnd(new Propiedad(14, "Barco hundido", "Propiedad", 180, 20));
-        this.tablero.InsertEnd(new Propiedad(15, "Monumento oceanico", "Propiedad", 200, 24));
+        this.tablero.InsertEnd(new Propiedad(12, "Tren a las minas", "Propiedad", 200, 25, colorGrupo: "Tren"));
+        this.tablero.InsertEnd(new Propiedad(13, "Runa oceanica", "Propiedad", 180, 20, colorGrupo: "Naranja"));
+        this.tablero.InsertEnd(new Propiedad(14, "Barco hundido", "Propiedad", 180, 20, colorGrupo: "Naranja"));
+        this.tablero.InsertEnd(new Propiedad(15, "Monumento oceanico", "Propiedad", 200, 24, colorGrupo: "Naranja"));
         this.tablero.InsertEnd(new CasillaEspecial(16, "Parada Libre", "ParadaLibre"));
-        this.tablero.InsertEnd(new Propiedad(17, "Templo del desierto", "Propiedad", 220, 20));
+        this.tablero.InsertEnd(new Propiedad(17, "Templo del desierto", "Propiedad", 220, 20, colorGrupo: "Rojo"));
         this.tablero.InsertEnd(new CasillaEvento(18, "Arca Comunal", "ArcaComunal"));
-        this.tablero.InsertEnd(new Propiedad(19, "Trial Chamber", "Propiedad", 220, 20));
-        this.tablero.InsertEnd(new Propiedad(20, "Tren a los portales", "Propiedad", 200, 25));
-        this.tablero.InsertEnd(new Propiedad(21, "Ciudad Antigua", "Propiedad", 240, 25));
-        this.tablero.InsertEnd(new Propiedad(22, "Portal al Nether", "Propiedad", 240, 25));
-        this.tablero.InsertEnd(new Propiedad(23, "Portal al End", "Propiedad", 260, 28));
+        this.tablero.InsertEnd(new Propiedad(19, "Trial Chamber", "Propiedad", 220, 20, colorGrupo: "Rojo"));
+        this.tablero.InsertEnd(new Propiedad(20, "Tren a los portales", "Propiedad", 200, 25, colorGrupo: "Tren"));
+        this.tablero.InsertEnd(new Propiedad(21, "Ciudad Antigua", "Propiedad", 240, 25, colorGrupo: "Amarillo"));
+        this.tablero.InsertEnd(new Propiedad(22, "Portal al Nether", "Propiedad", 240, 25, colorGrupo: "Amarillo"));
+        this.tablero.InsertEnd(new Propiedad(23, "Portal al End", "Propiedad", 260, 28, colorGrupo: "Amarillo"));
         this.tablero.InsertEnd(new CasillaEspecial(24, "Vaya a la carcel", "VayaALaCarcel"));
-        this.tablero.InsertEnd(new Propiedad(25, "Charco de lava", "Propiedad", 280, 30));
-        this.tablero.InsertEnd(new Propiedad(26, "Fortaleza del Nether", "Propiedad", 280, 30));
-        this.tablero.InsertEnd(new Propiedad(27, "Bastion del Nether", "Propiedad", 300, 32));
-        this.tablero.InsertEnd(new Propiedad(28, "Tren a las Farlands", "Propiedad", 200, 25));
-        this.tablero.InsertEnd(new Propiedad(29, "Ciudad del End", "Propiedad", 350, 35));
+        this.tablero.InsertEnd(new Propiedad(25, "Charco de lava", "Propiedad", 280, 30, colorGrupo: "Verde"));
+        this.tablero.InsertEnd(new Propiedad(26, "Fortaleza del Nether", "Propiedad", 280, 30, colorGrupo: "Verde"));
+        this.tablero.InsertEnd(new Propiedad(27, "Bastion del Nether", "Propiedad", 300, 32, colorGrupo: "Verde"));
+        this.tablero.InsertEnd(new Propiedad(28, "Tren a las Farlands", "Propiedad", 200, 25, colorGrupo: "Tren"));
+        this.tablero.InsertEnd(new Propiedad(29, "Ciudad del End", "Propiedad", 350, 35, colorGrupo: "Azul"));
         this.tablero.InsertEnd(new CasillaEvento(30, "Fortuna", "Fortuna"));
-        this.tablero.InsertEnd(new Propiedad(31, "Barco del End", "Propiedad", 350, 35));        
+        this.tablero.InsertEnd(new Propiedad(31, "Barco del End", "Propiedad", 350, 35, colorGrupo: "Azul"));        
 
         // LISTA CIRCULAR: Conecta la cola con la cabeza para que el tablero dé vueltas continuas
         this.tablero.MakeCircular();
@@ -97,6 +102,21 @@ public class JuegoMonopoly
         this.jugadores.InsertEnd(nuevo);
         Broadcast($"[SISTEMA] {nuevo.Nombre} se ha unido a la partida.");
         return nuevo;
+    }
+
+    // Registra a un jugador ya existente (creado por RFID o consola) en la lista de jugadores.
+    public void RegistrarJugadorExistente(Jugador jugador)
+    {
+        if (jugador.Id == 0)
+        {
+            jugador.Id = contadorJugadores++;
+        }
+        if (jugador.Posicion == null)
+        {
+            jugador.Posicion = this.tablero.GetHead();
+        }
+        this.jugadores.InsertEnd(jugador);
+        Broadcast($"[SISTEMA] {jugador.Nombre} (ID: {jugador.Id}) está listo en el tablero.");
     }
 
     // Remueve a un jugador cuando se desconecta.
@@ -125,56 +145,229 @@ public class JuegoMonopoly
         }
     }
 
-    // PLANTILLA: Tirar dados y avanzar por la lista enlazada.
+    // Tirar dados, gestionar cárcel, avanzar en la lista circular y activar la casilla polimórficamente.
     public void TirarDados(Jugador jugador)
     {
-        // 1. Tirar dos dados
+        // 1. Verifica si debe perder su turno por efecto de carta
+        if (jugador.PierdeSiguienteTurno)
+        {
+            jugador.PierdeSiguienteTurno = false;
+            jugador.EnviarMensaje("⏳ Perdiste este turno debido a un evento anterior.");
+            Broadcast($"📢 {jugador.Nombre} perdió su turno.", jugador);
+            return;
+        }
+
+        // 2. Tirar dos dados
         int dado1 = random.Next(1, 7);
         int dado2 = random.Next(1, 7);
         int total = dado1 + dado2;
 
         jugador.EnviarMensaje($"🎲 Tiraste: [{dado1}] + [{dado2}] = {total}");
 
-        // 2. RECORRIDO DE LA LISTA ENLAZADA CIRCULAR:
+        // 3. Manejo de estado en la cárcel
+        if (jugador.EnCarcel)
+        {
+            if (dado1 == dado2)
+            {
+                jugador.EnCarcel = false;
+                jugador.TurnosEnCarcel = 0;
+                jugador.EnviarMensaje("🎉 ¡Sacaste dobles! Quedas libre de la Cárcel.");
+                Broadcast($"📢 {jugador.Nombre} sacó dobles y salió libre de la Cárcel.", jugador);
+            }
+            else
+            {
+                jugador.TurnosEnCarcel++;
+                jugador.EnviarMensaje($"🔒 No sacaste dobles. Sigues en la Cárcel ({jugador.TurnosEnCarcel}/3 turnos).");
+
+                if (jugador.TurnosEnCarcel >= 3)
+                {
+                    jugador.EnviarMensaje("⚠️ Cumpliste 3 turnos en prisión. Debes pagar fianza de $50 para salir.");
+                    SalirDeCarcelConPago(jugador);
+                }
+                return;
+            }
+        }
+
+        // 4. RECORRIDO DE LA LISTA ENLAZADA CIRCULAR:
         // Avanzamos 'total' nodos hacia adelante utilizando 'GetNext()'
         for (int i = 0; i < total; i++)
         {
             jugador.Posicion = jugador.Posicion?.GetNext();
 
-            // TODO: Implementar lógica de bono al pasar por Salida
-            // Ejemplo: if (jugador.Posicion == this.tablero.GetHead()) { jugador.Dinero += 200; }
+            // Bono por pasar por Salida (Casilla 0) antes de llegar al destino
+            if (jugador.ObtenerCasillaActual()?.Posicion == 0 && i < total - 1)
+            {
+                new Transaccion(200, TurnoActual, "Premio por pasar por inicio", jugador, null);
+                jugador.EnviarMensaje("💵 ¡Pasaste por Salida! Cobraste $200 de bono.");
+                Broadcast($"📢 {jugador.Nombre} pasó por Salida y cobró $200.", jugador);
+            }
         }
 
         Casilla? actual = jugador.ObtenerCasillaActual();
         jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.Nombre} ({actual?.Tipo})");
 
-        // TODO: Implementar las reglas de cada casilla (cobro de renta a rivales, cárcel, impuestos, etc.)
+        // POLIMORFISMO: Se delega la acción a la casilla en la que aterrizó
+        actual?.Accion(jugador);
     }
 
-    // PLANTILLA: Comprar la propiedad de la casilla actual.
+    // Comprar la propiedad de la casilla actual.
     public void ComprarPropiedad(Jugador jugador)
     {
         Casilla? casilla = jugador.ObtenerCasillaActual();
         if (casilla == null) return;
 
-        // TODO: Agregar validaciones completas (si el jugador tiene suficiente dinero, si ya tiene dueño, etc.)
-        if (casilla.EsPropiedad() && !casilla.TienePropietario())
+        if (casilla is not Propiedad propiedad)
         {
-            casilla.Propietario = jugador;
+            jugador.EnviarMensaje("❌ Esta casilla no es una propiedad comprable.");
+            return;
+        }
 
-            // USO DE LISTA ENLAZADA: Guardamos la casilla en el inventario del jugador
-            jugador.Propiedades.InsertEnd(casilla);
+        if (propiedad.TienePropietario())
+        {
+            string dueño = propiedad.Propietario == jugador ? "ya te pertenece" : $"le pertenece a {propiedad.Propietario!.Nombre}";
+            jugador.EnviarMensaje($"❌ Esta propiedad {dueño}.");
+            return;
+        }
 
-            jugador.EnviarMensaje($"🎉 ¡Has comprado {casilla.Nombre}!");
-            Broadcast($"📢 {jugador.Nombre} compró {casilla.Nombre}!", jugador);
+        if (jugador.Dinero < propiedad.PrecioCompra)
+        {
+            jugador.EnviarMensaje($"❌ Saldo insuficiente. Tienes ${jugador.Dinero} y cuesta ${propiedad.PrecioCompra}.");
+            return;
+        }
+
+        // Ejecuta la transacción de compra
+        new Transaccion(propiedad.PrecioCompra, TurnoActual, "Compra de propiedad", jugador, null);
+        propiedad.Propietario = jugador;
+
+        // USO DE LISTA ENLAZADA: Guardamos la casilla en el inventario del jugador
+        jugador.Propiedades.InsertEnd(propiedad);
+
+        jugador.EnviarMensaje($"🎉 ¡Has comprado '{propiedad.Nombre}' por ${propiedad.PrecioCompra}!");
+        jugador.EnviarMensaje($"Saldo restante: ${jugador.Dinero}");
+        Broadcast($"📢 {jugador.Nombre} compró '{propiedad.Nombre}'!", jugador);
+    }
+
+    // Comprar una casa u hotel en la propiedad actual si le pertenece al jugador.
+    public void ComprarCasa(Jugador jugador)
+    {
+        Casilla? actual = jugador.ObtenerCasillaActual();
+        if (actual is not Propiedad propiedad || propiedad.Propietario != jugador)
+        {
+            jugador.EnviarMensaje("❌ Debes estar en una propiedad que te pertenezca para construir.");
+            return;
+        }
+
+        if (propiedad.CantidadCasas >= 5)
+        {
+            jugador.EnviarMensaje("❌ Esta propiedad ya tiene un Hotel construido (nivel máximo).");
+            return;
+        }
+
+        int costoCasa = propiedad.PrecioCompra / 2;
+        if (jugador.Dinero < costoCasa)
+        {
+            jugador.EnviarMensaje($"❌ Saldo insuficiente. Construir cuesta ${costoCasa} y tienes ${jugador.Dinero}.");
+            return;
+        }
+
+        new Transaccion(costoCasa, TurnoActual, "Pago al banco", jugador, null);
+        propiedad.CantidadCasas++;
+        string mejora = propiedad.CantidadCasas == 5 ? "un Hotel" : $"la casa #{propiedad.CantidadCasas}";
+        jugador.EnviarMensaje($"🏗️ ¡Construiste {mejora} en '{propiedad.Nombre}' por ${costoCasa}!");
+        jugador.EnviarMensaje($"Nueva renta: ${propiedad.CalcularRenta()}. Saldo: ${jugador.Dinero}");
+        Broadcast($"📢 {jugador.Nombre} construyó {mejora} en '{propiedad.Nombre}'.", jugador);
+    }
+
+    // Mueve al jugador a una casilla específica por su índice numérico (0 a 31).
+    public void MoverJugadorACasilla(Jugador jugador, int posicionDestino)
+    {
+        if (jugador.Posicion == null)
+        {
+            jugador.Posicion = this.tablero.GetHead();
+        }
+
+        int total = this.tablero.Size();
+        for (int i = 0; i < total; i++)
+        {
+            if (jugador.ObtenerCasillaActual()?.Posicion == posicionDestino)
+            {
+                break;
+            }
+            jugador.Posicion = jugador.Posicion?.GetNext();
+        }
+
+        Casilla? actual = jugador.ObtenerCasillaActual();
+        jugador.EnviarMensaje($"📍 Te moviste a: {actual?.Nombre} ({actual?.Tipo})");
+        actual?.Accion(jugador);
+    }
+
+    // Mueve al jugador un número relativo de casillas (positivo hacia adelante, negativo hacia atrás).
+    public void MoverJugadorCasillas(Jugador jugador, int cantidad)
+    {
+        if (cantidad >= 0)
+        {
+            for (int i = 0; i < cantidad; i++)
+            {
+                jugador.Posicion = jugador.Posicion?.GetNext();
+            }
         }
         else
         {
-            jugador.EnviarMensaje("❌ Esta casilla no se puede comprar o ya tiene dueño.");
+            for (int i = 0; i < Math.Abs(cantidad); i++)
+            {
+                jugador.Posicion = jugador.Posicion?.GetPrevious();
+            }
         }
+
+        Casilla? actual = jugador.ObtenerCasillaActual();
+        jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.Nombre} ({actual?.Tipo})");
+        actual?.Accion(jugador);
     }
 
-    // PLANTILLA: Consultar estado del jugador y recorrer su lista enlazada de propiedades.
+    // Envía a un jugador directamente a la Cárcel (Casilla 8).
+    public void EnviarACarcel(Jugador jugador)
+    {
+        jugador.EnCarcel = true;
+        jugador.TurnosEnCarcel = 0;
+        MoverJugadorACasilla(jugador, 8); // Casilla 8 es la Cárcel
+        jugador.EnviarMensaje("🔒 Has sido encerrado en la Cárcel.");
+        Broadcast($"🚨 {jugador.Nombre} fue enviado a la Cárcel.", jugador);
+    }
+
+    // Salir de la cárcel pagando fianza o usando carta.
+    public void SalirDeCarcelConPago(Jugador jugador)
+    {
+        if (!jugador.EnCarcel)
+        {
+            jugador.EnviarMensaje("ℹ️ No estás en la Cárcel.");
+            return;
+        }
+
+        if (jugador.CartasSalirDeCarcel > 0)
+        {
+            jugador.CartasSalirDeCarcel--;
+            jugador.EnCarcel = false;
+            jugador.TurnosEnCarcel = 0;
+            jugador.EnviarMensaje("🎟️ ¡Usaste tu carta de Salir de la Cárcel Gratis y quedas en libertad!");
+            Broadcast($"📢 {jugador.Nombre} usó una carta y salió de la Cárcel.", jugador);
+            return;
+        }
+
+        int fianza = 50;
+        if (jugador.Dinero < fianza)
+        {
+            jugador.EnviarMensaje($"❌ No tienes suficiente dinero (${jugador.Dinero}) para pagar la fianza (${fianza}).");
+            return;
+        }
+
+        new Transaccion(fianza, TurnoActual, "Pago al banco", jugador, null);
+        jugador.EnCarcel = false;
+        jugador.TurnosEnCarcel = 0;
+        jugador.EnviarMensaje($"💵 Pagaste ${fianza} de fianza y has salido de la Cárcel. Saldo: ${jugador.Dinero}");
+        Broadcast($"📢 {jugador.Nombre} pagó la fianza y salió de la Cárcel.", jugador);
+    }
+
+    // Consultar estado del jugador y recorrer su lista enlazada de propiedades.
     public void VerEstado(Jugador jugador)
     {
         Casilla? actual = jugador.ObtenerCasillaActual();
@@ -182,6 +375,8 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"\n=== ESTADO DE {jugador.Nombre} ===");
         jugador.EnviarMensaje($"Dinero: ${jugador.Dinero}");
         jugador.EnviarMensaje($"Casilla actual: {actual?.Nombre ?? "Ninguna"}");
+        jugador.EnviarMensaje($"En Cárcel: {(jugador.EnCarcel ? $"Sí ({jugador.TurnosEnCarcel}/3)" : "No")}");
+        jugador.EnviarMensaje($"Cartas Salir de Cárcel: {jugador.CartasSalirDeCarcel}");
         jugador.EnviarMensaje($"Propiedades compradas ({jugador.Propiedades.Size()}):");
 
         // Recorrido de la lista enlazada de propiedades del jugador
@@ -189,17 +384,20 @@ public class JuegoMonopoly
         int totalPropiedades = jugador.Propiedades.Size();
         for (int i = 0; i < totalPropiedades; i++)
         {
-            if (temp?.GetData() is Casilla c)
+            if (temp?.GetData() is Propiedad p)
+            {
+                string nivel = p.CantidadCasas == 5 ? "Hotel" : $"{p.CantidadCasas} casas";
+                jugador.EnviarMensaje($"  - {p.Nombre} (Grupo: {p.ColorGrupo}, Renta: ${p.CalcularRenta()}, {nivel})");
+            }
+            else if (temp?.GetData() is Casilla c)
             {
                 jugador.EnviarMensaje($"  - {c.Nombre} (Renta: ${c.Renta})");
             }
             temp = temp?.GetNext();
         }
-
-        // TODO: Personalizar el formato o agregar más estadísticas (turnos, bancarrota, etc.)
     }
 
-    // PLANTILLA: Mostrar el tablero recorriendo la lista circular.
+    // Mostrar el tablero recorriendo la lista circular.
     public void VerTablero(Jugador jugador)
     {
         jugador.EnviarMensaje("\n=== TABLERO (LISTA CIRCULAR) ===");
@@ -212,19 +410,14 @@ public class JuegoMonopoly
         {
             if (actual?.GetData() is Casilla c)
             {
-                string dueño = c.Propietario != null ? $" [Dueño: {c.Propietario.Nombre}]" : "";
+                string dueño = "";
+                if (c is Propiedad p && p.Propietario != null)
+                {
+                    dueño = $" [Dueño: {p.Propietario.Nombre}]";
+                }
                 jugador.EnviarMensaje($"[{c.Posicion}] {c.Nombre} ({c.Tipo}){dueño}");
             }
             actual = actual?.GetNext();
         }
-
-        // TODO: Agregar formato visual, precios, o mostrar en qué casilla está cada jugador
-    }
-
-    // PLANTILLA: Salir de la cárcel pagando fianza.
-    public void SalirDeCarcelConPago(Jugador jugador)
-    {
-        // TODO: Implementar la lógica completa de la cárcel (costo de fianza, turnos en espera, etc.)
-        jugador.EnviarMensaje("ℹ️ [TODO]: Implementar lógica de fianza para la cárcel.");
     }
 }

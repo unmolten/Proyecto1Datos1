@@ -28,7 +28,7 @@ class Transaccion
     private Jugador? jugadorDestino; // NOMBRE del jugador destinado. USAR NULL SI VA AL BANCO
     private string descripcion; //Descripcion autogenerada segun el tipo de transaccion
 
-    public Transaccion(int monto, int turno, string tipo, Jugador jugadorOrigen, Jugador jugadorDestino)
+    public Transaccion(int monto, int turno, string tipo, Jugador? jugadorOrigen, Jugador? jugadorDestino)
     {   
         //Datos iniciales
         this.transaccionID = Interlocked.Increment(ref refID);
@@ -139,32 +139,35 @@ class Transaccion
         string mensajeDescripcion;
         
 
+        string origen = this.jugadorOrigen?.Nombre ?? "El Banco";
+        string destino = this.jugadorDestino?.Nombre ?? "el Banco";
+
         //Mensajes en mayuscula deben ser reemplazados por el dato correspondiente
         switch (this.tipo)
         {
             case "Compra de propiedad":
-                mensajeDescripcion = $"{jugadorOrigen} ha comprado la propiedad PROPIEDAD por {monto}";
+                mensajeDescripcion = $"{origen} ha comprado una propiedad por ${monto}";
                 break;
             case "Pago de alquiler":
-                mensajeDescripcion = $"{jugadorOrigen} ha pagado {monto} a {jugadorDestino} por el alquiler de la propiedad PROPIEDAD";
+                mensajeDescripcion = $"{origen} ha pagado ${monto} a {destino} por alquiler";
                 break;
             case "Pago al banco":
-                mensajeDescripcion = $"{jugadorOrigen} ha pagado {monto} al banco";
+                mensajeDescripcion = $"{origen} ha pagado ${monto} al banco";
                 break;
             case "Pago entre jugadores":
-                mensajeDescripcion = $"{jugadorOrigen} ha pagado {monto} a {jugadorDestino}";
+                mensajeDescripcion = $"{origen} ha pagado ${monto} a {destino}";
                 break;
             case "Ganancia por evento":
-                mensajeDescripcion = $"{jugadorOrigen} ha ganado {monto} por el evento EVENTO";
+                mensajeDescripcion = $"{origen} ha ganado ${monto} por evento";
                 break;
             case "Perdida por evento":
-                mensajeDescripcion = $"{jugadorOrigen} ha perdido {monto} por el evento EVENTO";
+                mensajeDescripcion = $"{origen} ha perdido ${monto} por evento";
                 break;
             case "Premio por pasar por inicio":
-                mensajeDescripcion = $"{jugadorOrigen} ha recibido {monto} por pasar por inicio";
+                mensajeDescripcion = $"{origen} ha recibido ${monto} por pasar por inicio";
                 break;
             default:
-                mensajeDescripcion = "Error";
+                mensajeDescripcion = $"{origen} realizó {tipo} por ${monto}";
                 break;
         }
 
@@ -174,7 +177,9 @@ class Transaccion
     //Método para almacenar la transacción en el archivo Almacenamiento.txt
     public void AlmacenarTransaccion()
     {
-        string contenido = $"{transaccionID}.{fechaYHora}.{turno}.{tipo}.{monto}.{jugadorOrigen}.{jugadorDestino}.{descripcion}"; //La informacion se almacena con separador de punto. EVITAR NOMBRES Y DATOS QUE PUEDAN CONTENER UN PUNTO
+        string nomOrigen = this.jugadorOrigen?.Nombre ?? "Banco";
+        string nomDestino = this.jugadorDestino?.Nombre ?? "Banco";
+        string contenido = $"{transaccionID}.{fechaYHora}.{turno}.{tipo}.{monto}.{nomOrigen}.{nomDestino}.{descripcion}"; //La informacion se almacena con separador de punto. EVITAR NOMBRES Y DATOS QUE PUEDAN CONTENER UN PUNTO
 
         try
         {
