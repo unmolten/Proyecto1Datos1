@@ -22,17 +22,17 @@ using System;
 // CantidadCasillas sin tener que crear una subclase distinta por cada carta
 public enum TipoEfectoCarta
 {
-    GanarDinero,          // El jugador recibe un monto del banco
-    PerderDinero,         // El jugador paga un monto al banco
-    PagarACadaJugador,    // Quien roba la carta paga un monto a cada uno de los demas jugadores
-    CobrarDeCadaJugador,  // Cada uno de los demas jugadores le paga un monto a quien robo la carta
-    PerderDineroPorPropiedad,  // El jugador paga un monto multiplicado por la cantidad de propiedades que tiene
-    PerderDineroPorConstruccion, // El jugador paga MontoPorCasa por cada casa y MontoPorHotel por cada hotel que tenga
-    MoverACasilla,        // El jugador se mueve directo a la casilla de indice CasillaDestino
-    MoverCasillas,        // El jugador avanza o retrocede +- CantidadCasillas
-    IrACarcel,            // El jugador va directo a la carcel, sin cobrar salida
-    SalirDeCarcelGratis,   // El jugador se queda con esta carta hasta que la use para salir de la carcel
-    TomarOtraCarta // El jugador toma otra carta de uno de los dos mazos de cartas de arca comunal o fortuna
+    GanarDinero,                   // El jugador recibe un monto del banco
+    PerderDinero,                  // El jugador paga un monto al banco
+    PagarACadaJugador,             // Quien roba la carta paga un monto a cada uno de los demas jugadores
+    CobrarDeCadaJugador,           // Cada uno de los demas jugadores le paga un monto a quien robo la carta
+    PerderDineroPorPropiedad,      // El jugador paga un monto multiplicado por la cantidad de propiedades que tiene
+    PerderDineroPorConstruccion,   // El jugador paga MontoPorCasa por cada casa y MontoPorHotel por cada hotel que tenga
+    MoverACasilla,                 // El jugador se mueve directo a la casilla de indice CasillaDestino
+    MoverCasillas,                 // El jugador avanza o retrocede +- CantidadCasillas
+    IrACarcel,                     // El jugador va directo a la carcel, sin cobrar salida
+    SalirDeCarcelGratis,           // El jugador se queda con esta carta hasta que la use para salir de la carcel
+    TomarOtraCarta                 // El jugador toma otra carta de uno de los dos mazos de cartas de arca comunal o fortuna
 }
 
 // Carta de evento (Fortuna o Arca Comunal)

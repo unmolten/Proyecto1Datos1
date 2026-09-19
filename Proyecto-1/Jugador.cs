@@ -10,11 +10,19 @@ public class Jugador
     // Balance / Dinero que tiene el jugador.
     public int Balance { get; set;}
 
+    // Propiedades / La lista de propiedades que tiene el jugador
+    public LinkedList Propiedades;
+
+    // Cantidad de cartas de salir de la carcel que tiene el jugador
+    public int CartasSalirDeCarcel;
+
     // Crea un jugador con su nombre y UID de tarjeta.
-    public Jugador(string nombre, string idTarjeta)
+    public Jugador(string nombre, string idTarjeta, int balance_incial = 0)
     {
-        Nombre = nombre;
-        IdTarjeta = idTarjeta;
-        Balance = 0;
+        this.Nombre = nombre;
+        this.IdTarjeta = idTarjeta;
+        this.Balance = balance_inicial;
+        this.Propiedades = new LinkedList();
+        this.CartasSalirDeCarcel = 0;
     }
 }

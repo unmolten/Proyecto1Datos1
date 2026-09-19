@@ -65,6 +65,7 @@ public class Propiedad : Casilla
         this.Propietario = propietario;
         this.IsHipotecada = false;
         this.ColorGrupo = colorGrupo;
+        this.CantidadCasas = 0;
     }
 
     // Verifica si la casilla tiene un propietario.

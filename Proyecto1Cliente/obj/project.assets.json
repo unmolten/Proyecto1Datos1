@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "targets": {
     "net10.0": {}
   },
@@ -8,29 +8,29 @@
     "net10.0": []
   },
   "packageFolders": {
-    "/home/fabricio/.nuget/packages/": {}
+    "C:\\Users\\speed\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/fabricio/Proyecto1/Proyecto1Cliente/Proyecto1Cliente.csproj",
+      "projectUniqueName": "C:\\Users\\speed\\Documents\\TEC\\Semestre II 2026\\Datos 1\\Proyecto 1 - Monopoly\\Proyecto1Datos1\\Proyecto1Cliente\\Proyecto1Cliente.csproj",
       "projectName": "Proyecto1Cliente",
-      "projectPath": "/home/fabricio/Proyecto1/Proyecto1Cliente/Proyecto1Cliente.csproj",
-      "packagesPath": "/home/fabricio/.nuget/packages/",
-      "outputPath": "/home/fabricio/Proyecto1/Proyecto1Cliente/obj/",
+      "projectPath": "C:\\Users\\speed\\Documents\\TEC\\Semestre II 2026\\Datos 1\\Proyecto 1 - Monopoly\\Proyecto1Datos1\\Proyecto1Cliente\\Proyecto1Cliente.csproj",
+      "packagesPath": "C:\\Users\\speed\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\speed\\Documents\\TEC\\Semestre II 2026\\Datos 1\\Proyecto 1 - Monopoly\\Proyecto1Datos1\\Proyecto1Cliente\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/fabricio/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\speed\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0"
       ],
       "sources": {
-        "/usr/lib/dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net10.0": {
+          "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {}
         }
@@ -45,10 +45,11 @@
         "auditLevel": "low",
         "auditMode": "all"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "10.0.300"
     },
     "frameworks": {
       "net10.0": {
+        "framework": "net10.0",
         "targetAlias": "net10.0",
         "imports": [
           "net461",
@@ -66,7 +67,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.112/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.302/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",
