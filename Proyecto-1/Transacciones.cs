@@ -16,6 +16,8 @@ using System.IO;
 
 class Transaccion
 {
+    private const string rutaAlmacenamiento = "../../../Almacenamiento.txt";
+    private const string rutaReporte = "../../../Reporte.txt";
     private static int refID = 0; //ID de referencia para cada instancia
     private int transaccionID; //ID propio de cada instancia
     private int monto; //Monto transferido de jugadorOrigen a jugadorDestino
@@ -172,12 +174,11 @@ class Transaccion
     //Método para almacenar la transacción en el archivo Almacenamiento.txt
     public void AlmacenarTransaccion()
     {
-        string rutaArchivo = "../../../Almacenamiento.txt"; //Se suben 3 directorios para crearlo en la ubicacion de este archivo. Cambiar ruta de ser requerido
         string contenido = $"{transaccionID}.{fechaYHora}.{turno}.{tipo}.{monto}.{jugadorOrigen}.{jugadorDestino}.{descripcion}"; //La informacion se almacena con separador de punto. EVITAR NOMBRES Y DATOS QUE PUEDAN CONTENER UN PUNTO
 
         try
         {
-            File.AppendAllText(rutaArchivo, contenido + "\n");
+            File.AppendAllText(rutaAlmacenamiento, contenido + "\n");
         }
         catch (Exception ex)
         {
@@ -185,11 +186,32 @@ class Transaccion
         }
     }
 
+    // -- Metodos estaticos para manejar el historial de transacciones --
+
+    
+    //Permite anadir una transaccion manualmente
+    public static void AgregarTransaccion()
+    {
+        
+    }
+    //Metodo estatico para buscar transacciones en el archivo historial.txt
+    //      atributo: Es el atributo al cual se va a realizar la busqueda (solo jugadorOrigen, jugadorDestino y tipo), si es null, imprime todas las transacciones
+    //      valor: Valor el cual sera buscado en el atributo. Se ignora si atributo es null
+    //      ordenar: Orden en el que se mostraran las transacciones. Puede ser:
+    //          "AntiguoAReciente": Ordena de la transaccion mas antigua a la mas reciente.
+    //          "RecienteAAntiguo": Ordena de la transaccion mas reciente a la mas antigua.
+    //          
+    //      imprimirYEsperar: Si es true, imprime la informacion en la terminal y espera a que el usuario presione enter para continuar. De lo contrario imprime toda la informacion en terminal sin esperar.
+    public static void BuscarTransaccion(string atributo, string valor, string ordenar = "AntiguoAReciente", bool imprimirYEsperar = false)
+    {
+        string[] lineas = File.ReadAllLines(rutaAlmacenamiento);
+
+        
+    }
+
     //Metodo para imprimir la informacion en un archivo de texto con formato para usuario final
     public static void ImprimirTransacciones()
     {
-        string rutaAlmacenamiento = "../../../Almacenamiento.txt";
-        string rutaReporte = "../../../Reporte.txt";
         //string encabezado = "En este archivo se encuentra la informacion";
 
         try
@@ -199,6 +221,7 @@ class Transaccion
             foreach (var linea in lineas)
             {
                 string[] datos = linea.Split("."); //Separa los datos de las lineas por un punto
+
                 
                 File.AppendAllText(rutaReporte, "\n--------------------------\n");
                 File.AppendAllText(rutaReporte, "ID: " + datos[0] + '\n');
