@@ -185,6 +185,42 @@ class Transaccion
             Console.WriteLine($"Error al almacenar la transacción: {ex.Message}");
         }
     }
+}
+
+static class HistorialTransaccion
+{
+    static string rutaAlmacenamiento = "../../../Almacenamiento.txt";
+    static string rutaReporte = "../../../Reporte.txt";
+    
+    //Permite anadir una transaccion manualmente
+    public static void AgregarTransaccion()
+    {
+        
+    }
+    //Metodo estatico para buscar transacciones en el archivo historial.txt
+    //      atributo: Es el atributo al cual se va a realizar la busqueda (solo jugadorOrigen, jugadorDestino y tipo), si es null, imprime todas las transacciones
+    //      valor: Valor el cual sera buscado en el atributo. Se ignora si atributo es null
+    //      ordenar: Orden en el que se mostraran las transacciones. Puede ser:
+    //          "AntiguoAReciente": Ordena de la transaccion mas antigua a la mas reciente.
+    //          "RecienteAAntiguo": Ordena de la transaccion mas reciente a la mas antigua.
+    //          
+    //      imprimirYEsperar: Si es true, imprime la informacion en la terminal y espera a que el usuario presione enter para continuar. De lo contrario imprime toda la informacion en terminal sin esperar.
+    public static void BuscarTransaccion(string atributo, string valor, string ordenar = "AntiguoAReciente", bool imprimirYEsperar = false)
+    {
+        
+
+        if (imprimirYEsperar)
+        {   
+            Console.WriteLine("Presiona Enter para continuar...");
+            Console.WriteLine("Digita '-' para cancelar.");
+            string? opt = Console.ReadLine();
+
+            if (opt == "-")
+            {   
+                Console.WriteLine("Se ha cancelado la impresion en terminal...");
+            }
+        }
+    }
 
     // -- Metodos estaticos para manejar el historial de transacciones --
 
