@@ -185,18 +185,23 @@ class Transaccion
             Console.WriteLine($"Error al almacenar la transacción: {ex.Message}");
         }
     }
-}
 
-static class HistorialTransaccion
-{
-    static string rutaAlmacenamiento = "../../../Almacenamiento.txt";
-    static string rutaReporte = "../../../Reporte.txt";
-    
-    //Permite anadir una transaccion manualmente
-    public static void AgregarTransaccion()
+    private static void ImprimirTransaccionEnTerminal(string[] datos)
     {
-        
+        Console.WriteLine("\n--------------------------\n");
+        Console.WriteLine("ID: " + datos[0]);
+        Console.WriteLine("Fecha: " + datos[1]);
+        Console.WriteLine("Turno: " + datos[2]);
+        Console.WriteLine("Tipo: " + datos[3]);
+        Console.WriteLine("Monto: " + datos[4]);
+        Console.WriteLine("Origen: " + datos[5]);
+        Console.WriteLine("Destino: " + datos[6]);
+        Console.WriteLine("Descripcion: " + datos[7]);
+        Console.WriteLine("\n--------------------------\n");
     }
+
+    // -- Metodos estaticos para manejar el historial de transacciones --
+
     //Metodo estatico para buscar transacciones en el archivo historial.txt
     //      atributo: Es el atributo al cual se va a realizar la busqueda (solo jugadorOrigen, jugadorDestino y tipo), si es null, imprime todas las transacciones
     //      valor: Valor el cual sera buscado en el atributo. Se ignora si atributo es null
@@ -207,36 +212,66 @@ static class HistorialTransaccion
     //      imprimirYEsperar: Si es true, imprime la informacion en la terminal y espera a que el usuario presione enter para continuar. De lo contrario imprime toda la informacion en terminal sin esperar.
     public static void BuscarTransaccion(string atributo, string valor, string ordenar = "AntiguoAReciente", bool imprimirYEsperar = false)
     {
-        
+        try
+        {
+            string[] lineas = File.ReadAllLines(rutaAlmacenamiento);
 
-        if (imprimirYEsperar)
-        {   
-            Console.WriteLine("Presiona Enter para continuar...");
-            Console.WriteLine("Digita '-' para cancelar.");
-            string? opt = Console.ReadLine();
-
-            if (opt == "-")
-            {   
-                Console.WriteLine("Se ha cancelado la impresion en terminal...");
+            if (ordenar == "RecienteAAntiguo")
+            {
+                Array.Reverse(lineas);
             }
+
+            foreach (var linea in lineas)
+            {
+                string[] datos = linea.Split('.');
+
+                switch (atributo)
+                {
+                    case "jugadorOrigen":
+                        if (datos[5] == valor)
+                        {
+                            ImprimirTransaccionEnTerminal(datos);
+                        } 
+                        break;
+                    case "jugadorDestino":
+                        if (datos[6] == valor)
+                        {
+                            ImprimirTransaccionEnTerminal(datos);
+                        }
+                        break;
+                    case "tipo":
+                        if (datos[3] == valor)
+                        {
+                            ImprimirTransaccionEnTerminal(datos);
+                        }
+                        break;
+                    default:
+                        if (atributo == null)
+                        {
+                            ImprimirTransaccionEnTerminal(datos);
+                        }
+                        break;
+                }
+                if (imprimirYEsperar)
+                {   
+                    Console.WriteLine("Presiona Enter para continuar...");
+                    Console.WriteLine("Digita '-' para cancelar.");
+                    string? opt = Console.ReadLine();
+
+                    if (opt == "-")
+                    {   
+                        Console.WriteLine("Se ha cancelado la impresion en terminal...");
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al buscar transacciones: {ex.Message}");
         }
     }
 
-    // -- Metodos estaticos para manejar el historial de transacciones --
-
-
-    // Metodo estatico para buscar transacciones en el archivo historial.txt:
-    //      atributo: Es el atributo al cual se va a realizar la busqueda (solo jugadorOrigen, jugadorDestino y tipo), si es null, imprime todas las transacciones
-    //      valor: Valor el cual sera buscado en el atributo. Se ignora si atributo es null
-    //      ordenar: Orden en el que se mostraran las transacciones. Puede ser:
-    //          "AntiguoAReciente": Ordena de la transaccion mas antigua a la mas reciente.
-    //          "RecienteAAntiguo": Ordena de la transaccion mas reciente a la mas antigua.
-    //          
-    //      imprimirYEsperar: Si es true, imprime la informacion en la terminal y espera a que el usuario presione enter para continuar. De lo contrario imprime toda la informacion en terminal sin esperar.
-    public static void BuscarTransaccion(string atributo, string valor, string ordenar = "AntiguoAReciente", bool imprimirYEsperar = false)
-    {
-
-    }
 
     //Metodo para imprimir la informacion en un archivo de texto con formato para usuario final
     public static void ImprimirTransacciones()
