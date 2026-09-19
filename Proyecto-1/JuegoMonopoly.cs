@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 // PLANTILLA BASE: JuegoMonopoly
@@ -11,6 +10,7 @@ using System.IO;
 // - El tablero es una lista enlazada circular ('LinkedList' + 'MakeCircular()').
 // - Los jugadores avanzan en el tablero de nodo en nodo con 'jugador.Posicion = jugador.Posicion.GetNext()'.
 // - Cada jugador tiene su propia lista enlazada ('jugador.Propiedades') para guardar sus compras.
+// - Los jugadores conectados se almacenan en una lista enlazada ('LinkedList').
 public class JuegoMonopoly
 {
     // Patrón Singleton: Una única instancia para coordinar el juego en el servidor
@@ -20,8 +20,8 @@ public class JuegoMonopoly
     // Estructura de datos del tablero (Lista Enlazada Circular)
     private LinkedList tablero;
 
-    // Lista de jugadores conectados al servidor
-    private List<Jugador> jugadores;
+    // Lista de jugadores conectados al servidor (Lista Enlazada)
+    private LinkedList jugadores;
 
     // Contador para asignar IDs a los nuevos jugadores
     private int contadorJugadores = 1;
@@ -35,12 +35,12 @@ public class JuegoMonopoly
 
     // Getters para acceder al tablero y los jugadores
     public LinkedList Tablero => this.tablero;
-    public List<Jugador> Jugadores => this.jugadores;
+    public LinkedList Jugadores => this.jugadores;
 
     public JuegoMonopoly()
     {
         this.tablero = new LinkedList();
-        this.jugadores = new List<Jugador>();
+        this.jugadores = new LinkedList();
         InicializarTablero();
     }
 
@@ -97,7 +97,7 @@ public class JuegoMonopoly
         };
         contadorJugadores++;
 
-        this.jugadores.Add(nuevo);
+        this.jugadores.InsertEnd(nuevo);
         Broadcast($"[SISTEMA] {nuevo.Nombre} se ha unido a la partida.");
         return nuevo;
     }
@@ -105,19 +105,26 @@ public class JuegoMonopoly
     // Remueve a un jugador cuando se desconecta.
     public void DesconectarJugador(Jugador jugador)
     {
-        this.jugadores.Remove(jugador);
+        this.jugadores.Delete(jugador);
         Broadcast($"[SISTEMA] {jugador.Nombre} ha salido de la partida.");
     }
 
-    // Envía un mensaje a todos los jugadores conectados.
+    // Envía un mensaje a todos los jugadores conectados recorriendo la lista enlazada.
     public void Broadcast(string mensaje, Jugador? excluir = null)
     {
-        foreach (var j in this.jugadores)
+        Node? actual = this.jugadores.GetHead();
+        int total = this.jugadores.Size();
+
+        for (int i = 0; i < total; i++)
         {
-            if (excluir == null || j.Id != excluir.Id)
+            if (actual?.GetData() is Jugador j)
             {
-                j.EnviarMensaje(mensaje);
+                if (excluir == null || j.Id != excluir.Id)
+                {
+                    j.EnviarMensaje(mensaje);
+                }
             }
+            actual = actual?.GetNext();
         }
     }
 
@@ -369,10 +376,19 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"Casilla actual: {actual?.Nombre ?? "Ninguna"}");
         jugador.EnviarMensaje($"Propiedades compradas ({jugador.Propiedades.Size()}):");
 
+<<<<<<< HEAD
+=======
+        // Recorrido de la lista enlazada de propiedades del jugador
+>>>>>>> d3500c18c62e4fefe82b89f890ea1839fc31c57b
         Node? temp = jugador.Propiedades.GetHead();
-        while (temp != null)
+        int totalPropiedades = jugador.Propiedades.Size();
+        for (int i = 0; i < totalPropiedades; i++)
         {
+<<<<<<< HEAD
             if (temp.GetData() is Propiedad p)
+=======
+            if (temp?.GetData() is Casilla c)
+>>>>>>> d3500c18c62e4fefe82b89f890ea1839fc31c57b
             {
                 int rentaActual;
                 string detalle;
@@ -397,7 +413,7 @@ public class JuegoMonopoly
 
                 jugador.EnviarMensaje($"  - [{p.Posicion}] {p.Nombre} ({detalle}) - Renta actual: ${rentaActual}{casas}{estado}");
             }
-            temp = temp.GetNext();
+            temp = temp?.GetNext();
         }
     }
 

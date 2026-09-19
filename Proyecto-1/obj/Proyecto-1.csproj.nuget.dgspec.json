@@ -1,6 +1,7 @@
 {
   "format": 1,
   "restore": {
+<<<<<<< HEAD
     "C:\\Users\\speed\\Documents\\TEC\\Semestre II 2026\\Datos 1\\Proyecto 1 - Monopoly\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj": {}
   },
   "projects": {
@@ -15,6 +16,22 @@
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\speed\\AppData\\Roaming\\NuGet\\NuGet.Config"
+=======
+    "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj",
+        "projectName": "Proyecto-1",
+        "projectPath": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\Proyecto-1.csproj",
+        "packagesPath": "C:\\Users\\Gabriel\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Gabriel\\Coding\\AyEdD\\Proyecto1Datos1\\Proyecto-1\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Gabriel\\AppData\\Roaming\\NuGet\\NuGet.Config"
+>>>>>>> d3500c18c62e4fefe82b89f890ea1839fc31c57b
         ],
         "originalTargetFrameworks": [
           "net10.0"
