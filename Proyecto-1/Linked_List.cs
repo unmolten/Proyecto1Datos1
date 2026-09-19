@@ -292,4 +292,28 @@ public class LinkedList
 
         return current.GetData();
     }
+
+    // Devuelve el nodo ubicado en una posicion basada en cero.
+    public Node GetNodeAt(int position)
+    {
+        if (this.head == null)
+        {
+            throw new InvalidOperationException("La lista esta vacia");
+        }
+
+        if (position < 0 || position >= this.size)
+        {
+            throw new ArgumentOutOfRangeException(nameof(position));
+        }
+
+        Node current = this.head;
+
+        for (int i = 0; i < position; i++)
+        {
+            current = current.GetNext()
+                ?? throw new InvalidOperationException("La lista no tiene suficientes nodos");
+        }
+
+        return current;
+    }
 }

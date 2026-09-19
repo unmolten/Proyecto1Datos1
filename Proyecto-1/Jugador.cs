@@ -7,6 +7,9 @@ public class Jugador
     // UID de la tarjeta RFID, conservado como texto.
     public string IdTarjeta { get; set; }
 
+    // Nodo del tablero donde se encuentra actualmente el jugador.
+    public Node? Posicion { get; set; }
+
     // Balance / Dinero que tiene el jugador.
     public int Balance { get; set;}
 
@@ -21,7 +24,8 @@ public class Jugador
     {
         this.Nombre = nombre;
         this.IdTarjeta = idTarjeta;
-        this.Balance = balance_inicial;
+        this.Posicion = null;
+        this.Balance = balance_incial;
         this.Propiedades = new LinkedList();
         this.CartasSalirDeCarcel = 0;
     }

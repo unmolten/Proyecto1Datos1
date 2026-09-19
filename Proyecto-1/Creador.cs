@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 // Coordina la captura de nombres y tarjetas para crear jugadores.
 class Creador
 {
     /* Espera la conexion, solicita la cantidad de jugadores, lee sus nombres
     y asigna un UID RFID valido a cada jugador. */
-    public static void CrearJugador(ConexionPico conexion)
+    public static Jugador[] CrearJugador(ConexionPico conexion)
     {
         // La conexion se recibe desde Program para compartir el mismo puerto
         // con ControlDados y cerrarlo una sola vez al final.
@@ -22,14 +21,16 @@ class Creador
         Console.WriteLine("Lector listo.\n");
         lector.IniciarLecturaTarjetas();
 
-        List<Jugador> listaJugadores = new List<Jugador>();
 
         Console.Write("¿Cuántos jugadores van a jugar?: ");
         if (!int.TryParse(Console.ReadLine(), out int cantidad) || cantidad <= 0)
         {
             Console.WriteLine("Cantidad invalida.");
-            return;
+            return Array.Empty<Jugador>();
         }
+
+        Jugador[] listaJugadores = new Jugador[cantidad];
+        int contador = 0;
 
         // Cada jugador se crea solo despues de recibir un UID validado.
         for (int i = 1; i <= cantidad; i++)
@@ -68,18 +69,21 @@ class Creador
             }
 
             // El UID se conserva como string para no perder ceros iniciales.
-            Jugador nuevoJugador = new Jugador(nombreIngresado, idUnico);
-            listaJugadores.Add(nuevoJugador);
+            Jugador nuevoJugador = new Jugador(nombreIngresado, idUnico, 1500);
+            listaJugadores[contador] = nuevoJugador;
+            contador ++;
 
             Console.WriteLine($"¡Jugador creado con éxito! [{nuevoJugador.Nombre} -> ID: {nuevoJugador.IdTarjeta}]");
         }
 
         // Muestra los jugadores registrados para confirmar la captura.
         Console.WriteLine("\n=== JUGADORES LISTOS PARA EL MONOPOLY ===");
-        foreach (Jugador j in listaJugadores)
+        for (int i = 0; i < contador; i++)
         {
+            Jugador j = listaJugadores[i];
             Console.WriteLine($"Nombre: {j.Nombre} | UID Tarjeta: {j.IdTarjeta}");
         }
 
+        return listaJugadores;
     }
 }
