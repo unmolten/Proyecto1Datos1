@@ -1,0 +1,30 @@
+1.19/09/2026-01:50:51.1.Pago al banco.100.Jordanny.Banco.Jordanny ha pagado $100 al banco
+2.19/09/2026-01:51:08.2.Compra de propiedad.140.Evan.Banco.Evan ha comprado una propiedad por $140
+3.19/09/2026-01:51:10.2.Pago al banco.70.Evan.Banco.Evan ha pagado $70 al banco
+4.19/09/2026-01:51:12.2.Pago al banco.70.Evan.Banco.Evan ha pagado $70 al banco
+5.19/09/2026-01:51:12.2.Pago al banco.70.Evan.Banco.Evan ha pagado $70 al banco
+6.19/09/2026-01:51:13.2.Pago al banco.70.Evan.Banco.Evan ha pagado $70 al banco
+7.19/09/2026-01:51:13.2.Pago al banco.70.Evan.Banco.Evan ha pagado $70 al banco
+8.19/09/2026-01:52:24.2.Compra de propiedad.180.Jordanny.Banco.Jordanny ha comprado una propiedad por $180
+9.19/09/2026-01:52:26.2.Pago al banco.90.Jordanny.Banco.Jordanny ha pagado $90 al banco
+10.19/09/2026-01:52:26.2.Pago al banco.90.Jordanny.Banco.Jordanny ha pagado $90 al banco
+11.19/09/2026-01:52:26.2.Pago al banco.90.Jordanny.Banco.Jordanny ha pagado $90 al banco
+12.19/09/2026-01:52:26.2.Pago al banco.90.Jordanny.Banco.Jordanny ha pagado $90 al banco
+13.19/09/2026-01:52:26.2.Pago al banco.90.Jordanny.Banco.Jordanny ha pagado $90 al banco
+14.19/09/2026-01:52:31.3.Perdida por evento.100.Evan.Banco.Evan ha perdido $100 por evento
+15.19/09/2026-01:53:02.3.Compra de propiedad.260.Jordanny.Banco.Jordanny ha comprado una propiedad por $260
+16.19/09/2026-01:53:15.4.Compra de propiedad.200.Jordanny.Banco.Jordanny ha comprado una propiedad por $200
+17.19/09/2026-01:53:20.5.Compra de propiedad.180.Evan.Banco.Evan ha comprado una propiedad por $180
+18.19/09/2026-01:53:24.5.Compra de propiedad.200.Jordanny.Banco.Jordanny ha comprado una propiedad por $200
+19.19/09/2026-01:53:28.6.Compra de propiedad.220.Evan.Banco.Evan ha comprado una propiedad por $220
+20.19/09/2026-01:53:51.7.Compra de propiedad.350.Evan.Banco.Evan ha comprado una propiedad por $350
+21.19/09/2026-01:53:54.7.Premio por pasar por inicio.200.Jordanny.Banco.Jordanny ha recibido $200 por pasar por inicio
+22.19/09/2026-01:54:00.8.Premio por pasar por inicio.200.Evan.Banco.Evan ha recibido $200 por pasar por inicio
+1.21/09/2026-07:28:16.1.Compra de propiedad.200.Jordanny.Banco.Jordanny ha comprado una propiedad por $200
+2.21/09/2026-07:28:19.1.Pago al banco.100.Jordanny.Banco.Jordanny ha pagado $100 al banco
+3.21/09/2026-07:28:19.1.Pago al banco.100.Jordanny.Banco.Jordanny ha pagado $100 al banco
+4.21/09/2026-07:28:20.1.Pago al banco.100.Jordanny.Banco.Jordanny ha pagado $100 al banco
+5.21/09/2026-07:28:20.1.Pago al banco.100.Jordanny.Banco.Jordanny ha pagado $100 al banco
+6.21/09/2026-07:28:20.1.Pago al banco.100.Jordanny.Banco.Jordanny ha pagado $100 al banco
+7.21/09/2026-07:28:33.2.Compra de propiedad.220.Evan.Banco.Evan ha comprado una propiedad por $220
+8.21/09/2026-07:28:37.2.Compra de propiedad.220.Jordanny.Banco.Jordanny ha comprado una propiedad por $220

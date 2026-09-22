@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 // PLANTILLA BASE: JuegoMonopoly
 // 
@@ -101,6 +102,7 @@ public class JuegoMonopoly
 
         this.jugadores.InsertEnd(nuevo);
         Broadcast($"[SISTEMA] {nuevo.Nombre} se ha unido a la partida.");
+        GodotBroadcast($"jugador/{nuevo.Id}/activar");
         return nuevo;
     }
 
@@ -117,6 +119,100 @@ public class JuegoMonopoly
         }
         this.jugadores.InsertEnd(jugador);
         Broadcast($"[SISTEMA] {jugador.Nombre} (ID: {jugador.Id}) está listo en el tablero.");
+        GodotBroadcast($"jugador/{jugador.Id}/activar");
+    }
+
+    // ---------------- CONEXION CON GODOT ----------------
+    //
+    // Esto es aparte de los jugadores de consola/RFID de arriba, un espectador
+    // de Godot solo recibe info, todavia no manda nada (eso lo conectamos
+    // despues con los botones). Por eso no son Jugador, son solo un StreamWriter
+    // guardado en una lista
+
+    // Conexiones de las instancias de Godot que estan viendo la partida
+    private List<StreamWriter> espectadoresGodot = new List<StreamWriter>();
+
+    // Program.cs llama esto cada vez que una instancia de Godot se conecta
+    public void ConectarEspectadorGodot(StreamWriter writer)
+    {
+        lock (this.espectadoresGodot)
+        {
+            this.espectadoresGodot.Add(writer);
+        }
+
+        // Como la partida puede que ya haya empezado, le mandamos el estado
+        // actual para que no arranque con el tablero vacio
+
+        // Sincroniza a los jugadores que ya estaban
+        Node? nodoJugador = this.jugadores.GetHead();
+        for (int i = 0; i < this.jugadores.Size(); i++)
+        {
+            if (nodoJugador?.GetData() is Jugador j)
+            {
+                Casilla? casillaJugador = j.ObtenerCasillaActual();
+                EnviarAEspectador(writer, $"jugador/{j.Id}/activar");
+                if (casillaJugador != null)
+                {
+                    EnviarAEspectador(writer, $"jugador/{j.Id}/mover/casilla/{casillaJugador.Posicion}");
+                }
+            }
+            nodoJugador = nodoJugador?.GetNext();
+        }
+
+        // Sincroniza las casas/hoteles que ya se hayan construido
+        Node? nodoCasilla = this.tablero.GetHead();
+        for (int i = 0; i < this.tablero.Size(); i++)
+        {
+            if (nodoCasilla?.GetData() is Propiedad p && p.CantidadCasas > 0)
+            {
+                EnviarAEspectador(writer, $"jugador/0/comprarcasa/{p.CantidadCasas}/casilla/{p.Posicion}");
+            }
+            nodoCasilla = nodoCasilla?.GetNext();
+        }
+    }
+
+    // Manda una linea nada mas a un espectador (usado para la sincronizacion inicial)
+    private void EnviarAEspectador(StreamWriter writer, string mensaje)
+    {
+        try { writer.WriteLine(mensaje); } catch { /* se limpia sola cuando falle el broadcast normal */ }
+    }
+
+    // Manda una linea a TODAS las instancias de Godot conectadas
+    // esto usa el protocolo que ya entiende networkclient.gd (jugador/id/accion/...)
+    private void GodotBroadcast(string mensaje)
+    {
+        lock (this.espectadoresGodot)
+        {
+            for (int i = this.espectadoresGodot.Count - 1; i >= 0; i--)
+            {
+                try
+                {
+                    this.espectadoresGodot[i].WriteLine(mensaje);
+                }
+                catch
+                {
+                    // se cayo la conexion, la sacamos de la lista
+                    this.espectadoresGodot.RemoveAt(i);
+                }
+            }
+        }
+    }
+
+    // Avisa a Godot en que casilla quedo el jugador despues de moverse
+    // se llama siempre que jugador.Posicion cambia y ya se asento
+    private void AnunciarPosicion(Jugador jugador)
+    {
+        Casilla? actual = jugador.ObtenerCasillaActual();
+        if (actual != null)
+        {
+            GodotBroadcast($"jugador/{jugador.Id}/mover/casilla/{actual.Posicion}");
+        }
+    }
+
+    // El Program.cs llama esto cuando un jugador queda eliminado por bancarrota
+    public void NotificarEliminacion(Jugador jugador)
+    {
+        GodotBroadcast($"jugador/{jugador.Id}/desactivar");
     }
 
     // Remueve a un jugador cuando se desconecta.
@@ -205,6 +301,7 @@ public class JuegoMonopoly
 
         Casilla? actual = jugador.ObtenerCasillaActual();
         jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.Nombre} ({actual?.Tipo})");
+        AnunciarPosicion(jugador);
 
         // POLIMORFISMO: Se delega la acción a la casilla en la que aterrizó
         actual?.Accion(jugador);
@@ -276,6 +373,7 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"🏗️ ¡Construiste {mejora} en '{propiedad.Nombre}' por ${costoCasa}!");
         jugador.EnviarMensaje($"Nueva renta: ${propiedad.CalcularRenta()}. Saldo: ${jugador.Dinero}");
         Broadcast($"📢 {jugador.Nombre} construyó {mejora} en '{propiedad.Nombre}'.", jugador);
+        GodotBroadcast($"jugador/{jugador.Id}/comprarcasa/{propiedad.CantidadCasas}/casilla/{propiedad.Posicion}");
     }
 
     // Mueve al jugador a una casilla específica por su índice numérico (0 a 31).
@@ -298,6 +396,7 @@ public class JuegoMonopoly
 
         Casilla? actual = jugador.ObtenerCasillaActual();
         jugador.EnviarMensaje($"📍 Te moviste a: {actual?.Nombre} ({actual?.Tipo})");
+        AnunciarPosicion(jugador);
         actual?.Accion(jugador);
     }
 
@@ -321,6 +420,7 @@ public class JuegoMonopoly
 
         Casilla? actual = jugador.ObtenerCasillaActual();
         jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.Nombre} ({actual?.Tipo})");
+        AnunciarPosicion(jugador);
         actual?.Accion(jugador);
     }
 

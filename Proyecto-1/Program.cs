@@ -1,4 +1,6 @@
 using System;
+using System.Net.Sockets;
+using System.Threading;
 
 // Punto de entrada: inicializa el juego de Monopoly con la lista circular de casillas,
 // registra a los jugadores (vía consola o RFID) y ejecuta el ciclo de turnos interactivo.
@@ -13,6 +15,14 @@ internal class Program
 
         var juego = JuegoMonopoly.Instancia;
         Console.WriteLine($"Tablero cargado con {juego.Tablero.Size()} casillas en lista circular.\n");
+
+        // Arrancamos el servidor para Godot en un hilo aparte, para que la
+        // consola pueda seguir pidiendo cosas normal sin quedar bloqueada
+        // esperando conexiones. Por ahora Godot solo VE la partida, no manda
+        // nada (eso lo conectamos despues con los botones de la UI)
+        Thread hiloGodot = new Thread(() => IniciarServidorGodot(juego));
+        hiloGodot.IsBackground = true;
+        hiloGodot.Start();
 
         Console.WriteLine("Seleccione el modo de juego:");
         Console.WriteLine("1. Modo Consola (Registro de jugadores manual)");
@@ -251,6 +261,7 @@ internal class Program
             if (jugador.Dinero <= 0)
             {
                 Console.WriteLine($"\n💀 {jugador.Nombre} ha quedado eliminado por bancarrota.");
+                juego.NotificarEliminacion(jugador);
                 turnoTerminado = true;
             }
         }
@@ -286,5 +297,22 @@ internal class Program
         }
         return null;
     }
-}
 
+    // Se queda esperando conexiones de instancias de Godot y las va agregando
+    // como espectadores. Corre en su propio hilo, separado de la consola
+    private static void IniciarServidorGodot(JuegoMonopoly juego)
+    {
+        const int puertoGodot = 6767;
+        TcpListener listener = new TcpListener(System.Net.IPAddress.Any, puertoGodot);
+        listener.Start();
+        Console.WriteLine($"[GODOT] Escuchando en el puerto {puertoGodot}, esperando a que se conecte la UI...\n");
+
+        while (true)
+        {
+            TcpClient cliente = listener.AcceptTcpClient();
+            var writer = new System.IO.StreamWriter(cliente.GetStream(), System.Text.Encoding.UTF8) { AutoFlush = true };
+            juego.ConectarEspectadorGodot(writer);
+            Console.WriteLine("[GODOT] Se conecto una instancia de Godot.");
+        }
+    }
+}
