@@ -38,60 +38,126 @@ public enum TipoEfectoCarta
 // Carta de evento (Fortuna o Arca Comunal)
 public class CartaEvento
 {
-    // Texto que se le muestra al jugador al robar la carta
-    public string Descripcion { get; set; }
+    // Campos privados
+    private string descripcion;
+    private TipoEfectoCarta tipo;
+    private int monto;
+    private int montoPorCasa;
+    private int montoPorHotel;
+    private int casillaDestino;
+    private int cantidadCasillas;
+    private bool pierdeTurno;
+    private int mazo;
 
-    // Que tipo de efecto aplica esta carta (enum TipoEfectoCarta)
-    public TipoEfectoCarta Tipo { get; set; }
+    // Métodos individuales para obtener y definir (Getters y Setters)
+    public string GetDescripcion()
+    {
+        return this.descripcion;
+    }
 
-    // Monto en dinero involucrado en el efecto, 0 si el
-    // efecto de la carta no involucra dinero
-    public int Monto { get; set; }
+    public void SetDescripcion(string descripcion)
+    {
+        this.descripcion = descripcion;
+    }
 
-    // Costo POR CADA casa que el jugador tenga construida, solo se usa si el
-    // Tipo es PerderDineroPorConstruccion, 0 si no aplica
-    public int MontoPorCasa { get; set; }
- 
-    // Costo POR CADA hotel que el jugador tenga construido, solo se usa si el
-    // Tipo es PerderDineroPorConstruccion, 0 si no aplica
-    public int MontoPorHotel { get; set; }
+    public TipoEfectoCarta GetTipo()
+    {
+        return this.tipo;
+    }
 
-    // Casilla de destino, solo se usa si el Tipo es MoverACasilla
-    // Se deja en -1 si no aplica
-    public int CasillaDestino { get; set; }
+    public void SetTipo(TipoEfectoCarta tipo)
+    {
+        this.tipo = tipo;
+    }
 
-    // Cantidad de casillas a avanzar/retroceder, solo se usa si Tipo es
-    // MoverCasillas (positivo avanza, negativo retrocede)
-    // Se deja en 0 si no aplica
-    public int CantidadCasillas { get; set; }
+    public int GetMonto()
+    {
+        return this.monto;
+    }
 
-    // true si ademas del efecto de Tipo, la carta hace que el jugador
-    // pierda su siguiente turno, se puede combinar con cualquier Tipo
-    // (por ejemplo: pagar dinero y perder turno, o moverse y perder turno)
-    public bool PierdeTurno { get; set; }
+    public void SetMonto(int monto)
+    {
+        this.monto = monto;
+    }
 
-    // Numero de mazo al que robar las tarjetas (1 para Fortuna, 2 Arca),
-    // 0 si no aplica
-    public int Mazo { get; set; }
+    public int GetMontoPorCasa()
+    {
+        return this.montoPorCasa;
+    }
+
+    public void SetMontoPorCasa(int montoPorCasa)
+    {
+        this.montoPorCasa = montoPorCasa;
+    }
+
+    public int GetMontoPorHotel()
+    {
+        return this.montoPorHotel;
+    }
+
+    public void SetMontoPorHotel(int montoPorHotel)
+    {
+        this.montoPorHotel = montoPorHotel;
+    }
+
+    public int GetCasillaDestino()
+    {
+        return this.casillaDestino;
+    }
+
+    public void SetCasillaDestino(int casillaDestino)
+    {
+        this.casillaDestino = casillaDestino;
+    }
+
+    public int GetCantidadCasillas()
+    {
+        return this.cantidadCasillas;
+    }
+
+    public void SetCantidadCasillas(int cantidadCasillas)
+    {
+        this.cantidadCasillas = cantidadCasillas;
+    }
+
+    public bool GetPierdeTurno()
+    {
+        return this.pierdeTurno;
+    }
+
+    public void SetPierdeTurno(bool pierdeTurno)
+    {
+        this.pierdeTurno = pierdeTurno;
+    }
+
+    public int GetMazo()
+    {
+        return this.mazo;
+    }
+
+    public void SetMazo(int mazo)
+    {
+        this.mazo = mazo;
+    }
 
     // Famosisimo constructor
     public CartaEvento(string descripcion, TipoEfectoCarta tipo, int monto = 0, int casillaDestino = -1, int cantidadCasillas = 0,
     int montoPorCasa = 0, int montoPorHotel = 0, bool pierdeTurno = false, int mazo = 0)
     {
-        this.Descripcion = descripcion;
-        this.Tipo = tipo;
-        this.Monto = monto;
-        this.CasillaDestino = casillaDestino;
-        this.CantidadCasillas = cantidadCasillas;
-        this.MontoPorCasa = montoPorCasa;
-        this.MontoPorHotel = montoPorHotel;
-        this.PierdeTurno = pierdeTurno;
-        this.Mazo = mazo;
+        this.descripcion = descripcion;
+        this.tipo = tipo;
+        this.monto = monto;
+        this.casillaDestino = casillaDestino;
+        this.cantidadCasillas = cantidadCasillas;
+        this.montoPorCasa = montoPorCasa;
+        this.montoPorHotel = montoPorHotel;
+        this.pierdeTurno = pierdeTurno;
+        this.mazo = mazo;
     }
 
     // Representacion en texto de la carta (lo que se le manda al jugador)
     public override string ToString()
     {
-        return this.Descripcion;
+        return this.descripcion;
     }
 }

@@ -7,76 +7,170 @@ using System.IO;
 /// </summary>
 public class Jugador
 {
-    // Identificador único numérico (1, 2, 3, 4...).
-    public int Id { get; set; }
+    // Campos privados
+    private int id;
+    private string nombre;
+    private string idTarjeta;
+    private Node? posicion;
+    private int balance;
+    private LinkedList propiedades;
+    private int cartasSalirDeCarcel;
+    private bool enCarcel;
+    private int turnosEnCarcel;
+    private bool pierdeSiguienteTurno;
+    private StreamWriter? writer;
 
-    // Nombre visible del jugador.
-    public string Nombre { get; set; }
-
-    // UID de la tarjeta RFID, conservado como texto.
-    public string IdTarjeta { get; set; }
-
-    // Nodo del tablero donde se encuentra actualmente el jugador (lista circular).
-    public Node? Posicion { get; set; }
-
-    // Balance / Dinero que tiene el jugador.
-    public int Balance { get; set; }
-
-    // Propiedad Dinero como alias de Balance para compatibilidad en todo el código.
-    public int Dinero
+    // Métodos individuales para obtener y definir (Getters y Setters)
+    public int GetId()
     {
-        get => this.Balance;
-        set => this.Balance = value;
+        return this.id;
     }
 
-    // Inventario personal de propiedades, administrado mediante una LinkedList independiente.
-    public LinkedList Propiedades { get; set; }
+    public void SetId(int id)
+    {
+        this.id = id;
+    }
 
-    // Cantidad de cartas de salir de la cárcel que posee el jugador.
-    public int CartasSalirDeCarcel { get; set; }
+    public string GetNombre()
+    {
+        return this.nombre;
+    }
 
-    // Indica si el jugador está encarcelado.
-    public bool EnCarcel { get; set; }
+    public void SetNombre(string nombre)
+    {
+        this.nombre = nombre;
+    }
 
-    // Contador de turnos transcurridos en la cárcel.
-    public int TurnosEnCarcel { get; set; }
+    public string GetIdTarjeta()
+    {
+        return this.idTarjeta;
+    }
 
-    // Indica si el jugador debe perder su siguiente turno por efecto de carta.
-    public bool PierdeSiguienteTurno { get; set; }
+    public void SetIdTarjeta(string idTarjeta)
+    {
+        this.idTarjeta = idTarjeta;
+    }
 
-    // Flujo de escritura TCP (StreamWriter) asociado a este cliente, o null si juega en consola.
-    public StreamWriter? Writer { get; set; }
+    public Node? GetPosicion()
+    {
+        return this.posicion;
+    }
+
+    public void SetPosicion(Node? posicion)
+    {
+        this.posicion = posicion;
+    }
+
+    public int GetBalance()
+    {
+        return this.balance;
+    }
+
+    public void SetBalance(int balance)
+    {
+        this.balance = balance;
+    }
+
+    public int GetDinero()
+    {
+        return this.balance;
+    }
+
+    public void SetDinero(int dinero)
+    {
+        this.balance = dinero;
+    }
+
+    public LinkedList GetPropiedades()
+    {
+        return this.propiedades;
+    }
+
+    public void SetPropiedades(LinkedList propiedades)
+    {
+        this.propiedades = propiedades;
+    }
+
+    public int GetCartasSalirDeCarcel()
+    {
+        return this.cartasSalirDeCarcel;
+    }
+
+    public void SetCartasSalirDeCarcel(int cartasSalirDeCarcel)
+    {
+        this.cartasSalirDeCarcel = cartasSalirDeCarcel;
+    }
+
+    public bool GetEnCarcel()
+    {
+        return this.enCarcel;
+    }
+
+    public void SetEnCarcel(bool enCarcel)
+    {
+        this.enCarcel = enCarcel;
+    }
+
+    public int GetTurnosEnCarcel()
+    {
+        return this.turnosEnCarcel;
+    }
+
+    public void SetTurnosEnCarcel(int turnosEnCarcel)
+    {
+        this.turnosEnCarcel = turnosEnCarcel;
+    }
+
+    public bool GetPierdeSiguienteTurno()
+    {
+        return this.pierdeSiguienteTurno;
+    }
+
+    public void SetPierdeSiguienteTurno(bool pierdeSiguienteTurno)
+    {
+        this.pierdeSiguienteTurno = pierdeSiguienteTurno;
+    }
+
+    public StreamWriter? GetWriter()
+    {
+        return this.writer;
+    }
+
+    public void SetWriter(StreamWriter? writer)
+    {
+        this.writer = writer;
+    }
 
     // Constructor para registro físico vía RFID / Raspberry Pi Pico.
     public Jugador(string nombre, string idTarjeta, int balance_incial = 1500)
     {
-        this.Id = 0;
-        this.Nombre = nombre;
-        this.IdTarjeta = idTarjeta;
-        this.Posicion = null;
-        this.Balance = balance_incial;
-        this.Propiedades = new LinkedList();
-        this.CartasSalirDeCarcel = 0;
-        this.EnCarcel = false;
-        this.TurnosEnCarcel = 0;
-        this.PierdeSiguienteTurno = false;
-        this.Writer = null;
+        this.id = 0;
+        this.nombre = nombre;
+        this.idTarjeta = idTarjeta;
+        this.posicion = null;
+        this.balance = balance_incial;
+        this.propiedades = new LinkedList();
+        this.cartasSalirDeCarcel = 0;
+        this.enCarcel = false;
+        this.turnosEnCarcel = 0;
+        this.pierdeSiguienteTurno = false;
+        this.writer = null;
     }
 
     // Constructor para servidor / red / terminal virtual.
     public Jugador(int id, string nombre, StreamWriter? writer = null, int balance_inicial = 1500)
     {
-        this.Id = id;
-        this.Nombre = nombre;
-        this.IdTarjeta = string.Empty;
-        this.Posicion = null;
-        this.Balance = balance_inicial;
-        this.Propiedades = new LinkedList();
-        this.CartasSalirDeCarcel = 0;
-        this.EnCarcel = false;
-        this.TurnosEnCarcel = 0;
-        this.PierdeSiguienteTurno = false;
-        this.Writer = writer;
+        this.id = id;
+        this.nombre = nombre;
+        this.idTarjeta = string.Empty;
+        this.posicion = null;
+        this.balance = balance_inicial;
+        this.propiedades = new LinkedList();
+        this.cartasSalirDeCarcel = 0;
+        this.enCarcel = false;
+        this.turnosEnCarcel = 0;
+        this.pierdeSiguienteTurno = false;
+        this.writer = writer;
     }
 
     // Envía un mensaje al cliente. Si tiene conexión TCP activa, lo envía por el socket;
@@ -85,13 +179,13 @@ public class Jugador
     {
         try
         {
-            if (this.Writer != null)
+            if (this.writer != null)
             {
-                this.Writer.WriteLine(mensaje);
+                this.writer.WriteLine(mensaje);
             }
             else
             {
-                Console.WriteLine($"[{this.Nombre}] {mensaje}");
+                Console.WriteLine($"[{this.nombre}] {mensaje}");
             }
         }
         catch
@@ -103,11 +197,11 @@ public class Jugador
     // Devuelve el objeto Casilla almacenado dentro del Node actual de posición.
     public Casilla? ObtenerCasillaActual()
     {
-        return this.Posicion?.GetData() as Casilla;
+        return this.posicion?.GetData() as Casilla;
     }
 
     public override string ToString()
     {
-        return this.Nombre;
+        return this.nombre;
     }
 }

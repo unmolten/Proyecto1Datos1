@@ -4,10 +4,11 @@
 # ==========================================
 # .NET / C#
 # ==========================================
-[Bb]in/
-[Oo]bj/
-[Dd]ebug/
-[Rr]elease/
+bin/
+obj/
+Debug/
+release/
+net10.0/
 *.user
 *.useros_prompt
 *.suo

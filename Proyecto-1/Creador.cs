@@ -73,7 +73,7 @@ class Creador
             listaJugadores[contador] = nuevoJugador;
             contador ++;
 
-            Console.WriteLine($"¡Jugador creado con éxito! [{nuevoJugador.Nombre} -> ID: {nuevoJugador.IdTarjeta}]");
+            Console.WriteLine($"¡Jugador creado con éxito! [{nuevoJugador.GetNombre()} -> ID: {nuevoJugador.GetIdTarjeta()}]");
         }
 
         // Muestra los jugadores registrados para confirmar la captura.
@@ -81,7 +81,7 @@ class Creador
         for (int i = 0; i < contador; i++)
         {
             Jugador j = listaJugadores[i];
-            Console.WriteLine($"Nombre: {j.Nombre} | UID Tarjeta: {j.IdTarjeta}");
+            Console.WriteLine($"Nombre: {j.GetNombre()} | UID Tarjeta: {j.GetIdTarjeta()}");
         }
 
         return listaJugadores;

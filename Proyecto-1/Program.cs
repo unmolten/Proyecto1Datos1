@@ -14,7 +14,7 @@ internal class Program
         Console.WriteLine("==========================================================");
 
         var juego = JuegoMonopoly.Instancia;
-        Console.WriteLine($"Tablero cargado con {juego.Tablero.Size()} casillas en lista circular.\n");
+        Console.WriteLine($"Tablero cargado con {juego.GetTablero().Size()} casillas en lista circular.\n");
 
         // Arrancamos el servidor para Godot en un hilo aparte, para que la
         // consola pueda seguir pidiendo cosas normal sin quedar bloqueada
@@ -61,7 +61,7 @@ internal class Program
         }
 
         // Si no se usó la Pico o falló, registrar jugadores por consola
-        if (juego.Jugadores.Size() == 0)
+        if (juego.GetJugadores().Size() == 0)
         {
             Console.Write("\n¿Cuántos jugadores participarán? (2-4): ");
             if (!int.TryParse(Console.ReadLine(), out int cantidad) || cantidad < 2)
@@ -75,10 +75,8 @@ internal class Program
                 string? nombre = Console.ReadLine();
                 if (string.IsNullOrWhiteSpace(nombre)) nombre = $"Jugador_{i}";
 
-                Jugador nuevo = new Jugador(i, nombre, balance_inicial: 1500)
-                {
-                    Posicion = juego.Tablero.GetHead()
-                };
+                Jugador nuevo = new Jugador(i, nombre, balance_inicial: 1500);
+                nuevo.SetPosicion(juego.GetTablero().GetHead());
                 juego.RegistrarJugadorExistente(nuevo);
             }
         }
@@ -94,17 +92,17 @@ internal class Program
             // Bucle principal de la partida: continúa mientras haya más de un jugador con saldo positivo
             while (ContarJugadoresActivos(juego) > 1)
             {
-                juego.TurnoActual = turnoGlobal;
+                juego.SetTurnoActual(turnoGlobal);
 
                 // Recorremos la lista enlazada de jugadores activos
-                Node? nodoJugador = juego.Jugadores.GetHead();
-                int totalJugadores = juego.Jugadores.Size();
+                Node? nodoJugador = juego.GetJugadores().GetHead();
+                int totalJugadores = juego.GetJugadores().Size();
 
                 for (int idx = 0; idx < totalJugadores; idx++)
                 {
                     if (nodoJugador?.GetData() is Jugador jugadorActual)
                     {
-                        if (jugadorActual.Dinero <= 0)
+                        if (jugadorActual.GetDinero() <= 0)
                         {
                             nodoJugador = nodoJugador?.GetNext();
                             continue;
@@ -129,8 +127,8 @@ internal class Program
             Console.WriteLine("\n==========================================================");
             if (ganador != null)
             {
-                Console.WriteLine($"🏆 ¡FELICITACIONES, {ganador.Nombre.ToUpper()}! ¡HAS GANADO LA PARTIDA!");
-                Console.WriteLine($"Saldo final: ${ganador.Dinero} | Propiedades: {ganador.Propiedades.Size()}");
+                Console.WriteLine($"🏆 ¡FELICITACIONES, {ganador.GetNombre().ToUpper()}! ¡HAS GANADO LA PARTIDA!");
+                Console.WriteLine($"Saldo final: ${ganador.GetDinero()} | Propiedades: {ganador.GetPropiedades().Size()}");
             }
             else
             {
@@ -156,11 +154,11 @@ internal class Program
     private static void EjecutarTurnoJugador(JuegoMonopoly juego, Jugador jugador, ControlDados? dadosHardware)
     {
         Console.WriteLine($"\n----------------------------------------------------------");
-        Console.WriteLine($"🎲 TURNO #{juego.TurnoActual} DE: {jugador.Nombre.ToUpper()}");
-        Console.WriteLine($"Saldo: ${jugador.Dinero} | Posición: {jugador.ObtenerCasillaActual()?.Nombre ?? "Salida"}");
-        if (jugador.EnCarcel)
+        Console.WriteLine($"🎲 TURNO #{juego.GetTurnoActual()} DE: {jugador.GetNombre().ToUpper()}");
+        Console.WriteLine($"Saldo: ${jugador.GetDinero()} | Posición: {jugador.ObtenerCasillaActual()?.GetNombre() ?? "Salida"}");
+        if (jugador.GetEnCarcel())
         {
-            Console.WriteLine($"🔒 ¡Estás en la Cárcel! (Turnos cumplidos: {jugador.TurnosEnCarcel}/3)");
+            Console.WriteLine($"🔒 ¡Estás en la Cárcel! (Turnos cumplidos: {jugador.GetTurnosEnCarcel()}/3)");
         }
         Console.WriteLine($"----------------------------------------------------------");
 
@@ -174,17 +172,17 @@ internal class Program
             {
                 Console.WriteLine("  1. Tirar dados y avanzar");
             }
-            if (jugador.EnCarcel)
+            if (jugador.GetEnCarcel())
             {
                 Console.WriteLine("  2. Pagar fianza ($50) o usar carta para salir de la cárcel");
             }
-            if (yaTiroDados && jugador.ObtenerCasillaActual() is Propiedad prop && !prop.TienePropietario() && jugador.Dinero >= prop.PrecioCompra)
+            if (yaTiroDados && jugador.ObtenerCasillaActual() is Propiedad prop && !prop.TienePropietario() && jugador.GetDinero() >= prop.GetPrecioCompra())
             {
-                Console.WriteLine($"  3. Comprar la propiedad actual ({prop.Nombre} por ${prop.PrecioCompra})");
+                Console.WriteLine($"  3. Comprar la propiedad actual ({prop.GetNombre()} por ${prop.GetPrecioCompra()})");
             }
-            if (jugador.ObtenerCasillaActual() is Propiedad miProp && miProp.Propietario == jugador && miProp.CantidadCasas < 5)
+            if (jugador.ObtenerCasillaActual() is Propiedad miProp && miProp.GetPropietario() == jugador && miProp.GetCantidadCasas() < 5)
             {
-                Console.WriteLine($"  4. Construir casa/hotel en {miProp.Nombre} (Costo: ${miProp.PrecioCompra / 2})");
+                Console.WriteLine($"  4. Construir casa/hotel en {miProp.GetNombre()} (Costo: ${miProp.GetPrecioCompra() / 2})");
             }
             Console.WriteLine("  5. Ver mi estado y propiedades");
             Console.WriteLine("  6. Ver tablero completo");
@@ -242,7 +240,7 @@ internal class Program
                     break;
 
                 case "7":
-                    if (!yaTiroDados && !jugador.PierdeSiguienteTurno)
+                    if (!yaTiroDados && !jugador.GetPierdeSiguienteTurno())
                     {
                         Console.WriteLine("⚠️ Debes tirar los dados antes de terminar tu turno.");
                     }
@@ -258,9 +256,9 @@ internal class Program
             }
 
             // Si el jugador cayó en bancarrota durante una acción
-            if (jugador.Dinero <= 0)
+            if (jugador.GetDinero() <= 0)
             {
-                Console.WriteLine($"\n💀 {jugador.Nombre} ha quedado eliminado por bancarrota.");
+                Console.WriteLine($"\n💀 {jugador.GetNombre()} ha quedado eliminado por bancarrota.");
                 juego.NotificarEliminacion(jugador);
                 turnoTerminado = true;
             }
@@ -271,10 +269,10 @@ internal class Program
     private static int ContarJugadoresActivos(JuegoMonopoly juego)
     {
         int activos = 0;
-        Node? actual = juego.Jugadores.GetHead();
-        for (int i = 0; i < juego.Jugadores.Size(); i++)
+        Node? actual = juego.GetJugadores().GetHead();
+        for (int i = 0; i < juego.GetJugadores().Size(); i++)
         {
-            if (actual?.GetData() is Jugador j && j.Dinero > 0)
+            if (actual?.GetData() is Jugador j && j.GetDinero() > 0)
             {
                 activos++;
             }
@@ -286,10 +284,10 @@ internal class Program
     // Encuentra al último jugador en pie
     private static Jugador? ObtenerGanador(JuegoMonopoly juego)
     {
-        Node? actual = juego.Jugadores.GetHead();
-        for (int i = 0; i < juego.Jugadores.Size(); i++)
+        Node? actual = juego.GetJugadores().GetHead();
+        for (int i = 0; i < juego.GetJugadores().Size(); i++)
         {
-            if (actual?.GetData() is Jugador j && j.Dinero > 0)
+            if (actual?.GetData() is Jugador j && j.GetDinero() > 0)
             {
                 return j;
             }

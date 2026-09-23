@@ -7,20 +7,47 @@ using System;
 public abstract class Casilla
 {
     // Posición o índice numérico en el tablero (0 a 31).
-    public int Posicion { get; set; }
+    private int posicion;
+    private string nombre;
+    private string tipo;
 
-    // Nombre visible de la casilla.
-    public string Nombre { get; set; }
+    public int GetPosicion()
+    {
+        return this.posicion;
+    }
 
-    // Tipo de casilla ("Salida", "Propiedad", "Carcel", "Impuesto", "ParadaLibre", "VayaALaCarcel", "Fortuna", "ArcaComunal").
-    public string Tipo { get; set; }
+    public void SetPosicion(int posicion)
+    {
+        this.posicion = posicion;
+    }
+
+    public string GetNombre()
+    {
+        return this.nombre;
+    }
+
+    public void SetNombre(string nombre)
+    {
+        this.nombre = nombre;
+    }
+
+    public string GetTipo()
+    {
+        return this.tipo;
+    }
+
+    public void SetTipo(string tipo)
+    {
+        this.tipo = tipo;
+    }
+
 
     // Constructor base para todas las casillas.
     public Casilla(int posicion, string nombre, string tipo)
     {
-        this.Posicion = posicion;
-        this.Nombre = nombre;
-        this.Tipo = tipo;
+        this.posicion = posicion;
+        this.nombre = nombre;
+        this.tipo = tipo;
     }
 
     // POLIMORFISMO: Cada subclase implementa su comportamiento específico cuando un jugador cae en ella.
@@ -33,11 +60,11 @@ public abstract class Casilla
     public virtual bool EsPropiedad() => false;
     public virtual bool TienePropietario() => false;
     public virtual int CalcularRenta() => 0;
-    public virtual int Renta => CalcularRenta();
+    public virtual int GetRenta() => CalcularRenta();
 
     public override string ToString()
     {
-        return $"[{this.Posicion}] {this.Nombre} ({this.Tipo})";
+        return $"[{GetPosicion()}] {GetNombre()} ({GetTipo()})";
     }
 }
 
@@ -46,38 +73,100 @@ public abstract class Casilla
 public class Propiedad : Casilla
 {
     // Propiedades hereditarias y específicas de Propiedad
-    public int PrecioCompra { get; set; }
-    public int AlquilerBase { get; set; }
-    public Jugador? Propietario { get; set; }
-    public bool IsHipotecada { get; set; }
-    public string ColorGrupo { get; set; }
-    public int CantidadCasas { get; set; } // 0 a 4 casas, 5 = hotel
+    private int precioCompra;
+    private int alquilerBase;
+    private Jugador? propietario;
+    private bool isHipotecada;
+    private string colorGrupo;
+    private int cantidadCasas; // 0 a 4 casas, 5 = hotel
+
+    public int GetPrecioCompra()
+    {
+        return this.precioCompra;
+    }
+
+    public void SetPrecioCompra(int precioCompra)
+    {
+        this.precioCompra = precioCompra;
+    }
+
+    public int GetAlquilerBase()
+    {
+        return this.alquilerBase;
+    }
+
+    public void SetAlquilerBase(int alquilerBase)
+    {
+        this.alquilerBase = alquilerBase;
+    }
+
+    public Jugador? GetPropietario()
+    {
+        return this.propietario;
+    }
+
+    public void SetPropietario(Jugador? propietario)
+    {
+        this.propietario = propietario;
+    }
+
+    public bool GetIsHipotecada()
+    {
+        return this.isHipotecada;
+    }
+
+    public void SetIsHipotecada(bool isHipotecada)
+    {
+        this.isHipotecada = isHipotecada;
+    }
+
+    public string GetColorGrupo()
+    {
+        return this.colorGrupo;
+    }
+
+    public void SetColorGrupo(string colorGrupo)
+    {
+        this.colorGrupo = colorGrupo;
+    }
+
+    public int GetCantidadCasas()
+    {
+        return this.cantidadCasas;
+    }
+
+    public void SetCantidadCasas(int cantidadCasas)
+    {
+        this.cantidadCasas = cantidadCasas;
+    }
+
+
 
     public Propiedad(int posicion, string nombre, string tipo, int precioCompra, int alquilerBase, Jugador? propietario = null, string colorGrupo = "")
         : base(posicion, nombre, tipo)
     {
-        this.PrecioCompra = precioCompra;
-        this.AlquilerBase = alquilerBase;
-        this.Propietario = propietario;
-        this.IsHipotecada = false;
-        this.ColorGrupo = colorGrupo;
-        this.CantidadCasas = 0;
+        this.precioCompra = precioCompra;
+        this.alquilerBase = alquilerBase;
+        this.propietario = propietario;
+        this.isHipotecada = false;
+        this.colorGrupo = colorGrupo;
+        this.cantidadCasas = 0;
     }
 
     public override bool EsPropiedad() => true;
 
-    public override bool TienePropietario() => this.Propietario != null;
+    public override bool TienePropietario() => GetPropietario() != null;
 
     // Calcula la renta en base al alquiler base, hipoteca y cantidad de casas/hotel
     public override int CalcularRenta()
     {
-        if (this.IsHipotecada) return 0;
-        if (this.CantidadCasas == 0) return this.AlquilerBase;
-        if (this.CantidadCasas == 5) return this.AlquilerBase * 8; // Hotel
-        return this.AlquilerBase * (1 + this.CantidadCasas * 2);   // Casas 1 a 4
+        if (GetIsHipotecada()) return 0;
+        if (GetCantidadCasas() == 0) return GetAlquilerBase();
+        if (GetCantidadCasas() == 5) return GetAlquilerBase() * 8; // Hotel
+        return GetAlquilerBase() * (1 + GetCantidadCasas() * 2);   // Casas 1 a 4
     }
 
-    public int NumeroCasas() => this.CantidadCasas;
+    public int NumeroCasas() => GetCantidadCasas();
 
     // POLIMORFISMO: Comportamiento cuando un jugador aterriza en una Propiedad
     public override void Accion(Jugador jugador)
@@ -86,51 +175,51 @@ public class Propiedad : Casilla
 
         if (!TienePropietario())
         {
-            jugador.EnviarMensaje($"🏠 La propiedad '{this.Nombre}' está disponible para compra por ${this.PrecioCompra}.");
-            if (jugador.Dinero >= this.PrecioCompra)
+            jugador.EnviarMensaje($"🏠 La propiedad '{GetNombre()}' está disponible para compra por ${GetPrecioCompra()}.");
+            if (jugador.GetDinero() >= GetPrecioCompra())
             {
                 jugador.EnviarMensaje($"💡 Usa el comando 'COMPRAR' si deseas adquirirla.");
             }
             else
             {
-                jugador.EnviarMensaje($"❌ Saldo insuficiente (${jugador.Dinero}) para comprarla.");
+                jugador.EnviarMensaje($"❌ Saldo insuficiente (${jugador.GetDinero()}) para comprarla.");
             }
         }
-        else if (this.Propietario != jugador)
+        else if (GetPropietario() != jugador)
         {
-            if (this.IsHipotecada)
+            if (GetIsHipotecada())
             {
-                jugador.EnviarMensaje($"ℹ️ '{this.Nombre}' está hipotecada. No pagas renta.");
+                jugador.EnviarMensaje($"ℹ️ '{GetNombre()}' está hipotecada. No pagas renta.");
                 return;
             }
 
             int renta = CalcularRenta();
-            jugador.EnviarMensaje($"💸 Caíste en '{this.Nombre}' de {this.Propietario!.Nombre}. Renta a pagar: ${renta}.");
+            jugador.EnviarMensaje($"💸 Caíste en '{GetNombre()}' de {GetPropietario()!.GetNombre()}. Renta a pagar: ${renta}.");
 
             // Transferencia de dinero mediante el registro de Transacciones
-            new Transaccion(renta, juego.TurnoActual, "Pago de alquiler", jugador, this.Propietario);
+            new Transaccion(renta, juego.GetTurnoActual(), "Pago de alquiler", jugador, GetPropietario());
 
-            this.Propietario.EnviarMensaje($"💰 ¡Recibiste ${renta} de renta de {jugador.Nombre} por '{this.Nombre}'!");
-            juego.Broadcast($"📢 {jugador.Nombre} pagó ${renta} de renta a {this.Propietario.Nombre} por {this.Nombre}.", jugador);
+            GetPropietario()!.EnviarMensaje($"💰 ¡Recibiste ${renta} de renta de {jugador.GetNombre()} por '{GetNombre()}'!");
+            juego.Broadcast($"📢 {jugador.GetNombre()} pagó ${renta} de renta a {GetPropietario()!.GetNombre()} por {GetNombre()}.", jugador);
 
-            if (jugador.Dinero < 0)
+            if (jugador.GetDinero() < 0)
             {
                 jugador.EnviarMensaje("⚠️ ¡Estás en bancarrota! Tu saldo es negativo.");
-                juego.Broadcast($"🚨 ¡{jugador.Nombre} ha caído en bancarrota!", jugador);
+                juego.Broadcast($"🚨 ¡{jugador.GetNombre()} ha caído en bancarrota!", jugador);
             }
         }
         else
         {
-            string casasInfo = this.CantidadCasas == 5 ? "Hotel" : $"{this.CantidadCasas} casas";
-            jugador.EnviarMensaje($"🏡 Estás en tu propia propiedad '{this.Nombre}' ({casasInfo}).");
+            string casasInfo = GetCantidadCasas() == 5 ? "Hotel" : $"{GetCantidadCasas()} casas";
+            jugador.EnviarMensaje($"🏡 Estás en tu propia propiedad '{GetNombre()}' ({casasInfo}).");
         }
     }
 
     public override string ToString()
     {
-        string dueño = this.Propietario != null ? this.Propietario.Nombre : "Sin dueño";
-        string nivel = this.CantidadCasas == 5 ? "Hotel" : $"{this.CantidadCasas} casas";
-        return $"[{this.Posicion}] {this.Nombre} (Propiedad) - Precio: ${this.PrecioCompra} | Renta: ${CalcularRenta()} | Dueño: {dueño} | {nivel}";
+        string dueño = GetPropietario() != null ? GetPropietario()!.GetNombre() : "Sin dueño";
+        string nivel = GetCantidadCasas() == 5 ? "Hotel" : $"{GetCantidadCasas()} casas";
+        return $"[{GetPosicion()}] {GetNombre()} (Propiedad) - Precio: ${GetPrecioCompra()} | Renta: ${CalcularRenta()} | Dueño: {dueño} | {nivel}";
     }
 }
 
@@ -138,101 +227,113 @@ public class Propiedad : Casilla
 // Representa casillas de Fortuna o Arca Comunal que roban cartas y aplican sus efectos.
 public class CasillaEvento : Casilla
 {
-    public string TipoEvento { get; set; }
+    private string tipoEvento;
+
+    public string GetTipoEvento()
+    {
+        return this.tipoEvento;
+    }
+
+    public void SetTipoEvento(string tipoEvento)
+    {
+        this.tipoEvento = tipoEvento;
+    }
+
+
 
     public CasillaEvento(int posicion, string nombre, string tipo) : base(posicion, nombre, tipo)
     {
-        this.TipoEvento = tipo;
+        this.tipoEvento = tipo;
     }
 
     // POLIMORFISMO: Acción al caer en una Casilla de Evento (Fortuna o Arca Comunal)
     public override void Accion(Jugador jugador)
     {
         var juego = JuegoMonopoly.Instancia;
-        LinkedList mazo = (this.Tipo == "ArcaComunal" || this.Nombre.Contains("Arca"))
-            ? juego.MazoArcaComunal
-            : juego.MazoFortuna;
+        LinkedList mazo = (GetTipo() == "ArcaComunal" || GetNombre().Contains("Arca"))
+            ? juego.GetMazoArcaComunal()
+            : juego.GetMazoFortuna();
 
         CartaEvento carta = MazoCartas.RobarCarta(mazo);
-        jugador.EnviarMensaje($"\n🎴 [CARTA DE {this.Nombre.ToUpper()}]:");
-        jugador.EnviarMensaje($"\"{carta.Descripcion}\"\n");
-        juego.Broadcast($"📢 {jugador.Nombre} sacó una carta de {this.Nombre}: \"{carta.Descripcion}\"", jugador);
+        jugador.EnviarMensaje($"\n🎴 [CARTA DE {GetNombre().ToUpper()}]:");
+        jugador.EnviarMensaje($"\"{carta.GetDescripcion()}\"\n");
+        juego.Broadcast($"📢 {jugador.GetNombre()} sacó una carta de {GetNombre()}: \"{carta.GetDescripcion()}\"", jugador);
 
         AplicarEfectoCarta(carta, jugador, juego);
     }
 
     private void AplicarEfectoCarta(CartaEvento carta, Jugador jugador, JuegoMonopoly juego)
     {
-        switch (carta.Tipo)
+        switch (carta.GetTipo())
         {
             case TipoEfectoCarta.GanarDinero:
-                new Transaccion(carta.Monto, juego.TurnoActual, "Ganancia por evento", jugador, null);
-                jugador.EnviarMensaje($"💵 Saldo actual: ${jugador.Dinero}");
+                new Transaccion(carta.GetMonto(), juego.GetTurnoActual(), "Ganancia por evento", jugador, null);
+                jugador.EnviarMensaje($"💵 Saldo actual: ${jugador.GetDinero()}");
                 break;
 
             case TipoEfectoCarta.PerderDinero:
-                new Transaccion(carta.Monto, juego.TurnoActual, "Perdida por evento", jugador, null);
-                jugador.EnviarMensaje($"💸 Saldo actual: ${jugador.Dinero}");
+                new Transaccion(carta.GetMonto(), juego.GetTurnoActual(), "Perdida por evento", jugador, null);
+                jugador.EnviarMensaje($"💸 Saldo actual: ${jugador.GetDinero()}");
                 break;
 
             case TipoEfectoCarta.PagarACadaJugador:
-                Node? actualP = juego.Jugadores.GetHead();
-                for (int i = 0; i < juego.Jugadores.Size(); i++)
+                Node? actualP = juego.GetJugadores().GetHead();
+                for (int i = 0; i < juego.GetJugadores().Size(); i++)
                 {
-                    if (actualP?.GetData() is Jugador otro && otro.Id != jugador.Id)
+                    if (actualP?.GetData() is Jugador otro && otro.GetId() != jugador.GetId())
                     {
-                        new Transaccion(carta.Monto, juego.TurnoActual, "Pago entre jugadores", jugador, otro);
-                        otro.EnviarMensaje($"💰 {jugador.Nombre} te pagó ${carta.Monto} por evento.");
+                        new Transaccion(carta.GetMonto(), juego.GetTurnoActual(), "Pago entre jugadores", jugador, otro);
+                        otro.EnviarMensaje($"💰 {jugador.GetNombre()} te pagó ${carta.GetMonto()} por evento.");
                     }
                     actualP = actualP?.GetNext();
                 }
-                jugador.EnviarMensaje($"Saldo actual: ${jugador.Dinero}");
+                jugador.EnviarMensaje($"Saldo actual: ${jugador.GetDinero()}");
                 break;
 
             case TipoEfectoCarta.CobrarDeCadaJugador:
-                Node? actualC = juego.Jugadores.GetHead();
-                for (int i = 0; i < juego.Jugadores.Size(); i++)
+                Node? actualC = juego.GetJugadores().GetHead();
+                for (int i = 0; i < juego.GetJugadores().Size(); i++)
                 {
-                    if (actualC?.GetData() is Jugador otro && otro.Id != jugador.Id)
+                    if (actualC?.GetData() is Jugador otro && otro.GetId() != jugador.GetId())
                     {
-                        new Transaccion(carta.Monto, juego.TurnoActual, "Pago entre jugadores", otro, jugador);
-                        otro.EnviarMensaje($"💸 Pagaste ${carta.Monto} a {jugador.Nombre} por evento.");
+                        new Transaccion(carta.GetMonto(), juego.GetTurnoActual(), "Pago entre jugadores", otro, jugador);
+                        otro.EnviarMensaje($"💸 Pagaste ${carta.GetMonto()} a {jugador.GetNombre()} por evento.");
                     }
                     actualC = actualC?.GetNext();
                 }
-                jugador.EnviarMensaje($"Saldo actual: ${jugador.Dinero}");
+                jugador.EnviarMensaje($"Saldo actual: ${jugador.GetDinero()}");
                 break;
 
             case TipoEfectoCarta.PerderDineroPorPropiedad:
-                int costoProp = carta.Monto * jugador.Propiedades.Size();
-                new Transaccion(costoProp, juego.TurnoActual, "Perdida por evento", jugador, null);
-                jugador.EnviarMensaje($"💸 Pagaste ${costoProp} (${carta.Monto} x {jugador.Propiedades.Size()} propiedades). Saldo: ${jugador.Dinero}");
+                int costoProp = carta.GetMonto() * jugador.GetPropiedades().Size();
+                new Transaccion(costoProp, juego.GetTurnoActual(), "Perdida por evento", jugador, null);
+                jugador.EnviarMensaje($"💸 Pagaste ${costoProp} (${carta.GetMonto()} x {jugador.GetPropiedades().Size()} propiedades). Saldo: ${jugador.GetDinero()}");
                 break;
 
             case TipoEfectoCarta.PerderDineroPorConstruccion:
                 int totalCasas = 0;
                 int totalHoteles = 0;
-                Node? propNodo = jugador.Propiedades.GetHead();
-                for (int i = 0; i < jugador.Propiedades.Size(); i++)
+                Node? propNodo = jugador.GetPropiedades().GetHead();
+                for (int i = 0; i < jugador.GetPropiedades().Size(); i++)
                 {
                     if (propNodo?.GetData() is Propiedad prop)
                     {
-                        if (prop.CantidadCasas == 5) totalHoteles++;
-                        else totalCasas += prop.CantidadCasas;
+                        if (prop.NumeroCasas() == 5) totalHoteles++;
+                        else totalCasas += prop.NumeroCasas();
                     }
                     propNodo = propNodo?.GetNext();
                 }
-                int costoConst = (totalCasas * carta.MontoPorCasa) + (totalHoteles * carta.MontoPorHotel);
-                new Transaccion(costoConst, juego.TurnoActual, "Perdida por evento", jugador, null);
-                jugador.EnviarMensaje($"💸 Reparaciones: ${costoConst} ({totalCasas} casas x ${carta.MontoPorCasa}, {totalHoteles} hoteles x ${carta.MontoPorHotel}). Saldo: ${jugador.Dinero}");
+                int costoConst = (totalCasas * carta.GetMontoPorCasa()) + (totalHoteles * carta.GetMontoPorHotel());
+                new Transaccion(costoConst, juego.GetTurnoActual(), "Perdida por evento", jugador, null);
+                jugador.EnviarMensaje($"💸 Reparaciones: ${costoConst} ({totalCasas} casas x ${carta.GetMontoPorCasa()}, {totalHoteles} hoteles x ${carta.GetMontoPorHotel()}). Saldo: ${jugador.GetDinero()}");
                 break;
 
             case TipoEfectoCarta.MoverACasilla:
-                juego.MoverJugadorACasilla(jugador, carta.CasillaDestino);
+                juego.MoverJugadorACasilla(jugador, carta.GetCasillaDestino());
                 break;
 
             case TipoEfectoCarta.MoverCasillas:
-                juego.MoverJugadorCasillas(jugador, carta.CantidadCasillas);
+                juego.MoverJugadorCasillas(jugador, carta.GetCantidadCasillas());
                 break;
 
             case TipoEfectoCarta.IrACarcel:
@@ -240,21 +341,21 @@ public class CasillaEvento : Casilla
                 break;
 
             case TipoEfectoCarta.SalirDeCarcelGratis:
-                jugador.CartasSalirDeCarcel++;
-                jugador.EnviarMensaje($"🎟️ ¡Guardas una carta para salir gratis de la cárcel! (Total cartas: {jugador.CartasSalirDeCarcel})");
+                jugador.SetCartasSalirDeCarcel(jugador.GetCartasSalirDeCarcel() + 1);
+                jugador.EnviarMensaje($"🎟️ ¡Guardas una carta para salir gratis de la cárcel! (Total cartas: {jugador.GetCartasSalirDeCarcel()})");
                 break;
 
             case TipoEfectoCarta.TomarOtraCarta:
-                LinkedList mazoExtra = (carta.Mazo == 1) ? juego.MazoFortuna : juego.MazoArcaComunal;
+                LinkedList mazoExtra = (carta.GetMazo() == 1) ? juego.GetMazoFortuna() : juego.GetMazoArcaComunal();
                 CartaEvento cartaExtra = MazoCartas.RobarCarta(mazoExtra);
-                jugador.EnviarMensaje($"🎴 Carta adicional: \"{cartaExtra.Descripcion}\"");
+                jugador.EnviarMensaje($"🎴 Carta adicional: \"{cartaExtra.GetDescripcion()}\"");
                 AplicarEfectoCarta(cartaExtra, jugador, juego);
                 break;
         }
 
-        if (carta.PierdeTurno)
+        if (carta.GetPierdeTurno())
         {
-            jugador.PierdeSiguienteTurno = true;
+            jugador.SetPierdeSiguienteTurno(true);
             jugador.EnviarMensaje("⏳ Pierdes tu siguiente turno.");
         }
     }
@@ -273,25 +374,25 @@ public class CasillaEspecial : Casilla
     {
         var juego = JuegoMonopoly.Instancia;
 
-        switch (this.Tipo)
+        switch (GetTipo())
         {
             case "Salida":
-                new Transaccion(200, juego.TurnoActual, "Premio por pasar por inicio", jugador, null);
+                new Transaccion(200, juego.GetTurnoActual(), "Premio por pasar por inicio", jugador, null);
                 jugador.EnviarMensaje("💵 ¡Aterrizaste en Salida! Cobraste $200 de bono.");
-                juego.Broadcast($"📢 {jugador.Nombre} cayó en Salida y cobró $200.", jugador);
+                juego.Broadcast($"📢 {jugador.GetNombre()} cayó en Salida y cobró $200.", jugador);
                 break;
 
             case "Impuesto":
                 int montoImpuesto = 100;
-                new Transaccion(montoImpuesto, juego.TurnoActual, "Pago al banco", jugador, null);
-                jugador.EnviarMensaje($"🧾 Impuesto sobre la renta: Pagaste ${montoImpuesto} al banco. Saldo: ${jugador.Dinero}");
-                juego.Broadcast($"📢 {jugador.Nombre} pagó ${montoImpuesto} de impuestos.", jugador);
+                new Transaccion(montoImpuesto, juego.GetTurnoActual(), "Pago al banco", jugador, null);
+                jugador.EnviarMensaje($"🧾 Impuesto sobre la renta: Pagaste ${montoImpuesto} al banco. Saldo: ${jugador.GetDinero()}");
+                juego.Broadcast($"📢 {jugador.GetNombre()} pagó ${montoImpuesto} de impuestos.", jugador);
                 break;
 
             case "Carcel":
-                if (jugador.EnCarcel)
+                if (jugador.GetEnCarcel())
                 {
-                    jugador.EnviarMensaje($"🔒 Estás cumpliendo condena en la Cárcel (Turnos en espera: {jugador.TurnosEnCarcel}/3).");
+                    jugador.EnviarMensaje($"🔒 Estás cumpliendo condena en la Cárcel (Turnos en espera: {jugador.GetTurnosEnCarcel()}/3).");
                 }
                 else
                 {
@@ -309,7 +410,7 @@ public class CasillaEspecial : Casilla
                 break;
 
             default:
-                jugador.EnviarMensaje($"📍 Te encuentras en {this.Nombre}.");
+                jugador.EnviarMensaje($"📍 Te encuentras en {GetNombre()}.");
                 break;
         }
     }

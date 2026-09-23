@@ -30,17 +30,41 @@ public class JuegoMonopoly
     private LinkedList mazoArcaComunal;
 
     // Contador de turnos y asignador de IDs
-    public int TurnoActual { get; set; } = 1;
+    private int turnoActual = 1;
     private int contadorJugadores = 1;
+
+    public int GetTurnoActual()
+    {
+        return this.turnoActual;
+    }
+
+    public void SetTurnoActual(int turnoActual)
+    {
+        this.turnoActual = turnoActual;
+    }
+
+    public LinkedList GetTablero()
+    {
+        return this.tablero;
+    }
+
+    public LinkedList GetJugadores()
+    {
+        return this.jugadores;
+    }
+
+    public LinkedList GetMazoFortuna()
+    {
+        return this.mazoFortuna;
+    }
+
+    public LinkedList GetMazoArcaComunal()
+    {
+        return this.mazoArcaComunal;
+    }
 
     // Generador de números aleatorios para los dados
     private Random random = new Random();
-
-    // Getters para acceder al tablero, jugadores y mazos
-    public LinkedList Tablero => this.tablero;
-    public LinkedList Jugadores => this.jugadores;
-    public LinkedList MazoFortuna => this.mazoFortuna;
-    public LinkedList MazoArcaComunal => this.mazoArcaComunal;
 
     public JuegoMonopoly()
     {
@@ -94,32 +118,30 @@ public class JuegoMonopoly
     // Registra a un nuevo cliente en la partida y lo posiciona en la cabeza de la lista (Salida).
     public Jugador RegistrarJugador(StreamWriter writer)
     {
-        Jugador nuevo = new Jugador(contadorJugadores, $"Jugador_{contadorJugadores}", writer)
-        {
-            Posicion = this.tablero.GetHead() // Inicia en la cabeza de la lista enlazada
-        };
+        Jugador nuevo = new Jugador(contadorJugadores, $"Jugador_{contadorJugadores}", writer);
+        nuevo.SetPosicion(this.tablero.GetHead()); // Inicia en la cabeza de la lista enlazada
         contadorJugadores++;
 
         this.jugadores.InsertEnd(nuevo);
-        Broadcast($"[SISTEMA] {nuevo.Nombre} se ha unido a la partida.");
-        GodotBroadcast($"jugador/{nuevo.Id}/activar");
+        Broadcast($"[SISTEMA] {nuevo.GetNombre()} se ha unido a la partida.");
+        GodotBroadcast($"jugador/{nuevo.GetId()}/activar");
         return nuevo;
     }
 
     // Registra a un jugador ya existente (creado por RFID o consola) en la lista de jugadores.
     public void RegistrarJugadorExistente(Jugador jugador)
     {
-        if (jugador.Id == 0)
+        if (jugador.GetId() == 0)
         {
-            jugador.Id = contadorJugadores++;
+            jugador.SetId(contadorJugadores++);
         }
-        if (jugador.Posicion == null)
+        if (jugador.GetPosicion() == null)
         {
-            jugador.Posicion = this.tablero.GetHead();
+            jugador.SetPosicion(this.tablero.GetHead());
         }
         this.jugadores.InsertEnd(jugador);
-        Broadcast($"[SISTEMA] {jugador.Nombre} (ID: {jugador.Id}) está listo en el tablero.");
-        GodotBroadcast($"jugador/{jugador.Id}/activar");
+        Broadcast($"[SISTEMA] {jugador.GetNombre()} (ID: {jugador.GetId()}) está listo en el tablero.");
+        GodotBroadcast($"jugador/{jugador.GetId()}/activar");
     }
 
     // ---------------- CONEXION CON GODOT ----------------
@@ -150,10 +172,10 @@ public class JuegoMonopoly
             if (nodoJugador?.GetData() is Jugador j)
             {
                 Casilla? casillaJugador = j.ObtenerCasillaActual();
-                EnviarAEspectador(writer, $"jugador/{j.Id}/activar");
+                EnviarAEspectador(writer, $"jugador/{j.GetId()}/activar");
                 if (casillaJugador != null)
                 {
-                    EnviarAEspectador(writer, $"jugador/{j.Id}/mover/casilla/{casillaJugador.Posicion}");
+                    EnviarAEspectador(writer, $"jugador/{j.GetId()}/mover/casilla/{casillaJugador.GetPosicion()}");
                 }
             }
             nodoJugador = nodoJugador?.GetNext();
@@ -163,9 +185,9 @@ public class JuegoMonopoly
         Node? nodoCasilla = this.tablero.GetHead();
         for (int i = 0; i < this.tablero.Size(); i++)
         {
-            if (nodoCasilla?.GetData() is Propiedad p && p.CantidadCasas > 0)
+            if (nodoCasilla?.GetData() is Propiedad p && p.GetCantidadCasas() > 0)
             {
-                EnviarAEspectador(writer, $"jugador/0/comprarcasa/{p.CantidadCasas}/casilla/{p.Posicion}");
+                EnviarAEspectador(writer, $"jugador/0/comprarcasa/{p.GetCantidadCasas()}/casilla/{p.GetPosicion()}");
             }
             nodoCasilla = nodoCasilla?.GetNext();
         }
@@ -205,21 +227,21 @@ public class JuegoMonopoly
         Casilla? actual = jugador.ObtenerCasillaActual();
         if (actual != null)
         {
-            GodotBroadcast($"jugador/{jugador.Id}/mover/casilla/{actual.Posicion}");
+            GodotBroadcast($"jugador/{jugador.GetId()}/mover/casilla/{actual.GetPosicion()}");
         }
     }
 
     // El Program.cs llama esto cuando un jugador queda eliminado por bancarrota
     public void NotificarEliminacion(Jugador jugador)
     {
-        GodotBroadcast($"jugador/{jugador.Id}/desactivar");
+        GodotBroadcast($"jugador/{jugador.GetId()}/desactivar");
     }
 
     // Remueve a un jugador cuando se desconecta.
     public void DesconectarJugador(Jugador jugador)
     {
         this.jugadores.Delete(jugador);
-        Broadcast($"[SISTEMA] {jugador.Nombre} ha salido de la partida.");
+        Broadcast($"[SISTEMA] {jugador.GetNombre()} ha salido de la partida.");
     }
 
     // Envía un mensaje a todos los jugadores conectados recorriendo la lista enlazada.
@@ -232,7 +254,7 @@ public class JuegoMonopoly
         {
             if (actual?.GetData() is Jugador j)
             {
-                if (excluir == null || j.Id != excluir.Id)
+                if (excluir == null || j.GetId() != excluir.GetId())
                 {
                     j.EnviarMensaje(mensaje);
                 }
@@ -245,11 +267,11 @@ public class JuegoMonopoly
     public void TirarDados(Jugador jugador)
     {
         // 1. Verifica si debe perder su turno por efecto de carta
-        if (jugador.PierdeSiguienteTurno)
+        if (jugador.GetPierdeSiguienteTurno())
         {
-            jugador.PierdeSiguienteTurno = false;
+            jugador.SetPierdeSiguienteTurno(false);
             jugador.EnviarMensaje("⏳ Perdiste este turno debido a un evento anterior.");
-            Broadcast($"📢 {jugador.Nombre} perdió su turno.", jugador);
+            Broadcast($"📢 {jugador.GetNombre()} perdió su turno.", jugador);
             return;
         }
 
@@ -261,21 +283,21 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"🎲 Tiraste: [{dado1}] + [{dado2}] = {total}");
 
         // 3. Manejo de estado en la cárcel
-        if (jugador.EnCarcel)
+        if (jugador.GetEnCarcel())
         {
             if (dado1 == dado2)
             {
-                jugador.EnCarcel = false;
-                jugador.TurnosEnCarcel = 0;
+                jugador.SetEnCarcel(false);
+                jugador.SetTurnosEnCarcel(0);
                 jugador.EnviarMensaje("🎉 ¡Sacaste dobles! Quedas libre de la Cárcel.");
-                Broadcast($"📢 {jugador.Nombre} sacó dobles y salió libre de la Cárcel.", jugador);
+                Broadcast($"📢 {jugador.GetNombre()} sacó dobles y salió libre de la Cárcel.", jugador);
             }
             else
             {
-                jugador.TurnosEnCarcel++;
-                jugador.EnviarMensaje($"🔒 No sacaste dobles. Sigues en la Cárcel ({jugador.TurnosEnCarcel}/3 turnos).");
+                jugador.SetTurnosEnCarcel(jugador.GetTurnosEnCarcel() + 1);
+                jugador.EnviarMensaje($"🔒 No sacaste dobles. Sigues en la Cárcel ({jugador.GetTurnosEnCarcel()}/3 turnos).");
 
-                if (jugador.TurnosEnCarcel >= 3)
+                if (jugador.GetTurnosEnCarcel() >= 3)
                 {
                     jugador.EnviarMensaje("⚠️ Cumpliste 3 turnos en prisión. Debes pagar fianza de $50 para salir.");
                     SalirDeCarcelConPago(jugador);
@@ -288,19 +310,19 @@ public class JuegoMonopoly
         // Avanzamos 'total' nodos hacia adelante utilizando 'GetNext()'
         for (int i = 0; i < total; i++)
         {
-            jugador.Posicion = jugador.Posicion?.GetNext();
+            jugador.SetPosicion(jugador.GetPosicion()?.GetNext());
 
             // Bono por pasar por Salida (Casilla 0) antes de llegar al destino
-            if (jugador.ObtenerCasillaActual()?.Posicion == 0 && i < total - 1)
+            if (jugador.ObtenerCasillaActual()?.GetPosicion() == 0 && i < total - 1)
             {
-                new Transaccion(200, TurnoActual, "Premio por pasar por inicio", jugador, null);
+                new Transaccion(200, GetTurnoActual(), "Premio por pasar por inicio", jugador, null);
                 jugador.EnviarMensaje("💵 ¡Pasaste por Salida! Cobraste $200 de bono.");
-                Broadcast($"📢 {jugador.Nombre} pasó por Salida y cobró $200.", jugador);
+                Broadcast($"📢 {jugador.GetNombre()} pasó por Salida y cobró $200.", jugador);
             }
         }
 
         Casilla? actual = jugador.ObtenerCasillaActual();
-        jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.Nombre} ({actual?.Tipo})");
+        jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.GetNombre()} ({actual?.GetTipo()})");
         AnunciarPosicion(jugador);
 
         // POLIMORFISMO: Se delega la acción a la casilla en la que aterrizó
@@ -321,81 +343,81 @@ public class JuegoMonopoly
 
         if (propiedad.TienePropietario())
         {
-            string dueño = propiedad.Propietario == jugador ? "ya te pertenece" : $"le pertenece a {propiedad.Propietario!.Nombre}";
+            string dueño = propiedad.GetPropietario() == jugador ? "ya te pertenece" : $"le pertenece a {propiedad.GetPropietario()!.GetNombre()}";
             jugador.EnviarMensaje($"❌ Esta propiedad {dueño}.");
             return;
         }
 
-        if (jugador.Dinero < propiedad.PrecioCompra)
+        if (jugador.GetDinero() < propiedad.GetPrecioCompra())
         {
-            jugador.EnviarMensaje($"❌ Saldo insuficiente. Tienes ${jugador.Dinero} y cuesta ${propiedad.PrecioCompra}.");
+            jugador.EnviarMensaje($"❌ Saldo insuficiente. Tienes ${jugador.GetDinero()} y cuesta ${propiedad.GetPrecioCompra()}.");
             return;
         }
 
         // Ejecuta la transacción de compra
-        new Transaccion(propiedad.PrecioCompra, TurnoActual, "Compra de propiedad", jugador, null);
-        propiedad.Propietario = jugador;
+        new Transaccion(propiedad.GetPrecioCompra(), GetTurnoActual(), "Compra de propiedad", jugador, null);
+        propiedad.SetPropietario(jugador);
 
         // USO DE LISTA ENLAZADA: Guardamos la casilla en el inventario del jugador
-        jugador.Propiedades.InsertEnd(propiedad);
+        jugador.GetPropiedades().InsertEnd(propiedad);
 
-        jugador.EnviarMensaje($"🎉 ¡Has comprado '{propiedad.Nombre}' por ${propiedad.PrecioCompra}!");
-        jugador.EnviarMensaje($"Saldo restante: ${jugador.Dinero}");
-        Broadcast($"📢 {jugador.Nombre} compró '{propiedad.Nombre}'!", jugador);
+        jugador.EnviarMensaje($"🎉 ¡Has comprado '{propiedad.GetNombre()}' por ${propiedad.GetPrecioCompra()}!");
+        jugador.EnviarMensaje($"Saldo restante: ${jugador.GetDinero()}");
+        Broadcast($"📢 {jugador.GetNombre()} compró '{propiedad.GetNombre()}'!", jugador);
     }
 
     // Comprar una casa u hotel en la propiedad actual si le pertenece al jugador.
     public void ComprarCasa(Jugador jugador)
     {
         Casilla? actual = jugador.ObtenerCasillaActual();
-        if (actual is not Propiedad propiedad || propiedad.Propietario != jugador)
+        if (actual is not Propiedad propiedad || propiedad.GetPropietario() != jugador)
         {
             jugador.EnviarMensaje("❌ Debes estar en una propiedad que te pertenezca para construir.");
             return;
         }
 
-        if (propiedad.CantidadCasas >= 5)
+        if (propiedad.GetCantidadCasas() >= 5)
         {
             jugador.EnviarMensaje("❌ Esta propiedad ya tiene un Hotel construido (nivel máximo).");
             return;
         }
 
-        int costoCasa = propiedad.PrecioCompra / 2;
-        if (jugador.Dinero < costoCasa)
+        int costoCasa = propiedad.GetPrecioCompra() / 2;
+        if (jugador.GetDinero() < costoCasa)
         {
-            jugador.EnviarMensaje($"❌ Saldo insuficiente. Construir cuesta ${costoCasa} y tienes ${jugador.Dinero}.");
+            jugador.EnviarMensaje($"❌ Saldo insuficiente. Construir cuesta ${costoCasa} y tienes ${jugador.GetDinero()}.");
             return;
         }
 
-        new Transaccion(costoCasa, TurnoActual, "Pago al banco", jugador, null);
-        propiedad.CantidadCasas++;
-        string mejora = propiedad.CantidadCasas == 5 ? "un Hotel" : $"la casa #{propiedad.CantidadCasas}";
-        jugador.EnviarMensaje($"🏗️ ¡Construiste {mejora} en '{propiedad.Nombre}' por ${costoCasa}!");
-        jugador.EnviarMensaje($"Nueva renta: ${propiedad.CalcularRenta()}. Saldo: ${jugador.Dinero}");
-        Broadcast($"📢 {jugador.Nombre} construyó {mejora} en '{propiedad.Nombre}'.", jugador);
-        GodotBroadcast($"jugador/{jugador.Id}/comprarcasa/{propiedad.CantidadCasas}/casilla/{propiedad.Posicion}");
+        new Transaccion(costoCasa, GetTurnoActual(), "Pago al banco", jugador, null);
+        propiedad.SetCantidadCasas(propiedad.GetCantidadCasas() + 1);
+        string mejora = propiedad.GetCantidadCasas() == 5 ? "un Hotel" : $"la casa #{propiedad.GetCantidadCasas()}";
+        jugador.EnviarMensaje($"🏗️ ¡Construiste {mejora} en '{propiedad.GetNombre()}' por ${costoCasa}!");
+        jugador.EnviarMensaje($"Nueva renta: ${propiedad.CalcularRenta()}. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"📢 {jugador.GetNombre()} construyó {mejora} en '{propiedad.GetNombre()}'.", jugador);
+        GodotBroadcast($"jugador/{jugador.GetId()}/comprarcasa/{propiedad.GetCantidadCasas()}/casilla/{propiedad.GetPosicion()}");
     }
 
     // Mueve al jugador a una casilla específica por su índice numérico (0 a 31).
     public void MoverJugadorACasilla(Jugador jugador, int posicionDestino)
     {
-        if (jugador.Posicion == null)
+        if (jugador.GetPosicion() == null)
         {
-            jugador.Posicion = this.tablero.GetHead();
+            jugador.SetPosicion(this.tablero.GetHead());
         }
 
         int total = this.tablero.Size();
         for (int i = 0; i < total; i++)
         {
-            if (jugador.ObtenerCasillaActual()?.Posicion == posicionDestino)
+            if (jugador.ObtenerCasillaActual()?.GetPosicion() == posicionDestino)
             {
                 break;
             }
-            jugador.Posicion = jugador.Posicion?.GetNext();
+            jugador.SetPosicion(jugador.GetPosicion()?.GetNext());
         }
 
         Casilla? actual = jugador.ObtenerCasillaActual();
-        jugador.EnviarMensaje($"📍 Te moviste a: {actual?.Nombre} ({actual?.Tipo})");
+        jugador.EnviarMensaje($"📍 Te moviste a: {actual?.GetNombre()} ({actual?.GetTipo()})");
         AnunciarPosicion(jugador);
         actual?.Accion(jugador);
     }
@@ -407,19 +429,19 @@ public class JuegoMonopoly
         {
             for (int i = 0; i < cantidad; i++)
             {
-                jugador.Posicion = jugador.Posicion?.GetNext();
+                jugador.SetPosicion(jugador.GetPosicion()?.GetNext());
             }
         }
         else
         {
             for (int i = 0; i < Math.Abs(cantidad); i++)
             {
-                jugador.Posicion = jugador.Posicion?.GetPrevious();
+                jugador.SetPosicion(jugador.GetPosicion()?.GetPrevious());
             }
         }
 
         Casilla? actual = jugador.ObtenerCasillaActual();
-        jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.Nombre} ({actual?.Tipo})");
+        jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.GetNombre()} ({actual?.GetTipo()})");
         AnunciarPosicion(jugador);
         actual?.Accion(jugador);
     }
@@ -427,44 +449,44 @@ public class JuegoMonopoly
     // Envía a un jugador directamente a la Cárcel (Casilla 8).
     public void EnviarACarcel(Jugador jugador)
     {
-        jugador.EnCarcel = true;
-        jugador.TurnosEnCarcel = 0;
+        jugador.SetEnCarcel(true);
+        jugador.SetTurnosEnCarcel(0);
         MoverJugadorACasilla(jugador, 8); // Casilla 8 es la Cárcel
         jugador.EnviarMensaje("🔒 Has sido encerrado en la Cárcel.");
-        Broadcast($"🚨 {jugador.Nombre} fue enviado a la Cárcel.", jugador);
+        Broadcast($"🚨 {jugador.GetNombre()} fue enviado a la Cárcel.", jugador);
     }
 
     // Salir de la cárcel pagando fianza o usando carta.
     public void SalirDeCarcelConPago(Jugador jugador)
     {
-        if (!jugador.EnCarcel)
+        if (!jugador.GetEnCarcel())
         {
             jugador.EnviarMensaje("ℹ️ No estás en la Cárcel.");
             return;
         }
 
-        if (jugador.CartasSalirDeCarcel > 0)
+        if (jugador.GetCartasSalirDeCarcel() > 0)
         {
-            jugador.CartasSalirDeCarcel--;
-            jugador.EnCarcel = false;
-            jugador.TurnosEnCarcel = 0;
+            jugador.SetCartasSalirDeCarcel(jugador.GetCartasSalirDeCarcel() - 1);
+            jugador.SetEnCarcel(false);
+            jugador.SetTurnosEnCarcel(0);
             jugador.EnviarMensaje("🎟️ ¡Usaste tu carta de Salir de la Cárcel Gratis y quedas en libertad!");
-            Broadcast($"📢 {jugador.Nombre} usó una carta y salió de la Cárcel.", jugador);
+            Broadcast($"📢 {jugador.GetNombre()} usó una carta y salió de la Cárcel.", jugador);
             return;
         }
 
         int fianza = 50;
-        if (jugador.Dinero < fianza)
+        if (jugador.GetDinero() < fianza)
         {
-            jugador.EnviarMensaje($"❌ No tienes suficiente dinero (${jugador.Dinero}) para pagar la fianza (${fianza}).");
+            jugador.EnviarMensaje($"❌ No tienes suficiente dinero (${jugador.GetDinero()}) para pagar la fianza (${fianza}).");
             return;
         }
 
-        new Transaccion(fianza, TurnoActual, "Pago al banco", jugador, null);
-        jugador.EnCarcel = false;
-        jugador.TurnosEnCarcel = 0;
-        jugador.EnviarMensaje($"💵 Pagaste ${fianza} de fianza y has salido de la Cárcel. Saldo: ${jugador.Dinero}");
-        Broadcast($"📢 {jugador.Nombre} pagó la fianza y salió de la Cárcel.", jugador);
+        new Transaccion(fianza, GetTurnoActual(), "Pago al banco", jugador, null);
+        jugador.SetEnCarcel(false);
+        jugador.SetTurnosEnCarcel(0);
+        jugador.EnviarMensaje($"💵 Pagaste ${fianza} de fianza y has salido de la Cárcel. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"📢 {jugador.GetNombre()} pagó la fianza y salió de la Cárcel.", jugador);
     }
 
     // Consultar estado del jugador y recorrer su lista enlazada de propiedades.
@@ -472,26 +494,26 @@ public class JuegoMonopoly
     {
         Casilla? actual = jugador.ObtenerCasillaActual();
 
-        jugador.EnviarMensaje($"\n=== ESTADO DE {jugador.Nombre} ===");
-        jugador.EnviarMensaje($"Dinero: ${jugador.Dinero}");
-        jugador.EnviarMensaje($"Casilla actual: {actual?.Nombre ?? "Ninguna"}");
-        jugador.EnviarMensaje($"En Cárcel: {(jugador.EnCarcel ? $"Sí ({jugador.TurnosEnCarcel}/3)" : "No")}");
-        jugador.EnviarMensaje($"Cartas Salir de Cárcel: {jugador.CartasSalirDeCarcel}");
-        jugador.EnviarMensaje($"Propiedades compradas ({jugador.Propiedades.Size()}):");
+        jugador.EnviarMensaje($"\n=== ESTADO DE {jugador.GetNombre()} ===");
+        jugador.EnviarMensaje($"Dinero: ${jugador.GetDinero()}");
+        jugador.EnviarMensaje($"Casilla actual: {actual?.GetNombre() ?? "Ninguna"}");
+        jugador.EnviarMensaje($"En Cárcel: {(jugador.GetEnCarcel() ? $"Sí ({jugador.GetTurnosEnCarcel()}/3)" : "No")}");
+        jugador.EnviarMensaje($"Cartas Salir de Cárcel: {jugador.GetCartasSalirDeCarcel()}");
+        jugador.EnviarMensaje($"Propiedades compradas ({jugador.GetPropiedades().Size()}):");
 
         // Recorrido de la lista enlazada de propiedades del jugador
-        Node? temp = jugador.Propiedades.GetHead();
-        int totalPropiedades = jugador.Propiedades.Size();
+        Node? temp = jugador.GetPropiedades().GetHead();
+        int totalPropiedades = jugador.GetPropiedades().Size();
         for (int i = 0; i < totalPropiedades; i++)
         {
             if (temp?.GetData() is Propiedad p)
             {
-                string nivel = p.CantidadCasas == 5 ? "Hotel" : $"{p.CantidadCasas} casas";
-                jugador.EnviarMensaje($"  - {p.Nombre} (Grupo: {p.ColorGrupo}, Renta: ${p.CalcularRenta()}, {nivel})");
+                string nivel = p.GetCantidadCasas() == 5 ? "Hotel" : $"{p.GetCantidadCasas()} casas";
+                jugador.EnviarMensaje($"  - {p.GetNombre()} (Grupo: {p.GetColorGrupo()}, Renta: ${p.CalcularRenta()}, {nivel})");
             }
             else if (temp?.GetData() is Casilla c)
             {
-                jugador.EnviarMensaje($"  - {c.Nombre} (Renta: ${c.Renta})");
+                jugador.EnviarMensaje($"  - {c.GetNombre()} (Renta: ${c.GetRenta()})");
             }
             temp = temp?.GetNext();
         }
@@ -511,11 +533,11 @@ public class JuegoMonopoly
             if (actual?.GetData() is Casilla c)
             {
                 string dueño = "";
-                if (c is Propiedad p && p.Propietario != null)
+                if (c is Propiedad p && p.GetPropietario() != null)
                 {
-                    dueño = $" [Dueño: {p.Propietario.Nombre}]";
+                    dueño = $" [Dueño: {p.GetPropietario()!.GetNombre()}]";
                 }
-                jugador.EnviarMensaje($"[{c.Posicion}] {c.Nombre} ({c.Tipo}){dueño}");
+                jugador.EnviarMensaje($"[{c.GetPosicion()}] {c.GetNombre()} ({c.GetTipo()}){dueño}");
             }
             actual = actual?.GetNext();
         }

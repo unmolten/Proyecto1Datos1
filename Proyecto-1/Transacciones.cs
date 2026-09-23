@@ -28,6 +28,89 @@ class Transaccion
     private Jugador? jugadorDestino; // NOMBRE del jugador destinado. USAR NULL SI VA AL BANCO
     private string descripcion; //Descripcion autogenerada segun el tipo de transaccion
 
+    // Métodos individuales para obtener y definir (Getters y Setters)
+    public int GetTransaccionID()
+    {
+        return this.transaccionID;
+    }
+
+    public void SetTransaccionID(int transaccionID)
+    {
+        this.transaccionID = transaccionID;
+    }
+
+    public int GetMonto()
+    {
+        return this.monto;
+    }
+
+    public void SetMonto(int monto)
+    {
+        this.monto = monto;
+    }
+
+    public int GetTurno()
+    {
+        return this.turno;
+    }
+
+    public void SetTurno(int turno)
+    {
+        this.turno = turno;
+    }
+
+    public string GetFechaYHora()
+    {
+        return this.fechaYHora;
+    }
+
+    public void SetFechaYHora(string fechaYHora)
+    {
+        this.fechaYHora = fechaYHora;
+    }
+
+    public string GetTipo()
+    {
+        return this.tipo;
+    }
+
+    public void SetTipo(string tipo)
+    {
+        this.tipo = tipo;
+    }
+
+    public Jugador? GetJugadorOrigen()
+    {
+        return this.jugadorOrigen;
+    }
+
+    public void SetJugadorOrigen(Jugador? jugadorOrigen)
+    {
+        this.jugadorOrigen = jugadorOrigen;
+    }
+
+    public Jugador? GetJugadorDestino()
+    {
+        return this.jugadorDestino;
+    }
+
+    public void SetJugadorDestino(Jugador? jugadorDestino)
+    {
+        this.jugadorDestino = jugadorDestino;
+    }
+
+    public string GetDescripcion()
+    {
+        return this.descripcion;
+    }
+
+    public void SetDescripcion(string descripcion)
+    {
+        this.descripcion = descripcion;
+    }
+
+
+
     public Transaccion(int monto, int turno, string tipo, Jugador? jugadorOrigen, Jugador? jugadorDestino)
     {   
         //Datos iniciales
@@ -61,7 +144,7 @@ class Transaccion
                     return;
                 }
 
-                jugadorOrigen.Balance -= monto;
+                jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
 
                 break;
             case "Pago de alquiler":
@@ -72,8 +155,8 @@ class Transaccion
                     return;
                 }
 
-                jugadorOrigen.Balance -= monto;
-                jugadorDestino.Balance += monto;
+                jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
+                jugadorDestino.SetBalance(jugadorDestino.GetBalance() + monto);
                 break;
             case "Pago al banco":
 
@@ -83,7 +166,7 @@ class Transaccion
                     return;
                 }
 
-                jugadorOrigen.Balance -= monto;
+                jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
                 break;
             case "Pago entre jugadores":
 
@@ -93,8 +176,8 @@ class Transaccion
                     return;
                 }
 
-                jugadorOrigen.Balance -= monto;
-                jugadorDestino.Balance += monto;
+                jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
+                jugadorDestino.SetBalance(jugadorDestino.GetBalance() + monto);
                 break;
             case "Ganancia por evento":
                 
@@ -104,7 +187,7 @@ class Transaccion
                     return;
                 }
 
-                jugadorOrigen.Balance += monto;
+                jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() + monto);
                 break;
             case "Perdida por evento":
 
@@ -114,7 +197,7 @@ class Transaccion
                     return;
                 }
 
-                jugadorOrigen.Balance -= monto;
+                jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
                 break;
             case "Premio por pasar por inicio":
 
@@ -124,7 +207,7 @@ class Transaccion
                     return;
                 }
 
-                jugadorOrigen.Balance += monto;
+                jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() + monto);
                 break;
             default:
                 Console.WriteLine("ERROR: Tipo de transaccion no reconocido");
@@ -139,8 +222,8 @@ class Transaccion
         string mensajeDescripcion;
         
 
-        string origen = this.jugadorOrigen?.Nombre ?? "El Banco";
-        string destino = this.jugadorDestino?.Nombre ?? "el Banco";
+        string origen = this.jugadorOrigen?.GetNombre() ?? "El Banco";
+        string destino = this.jugadorDestino?.GetNombre() ?? "el Banco";
 
         //Mensajes en mayuscula deben ser reemplazados por el dato correspondiente
         switch (this.tipo)
@@ -177,8 +260,8 @@ class Transaccion
     //Método para almacenar la transacción en el archivo Almacenamiento.txt
     public void AlmacenarTransaccion()
     {
-        string nomOrigen = this.jugadorOrigen?.Nombre ?? "Banco";
-        string nomDestino = this.jugadorDestino?.Nombre ?? "Banco";
+        string nomOrigen = this.jugadorOrigen?.GetNombre() ?? "Banco";
+        string nomDestino = this.jugadorDestino?.GetNombre() ?? "Banco";
         string contenido = $"{transaccionID}.{fechaYHora}.{turno}.{tipo}.{monto}.{nomOrigen}.{nomDestino}.{descripcion}"; //La informacion se almacena con separador de punto. EVITAR NOMBRES Y DATOS QUE PUEDAN CONTENER UN PUNTO
 
         try
