@@ -4,3 +4,8 @@
 
 [node name="HouseMarker" type="Node2D" unique_id=663245410]
 script = ExtResource("1_house")
+
+[node name="OwnerIcon" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(0, -30)
+scale = Vector2(0.45, 0.45)

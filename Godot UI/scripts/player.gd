@@ -25,6 +25,30 @@ var active: bool = false:
 		## y que deje de ser visible si active es false
 		visible = value
 
+## true cuando es el turno de este jugador. Mientras esto sea true, se
+## dibuja un aro de color alrededor de la ficha (ver _draw más abajo)
+var is_current_turn: bool = false:
+
+	set(value):
+		is_current_turn = value
+
+		## Pide que se vuelva a dibujar para que aparezca/desaparezca el aro
+		queue_redraw()
+
+## Color del aro de turno segun el jugador (MODIFICABLE, aqui se define
+## cual color le toca a cada jugador):
+## Jugador 1: Azul | Jugador 2: Rojo | Jugador 3: Verde | Jugador 4: Morado
+const TURN_RING_COLORS: Dictionary = {
+	1: Color.DODGER_BLUE,
+	2: Color.CRIMSON,
+	3: Color.LIME_GREEN,
+	4: Color(0.6, 0.2, 0.85),
+}
+
+## Radio y grosor del aro dibujado
+const TURN_RING_RADIUS: float = 24.0
+const TURN_RING_WIDTH: float = 4.0
+
 ## Cuando el nodo está listo dentro de la escena, se ejecuta esto
 func _ready() -> void:
 	
@@ -79,3 +103,17 @@ func move_to(target_position: Vector2) -> void:
 	## Le indica al Tween que cambie la posición global de la ficha
 	## hasta la posición indicada durante el tiempo definido en move_duration
 	tween.tween_property(self, "global_position", target_position, move_duration)
+
+
+## Dibuja el aro de color alrededor de la ficha, solo si es su turno.
+## No hace falta ninguna imagen, se dibuja el circulo directamente
+func _draw() -> void:
+
+	if not is_current_turn:
+		return
+
+	## Busca el color que le corresponde a este jugador, blanco si no está en la lista
+	var color: Color = TURN_RING_COLORS.get(player_id, Color.WHITE)
+
+	## draw_arc dibuja un círculo completo cuando va de 0 a TAU (2*PI)
+	draw_arc(Vector2.ZERO, TURN_RING_RADIUS, 0, TAU, 32, color, TURN_RING_WIDTH, true)

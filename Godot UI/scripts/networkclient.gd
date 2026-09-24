@@ -6,7 +6,9 @@ class_name NetworkClient
 ##   jugador/<id>/activar
 ##   jugador/<id>/desactivar
 ##   jugador/<id>/mover/casilla/<n>
-##   jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>   (5 = hotel)
+##   jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>   (5 = hotel, <id> es el dueño)
+##   jugador/<id>/turno                              (NUEVO, falta que el servidor lo mande)
+##   jugador/<id>/dinero/<monto>                     (NUEVO, falta que el servidor lo mande)
 ## Se usa StreamPeerTCP para establecer una conexión TCP con el servidor
 
 ## Señal de tipo string con el mensaje recibido.
@@ -197,7 +199,9 @@ func _handle_message(raw: String) -> void:
 	## tercera parte y "casilla" en la quinta parte:
 	## jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>
 	## (por ahora no se valida nada, solo se muestra la cantidad de casas/hotel
-	## indicada en esa casilla, sin importar el id del jugador)
+	## indicada en esa casilla; el <id> aqui es el DUEÑO de la propiedad, ya
+	## que solo el dueño puede construir, por eso se lo pasamos a set_house_level
+	## para que pueda poner su avatar arriba de las casas)
 	elif parts.size() >= 6 and parts[2] == "comprarcasa" and parts[4] == "casilla":
 		
 		## Nivel de casas (1 a 4) u hotel (5)
@@ -205,8 +209,23 @@ func _handle_message(raw: String) -> void:
 		
 		## Casilla donde se deben mostrar las casas/hotel
 		var casilla_index := int(parts[5])
-		game_board.set_house_level(casilla_index, level)
-		
+		game_board.set_house_level(casilla_index, level, player_id)
+
+	## Si el tamaño de las partes es mayor o igual a 3 e incluye "turno" en la
+	## tercera parte: jugador/<id>/turno
+	## (NUEVO, todavia falta que el servidor lo mande, pero Godot ya lo entiende)
+	elif parts.size() >= 3 and parts[2] == "turno":
+
+		game_board.set_current_turn(player_id)
+
+	## Si el tamaño de las partes es mayor o igual a 4 e incluye "dinero" en la
+	## tercera parte: jugador/<id>/dinero/<monto>
+	## (NUEVO, todavia falta que el servidor lo mande, pero Godot ya lo entiende)
+	elif parts.size() >= 4 and parts[2] == "dinero":
+
+		var monto := int(parts[3])
+		game_board.set_player_money(player_id, monto)
+
 	## Si no se reconoció el mensaje aquí arriba, tira un warning
 	else:
 		push_warning("Acción no reconocida: %s" % raw)

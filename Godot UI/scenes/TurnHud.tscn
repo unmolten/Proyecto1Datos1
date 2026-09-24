@@ -1,0 +1,49 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/turn_hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://sprites/esmeralda.png" id="2_emerald"]
+
+[node name="TurnHud" type="Control"]
+script = ExtResource("1_hud")
+mouse_filter = 2
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -230.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 60.0
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.45)
+
+[node name="Avatar" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 48.0
+offset_bottom = 48.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EmeraldIcon" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 56.0
+offset_top = 12.0
+offset_right = 80.0
+offset_bottom = 36.0
+texture = ExtResource("2_emerald")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MoneyLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 6.0
+offset_right = 220.0
+offset_bottom = 46.0
+theme_override_font_sizes/font_size = 22
+vertical_alignment = 1
+text = "0"

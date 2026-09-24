@@ -31,6 +31,9 @@ class_name GameBoard
 ## (la escena HouseMarker.tscn)
 @export var house_scene: PackedScene
 
+## Ruta al nodo TurnHud (el indicador de turno/dinero de la esquina)
+@export var hud_path: NodePath
+
 
 ## Colores que se utilizarán para las fichas si no se les asignó una textura.
 ## El índice 0 corresponde al jugador 1, el 1 al jugador 2, etc
@@ -93,6 +96,12 @@ var casilla_occupants: Dictionary = {}
 ## para cada casilla. Ejemplo: house_markers[5] = nodo HouseMarker de la casilla 5
 var house_markers: Dictionary = {}
 
+## Referencia al nodo TurnHud (la esquina superior derecha)
+var hud: TurnHud = null
+
+## ID del jugador que tiene el turno actualmente (0 = todavia nadie)
+var current_turn_id: int = 0
+
 
 # ============================================================
 # INICIO DEL TABLERO
@@ -106,6 +115,10 @@ func _ready() -> void:
 
 	# Después crea las fichas de los cuatro jugadores.
 	_spawn_players()
+
+	# Busca el HUD de turno/dinero, si se asignó una ruta
+	if hud_path != NodePath() and has_node(hud_path):
+		hud = get_node(hud_path)
 
 
 # -------------- BUSCAR LAS CASILLAS --------------
@@ -288,6 +301,38 @@ func move_player_to_casilla(id: int, casilla_index: int) -> void:
 	_update_casilla_arrangement(casilla_index)
 
 
+## Marca de quién es el turno actual: le pone el aro de color a esa ficha
+## (y se lo quita a las demás), y actualiza el avatar del HUD de la esquina.
+## Esta función es llamada cuando NetworkClient recibe:
+## "jugador/<id>/turno" (NUEVO, todavía falta que el servidor lo mande)
+func set_current_turn(id: int) -> void:
+
+	# Si no existe el jugador, no hacemos nada
+	if not players.has(id):
+		return
+
+	current_turn_id = id
+
+	# Le pone el aro solo al jugador que le toca, se lo quita a todos los demas
+	for pid in players.keys():
+		players[pid].is_current_turn = (pid == id)
+
+	# Si existe el HUD, le actualiza el avatar con el sprite de este jugador
+	if hud != null and id - 1 < player_sprites.size():
+		hud.set_turn_player(player_sprites[id - 1])
+
+
+## Actualiza cuánto dinero tiene un jugador. Si es el jugador que tiene el
+## turno actual, también actualiza el número que se ve en el HUD.
+## Esta función es llamada cuando NetworkClient recibe:
+## "jugador/<id>/dinero/<monto>" (NUEVO, todavía falta que el servidor lo mande)
+func set_player_money(id: int, monto: int) -> void:
+
+	# Solo nos importa actualizar el HUD si es el dinero de quien tiene el turno
+	if id == current_turn_id and hud != null:
+		hud.set_money(monto)
+
+
 # -------------- funciones internas --------------
 
 
@@ -432,7 +477,9 @@ func _get_house_placement(casilla_index: int) -> Dictionary:
 ## simplemente muestra la cantidad de casas u hotel indicado en esa casilla)
 ##
 ## level: 1, 2, 3 o 4 = esa cantidad de casas | 5 = hotel (reemplaza las casas)
-func set_house_level(casilla_index: int, level: int) -> void:
+## owner_id: el jugador dueño de la propiedad, viene del mismo mensaje
+## (jugador/<owner_id>/comprarcasa/...), se usa para poner su avatar arriba
+func set_house_level(casilla_index: int, level: int, owner_id: int = 0) -> void:
 
 	## Calcula dónde y cómo debe ir el marcador de casas para esta casilla
 	var placement: Dictionary = _get_house_placement(casilla_index)
@@ -471,3 +518,7 @@ func set_house_level(casilla_index: int, level: int) -> void:
 
 	## Le dice cuántas casas/hotel mostrar y en qué dirección acomodarse
 	marker.set_level(level, placement["horizontal"])
+
+	## Le pone (o le quita, si owner_id es 0) el avatar pequeño del dueño
+	if owner_id > 0 and owner_id - 1 < player_sprites.size():
+		marker.set_owner_texture(player_sprites[owner_id - 1])

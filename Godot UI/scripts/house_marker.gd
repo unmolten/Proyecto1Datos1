@@ -44,6 +44,25 @@ func set_level(new_level: int, is_horizontal: bool) -> void:
 	## Pide que se vuelva a dibujar (dispara _draw())
 	queue_redraw()
 
+	## Si ya no quedan casas, tambien se esconde el avatar del dueño
+	if level <= 0 and has_node("OwnerIcon"):
+		$OwnerIcon.visible = false
+
+
+## Pone (o quita) el sprite pequeño del dueño de la propiedad, un poco
+## arriba de donde van las casas. Se llama por separado de set_level porque
+## GameBoard ya sabe qué textura le toca a cada jugador
+func set_owner_texture(texture: Texture2D) -> void:
+	if not has_node("OwnerIcon"):
+		return
+
+	if texture == null:
+		$OwnerIcon.visible = false
+		return
+
+	$OwnerIcon.texture = texture
+	$OwnerIcon.visible = true
+
 
 func _draw() -> void:
 
