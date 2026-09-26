@@ -390,14 +390,61 @@ internal class Program
         const int puertoGodot = 6767;
         TcpListener listener = new TcpListener(System.Net.IPAddress.Any, puertoGodot);
         listener.Start();
-        Console.WriteLine($"[GODOT] Escuchando en el puerto {puertoGodot}, esperando a que se conecte la UI...\n");
+
+        Console.WriteLine("\n==========================================================");
+        Console.WriteLine($"[GODOT] Servidor de espectadores activo en el puerto {puertoGodot}");
+        Console.WriteLine("        - En esta misma PC: 127.0.0.1");
+
+        List<string> ips = ObtenerIpsLocales();
+        if (ips.Count > 0)
+        {
+            Console.WriteLine("        - Para amigos en otra PC (misma red WiFi/LAN o VPN):");
+            foreach (string ip in ips)
+            {
+                Console.WriteLine($"          -> IP: {ip}");
+            }
+        }
+        Console.WriteLine("==========================================================\n");
 
         while (true)
         {
-            TcpClient cliente = listener.AcceptTcpClient();
-            var writer = new System.IO.StreamWriter(cliente.GetStream(), System.Text.Encoding.UTF8) { AutoFlush = true };
-            juego.ConectarEspectadorGodot(writer);
-            Console.WriteLine("[GODOT] Se conecto una instancia de Godot.");
+            try
+            {
+                TcpClient cliente = listener.AcceptTcpClient();
+                string endpoint = cliente.Client.RemoteEndPoint?.ToString() ?? "desconocido";
+                var writer = new System.IO.StreamWriter(cliente.GetStream(), System.Text.Encoding.UTF8) { AutoFlush = true };
+                juego.ConectarEspectadorGodot(writer);
+                Console.WriteLine($"[GODOT] Se conectó un espectador desde {endpoint}.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GODOT] Error aceptando espectador: {ex.Message}");
+            }
         }
+    }
+
+    // Obtiene las direcciones IPv4 de las tarjetas de red activas para compartirlas con amigos
+    private static List<string> ObtenerIpsLocales()
+    {
+        List<string> ips = new List<string>();
+        try
+        {
+            foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ni.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up &&
+                    ni.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback)
+                {
+                    foreach (var ip in ni.GetIPProperties().UnicastAddresses)
+                    {
+                        if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        {
+                            ips.Add(ip.Address.ToString());
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
+        return ips;
     }
 }

@@ -18,6 +18,9 @@ class_name NetworkClient
 ## Una señal sirve para avisar a otras partes del código que algo ocurrió
 signal message_received(raw: String)
 
+## Señal para avisar del estado de conexión a la UI (ConnectionHud)
+signal connection_status_changed(connected: bool, message: String)
+
 # Variables exportadas que permiten modificarlas desde el editor 2D en vez de aquí
 # en el código, para poner la ip del host, el puerto, el nodo del tablero
 # el intervalo de reconexión
@@ -43,9 +46,14 @@ var _buffer: String = ""
 ## reconexion
 var _reconnect_timer: float = 0.0
 
+func is_connected_to_server() -> bool:
+	return _connected
+
 # Cuando el objeto está listo y cargado dentro de la escena, se ejecuta lo siguiente:
 func _ready() -> void:
-	
+	# Carga IP desde archivo o argumentos de consola si existen
+	_load_server_config()
+
 	## Si hay una ruta ya definida
 	if game_board_path != NodePath():
 		
@@ -62,15 +70,89 @@ func _ready() -> void:
 	## conseguir un tablero o no, se intenta la conexion.
 	_try_connect()
 
+## Intenta leer la IP y puerto desde archivos de configuración o argumentos de consola
+func _load_server_config() -> void:
+	# 1. Archivo server_ip.txt junto al ejecutable o en user://
+	var exe_dir := OS.get_executable_path().get_base_dir()
+	var paths_to_check: Array[String] = [
+		exe_dir.path_join("server_ip.txt"),
+		"user://last_server_ip.txt",
+		"res://server_ip.txt"
+	]
+	
+	for path in paths_to_check:
+		if FileAccess.file_exists(path):
+			var file := FileAccess.open(path, FileAccess.READ)
+			if file:
+				var found := false
+				while not file.eof_reached():
+					var line := file.get_line().strip_edges()
+					if line != "" and not line.begins_with("#"):
+						_apply_host_port_string(line)
+						found = true
+						break
+				file.close()
+				if found:
+					break
+
+	# 2. Argumentos de linea de comandos (--ip=192.168.1.5 o --ip 192.168.1.5 o --port=6767)
+	var args := OS.get_cmdline_args()
+	args.append_array(OS.get_cmdline_user_args())
+	for i in range(args.size()):
+		var arg := args[i]
+		if arg.begins_with("--ip="):
+			host = arg.substr(5).strip_edges()
+		elif arg == "--ip" and i + 1 < args.size():
+			host = args[i + 1].strip_edges()
+		elif arg.begins_with("--port="):
+			port = int(arg.substr(7).strip_edges())
+		elif arg == "--port" and i + 1 < args.size():
+			port = int(args[i + 1].strip_edges())
+
+func _apply_host_port_string(val: String) -> void:
+	if ":" in val:
+		var parts := val.split(":")
+		host = parts[0].strip_edges()
+		if parts.size() > 1 and parts[1].is_valid_int():
+			port = int(parts[1])
+	else:
+		host = val.strip_edges()
+
+## Permite cambiar la IP y el puerto en tiempo de ejecución (desde el ConnectionHud)
+func connect_to(new_host: String, new_port: int = 6767) -> void:
+	var clean_host := new_host.strip_edges()
+	if clean_host == "":
+		return
+	if ":" in clean_host:
+		var parts := clean_host.split(":")
+		clean_host = parts[0].strip_edges()
+		if parts.size() > 1 and parts[1].is_valid_int():
+			new_port = int(parts[1])
+
+	host = clean_host
+	port = new_port
+
+	# Guardar en user://last_server_ip.txt para recordar la IP elegida
+	var save_file := FileAccess.open("user://last_server_ip.txt", FileAccess.WRITE)
+	if save_file:
+		save_file.store_string("%s:%d" % [host, port])
+		save_file.close()
+
+	_connected = false
+	_reconnect_timer = 0.0
+	_try_connect()
+
 ## Función para intentar conectarse al servidor mediante conexion TCP
 func _try_connect() -> void:
-	
-	## Se intenta la conexion con el ip del host y el puerto
+	if _socket.get_status() != StreamPeerTCP.STATUS_NONE:
+		_socket.disconnect_from_host()
+	_buffer = ""
 	var err := _socket.connect_to_host(host, port)
-	
-	## Si err no es igual a OK (o sea, no se inicio la conexion), se muestra el warning
 	if err != OK:
-		push_warning("No se pudo iniciar conexión (%s), reintentando..." % err)
+		push_warning("No se pudo iniciar conexión (%s) a %s:%d" % [err, host, port])
+		connection_status_changed.emit(false, "No se pudo iniciar conexión (%s)" % err)
+	else:
+		connection_status_changed.emit(false, "Conectando a %s:%d..." % [host, port])
 
 # Esta función se pasa ejecutando constantemente mientras corre el juego
 func _process(delta: float) -> void:
@@ -92,6 +174,7 @@ func _process(delta: float) -> void:
 			if not _connected:
 				_connected = true
 				print("Conectado al servidor %s:%d" % [host, port])
+				connection_status_changed.emit(true, "Conectado a %s:%d" % [host, port])
 				
 			## Revisa si alguna información se envió
 			_read_available()
@@ -103,7 +186,8 @@ func _process(delta: float) -> void:
 			# se considere como conectado y hacemos un print
 			if _connected:
 				print("Desconectado del servidor")
-			_connected = false
+				_connected = false
+				connection_status_changed.emit(false, "Desconectado de %s:%d" % [host, port])
 			
 			## Comienza el proceso de reconexion con el timer, se le va sumando delta,
 			## que representa el tiempo desde el frame anterior, o sea, vamos contando

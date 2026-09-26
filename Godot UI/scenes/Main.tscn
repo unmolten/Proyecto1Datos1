@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://cbiynp5qwwjnl" path="res://scenes/HouseMarker.tscn" id="8_house"]
 [ext_resource type="PackedScene" path="res://scenes/TurnHud.tscn" id="9_hud"]
 [ext_resource type="PackedScene" path="res://scenes/PropertyList.tscn" id="10_proplist"]
+[ext_resource type="PackedScene" path="res://scenes/ConnectionHud.tscn" id="11_connhud"]
 
 [node name="Board" type="Node2D" unique_id=1573359381]
 script = ExtResource("1_rvslj")
@@ -184,3 +185,12 @@ offset_right = 0.0
 offset_bottom = 0.0
 grow_horizontal = 0
 grow_vertical = 2
+
+[node name="ConnectionHud" parent="HudLayer" instance=ExtResource("11_connhud")]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 372.0
+offset_bottom = 48.0
+
