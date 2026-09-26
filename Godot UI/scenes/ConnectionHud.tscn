@@ -1,0 +1,90 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/connection_hud.gd" id="1_hud"]
+
+[node name="ConnectionHud" type="Control"]
+custom_minimum_size = Vector2(360, 38)
+layout_mode = 3
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = 372.0
+offset_bottom = 48.0
+script = ExtResource("1_hud")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.13, 0.9)
+
+[node name="Margin" type="MarginContainer" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="VBox" type="VBoxContainer" parent="Background/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StatusRow" type="HBoxContainer" parent="Background/Margin/VBox"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="Background/Margin/VBox/StatusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "🔴 Desconectado (127.0.0.1:6767)"
+vertical_alignment = 1
+
+[node name="ToggleBtn" type="Button" parent="Background/Margin/VBox/StatusRow"]
+custom_minimum_size = Vector2(30, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "⚙️"
+
+[node name="InputRow" type="HBoxContainer" parent="Background/Margin/VBox"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="IpLabel" type="Label" parent="Background/Margin/VBox/InputRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "IP:"
+vertical_alignment = 1
+
+[node name="IpEdit" type="LineEdit" parent="Background/Margin/VBox/InputRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 12
+text = "127.0.0.1"
+placeholder_text = "127.0.0.1"
+
+[node name="PortLabel" type="Label" parent="Background/Margin/VBox/InputRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Port:"
+vertical_alignment = 1
+
+[node name="PortEdit" type="LineEdit" parent="Background/Margin/VBox/InputRow"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "6767"
+
+[node name="ConnectBtn" type="Button" parent="Background/Margin/VBox/InputRow"]
+custom_minimum_size = Vector2(65, 24)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Conectar"

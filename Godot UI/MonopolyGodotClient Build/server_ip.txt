@@ -1,0 +1,4 @@
+# Archivo de configuración de IP para MonopolyGodotClient
+# Si juegas en la misma computadora que el servidor, deja 127.0.0.1
+# Si un amigo hospeda el servidor, escribe aquí su IP local o de VPN (ej: 192.168.1.50)
+127.0.0.1:6767
