@@ -2,6 +2,16 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
+using System.Threading;
+
+// Representa una acción de juego solicitada desde la UI de Godot o la consola
+public class AccionTurno
+{
+    public string Tipo { get; set; } = "";
+    public int CasillaIndex { get; set; } = -1;
+    public int JugadorId { get; set; } = 0;
+}
+
 // PLANTILLA BASE: JuegoMonopoly
 // 
 // Esta clase coordina el juego de Monopoly en el servidor, conectando las casillas,
@@ -229,6 +239,12 @@ public class JuegoMonopoly
         {
             EnviarAEspectador(writer, $"jugador/{this.jugadorEnTurno.GetId()}/turno");
             EnviarAEspectador(writer, $"jugador/{this.jugadorEnTurno.GetId()}/dinero/{this.jugadorEnTurno.GetDinero()}");
+
+            Casilla? cActual = this.jugadorEnTurno.ObtenerCasillaActual();
+            bool puedeComprar = cActual is Propiedad pr && !pr.TienePropietario() && this.jugadorEnTurno.GetDinero() >= pr.GetPrecioCompra();
+            int precio = (cActual is Propiedad pr2) ? pr2.GetPrecioCompra() : 0;
+            string nom = cActual?.GetNombre() ?? "";
+            EnviarAEspectador(writer, $"turno/acciones/1/{(puedeComprar ? 1 : 0)}/{precio}/{nom}/0/{(this.jugadorEnTurno.GetEnCarcel() ? 1 : 0)}");
         }
     }
 
@@ -240,7 +256,7 @@ public class JuegoMonopoly
 
     // Manda una linea a TODAS las instancias de Godot conectadas
     // esto usa el protocolo que ya entiende networkclient.gd (jugador/id/accion/...)
-    private void GodotBroadcast(string mensaje)
+    public void GodotBroadcast(string mensaje)
     {
         lock (this.espectadoresGodot)
         {
@@ -257,6 +273,215 @@ public class JuegoMonopoly
                 }
             }
         }
+    }
+
+    // ---------------- INTEGRACIÓN HARDWARE RFID / DADOS ----------------
+    private ConexionPico? conexionPico;
+    private ObtenerID? lectorRfid;
+
+    public void ConfigurarHardware(ConexionPico? conexion)
+    {
+        this.conexionPico = conexion;
+        if (conexion != null)
+        {
+            this.lectorRfid = new ObtenerID(conexion);
+        }
+    }
+
+    public ConexionPico? GetConexionPico()
+    {
+        return this.conexionPico;
+    }
+
+    // ---------------- COLA DE ACCIONES DE TURNOS (GODOT + CONSOLA) ----------------
+    // Cola implementada con la lista enlazada propia + Monitor para bloqueo entre hilos
+    private LinkedList colaAcciones = new LinkedList();
+    private readonly object colaLock = new object();
+
+    public void EncolarAccion(AccionTurno accion)
+    {
+        lock (colaLock)
+        {
+            colaAcciones.InsertEnd(accion);
+            Monitor.Pulse(colaLock); // Despierta al hilo que espera en EsperarAccion
+        }
+    }
+
+    public AccionTurno EsperarAccion(Jugador jugador)
+    {
+        while (true)
+        {
+            AccionTurno accion;
+            lock (colaLock)
+            {
+                // Espera bloqueante hasta que haya al menos un elemento en la cola
+                while (colaAcciones.IsEmpty())
+                {
+                    Monitor.Wait(colaLock);
+                }
+                // Saca el primer elemento (FIFO) de la lista enlazada
+                Node? nodo = colaAcciones.DeleteFirst();
+                accion = (AccionTurno)nodo!.GetData();
+            }
+            // Acciones generales o asignadas al jugador en turno
+            if (accion.JugadorId == 0 || accion.JugadorId == jugador.GetId())
+            {
+                return accion;
+            }
+        }
+    }
+
+    // Procesa comandos enviados por los clientes Godot vía TCP (ej: accion/1/tirar)
+    public void ProcesarComandoCliente(string comando)
+    {
+        string[] partes = comando.Split('/');
+        if (partes.Length < 3 || partes[0] != "accion")
+        {
+            return;
+        }
+
+        if (!int.TryParse(partes[1], out int jugadorId))
+        {
+            return;
+        }
+
+        string tipo = partes[2].ToLower();
+        int arg = -1;
+        if (partes.Length >= 4)
+        {
+            int.TryParse(partes[3], out arg);
+        }
+
+        if (tipo == "rfid" || tipo == "rfid_confirmar" || tipo == "confirmarpago")
+        {
+            ConfirmarPagoRfid(jugadorId);
+            return;
+        }
+        if (tipo == "cancelarpago")
+        {
+            CancelarPagoRfid(jugadorId);
+            return;
+        }
+
+        EncolarAccion(new AccionTurno
+        {
+            JugadorId = jugadorId,
+            Tipo = tipo,
+            CasillaIndex = arg
+        });
+    }
+
+    // ---------------- AUTORIZACIÓN DE PAGO VIA RFID (ESTILO COMPRA CON TELÉFONO) ----------------
+    private volatile bool pagoRfidConfirmado = false;
+    private volatile bool pagoRfidCancelado = false;
+
+    public void ConfirmarPagoRfid(int jugadorId)
+    {
+        pagoRfidConfirmado = true;
+    }
+
+    public void CancelarPagoRfid(int jugadorId)
+    {
+        pagoRfidCancelado = true;
+    }
+
+    public bool AutorizarPagoRFID(Jugador jugador, int monto, string concepto)
+    {
+        pagoRfidConfirmado = false;
+        pagoRfidCancelado = false;
+
+        Console.WriteLine("\n==========================================================");
+        Console.WriteLine("📲 [AUTORIZACIÓN DE PAGO REQUERIDA (RFID / CONTACTLESS)]");
+        Console.WriteLine($"   Jugador: {jugador.GetNombre()} (Saldo actual: ${jugador.GetDinero()})");
+        Console.WriteLine($"   Monto a pagar: ${monto}");
+        Console.WriteLine($"   Concepto: {concepto}");
+        Console.WriteLine("   -> Acerca tu tarjeta RFID al lector físico, o presiona");
+        Console.WriteLine("      [Pagar con RFID / NFC] en Godot, o escribe 'p' en consola...");
+        Console.WriteLine("==========================================================");
+
+        // Notifica a todas las pantallas de Godot para abrir el modal de pago
+        GodotBroadcast($"pago/solicitar/{jugador.GetId()}/{monto}/{concepto}");
+
+        bool hardwareDisponible = this.conexionPico != null && this.conexionPico.EstaConectado();
+        if (hardwareDisponible && this.lectorRfid != null)
+        {
+            try
+            {
+                this.lectorRfid.IniciarLecturaTarjetas();
+            }
+            catch { }
+        }
+
+        while (!pagoRfidConfirmado && !pagoRfidCancelado)
+        {
+            if (hardwareDisponible && this.lectorRfid != null)
+            {
+                try
+                {
+                    string uid = this.lectorRfid.LeerTarjeta();
+                    if (!string.IsNullOrEmpty(uid))
+                    {
+                        Console.WriteLine($"💳 [Pico RFID] ¡Tarjeta física detectada! UID: {uid}. Pago aprobado.");
+                        pagoRfidConfirmado = true;
+                        break;
+                    }
+                }
+                catch { }
+            }
+
+            Thread.Sleep(50);
+        }
+
+        if (pagoRfidConfirmado)
+        {
+            Console.WriteLine($"✅ [PAGO APROBADO] Pago de ${monto} completado exitosamente para {jugador.GetNombre()}.\n");
+            GodotBroadcast($"pago/exito/{jugador.GetId()}/{monto}");
+            Thread.Sleep(300);
+            return true;
+        }
+        else
+        {
+            Console.WriteLine($"❌ [PAGO CANCELADO] La transacción de ${monto} fue cancelada.\n");
+            GodotBroadcast($"pago/cancelado/{jugador.GetId()}");
+            return false;
+        }
+    }
+
+    // Sincroniza con Godot qué botones de acción están habilitados en el turno actual
+    public void EnviarEstadoAcciones(Jugador jugador, bool yaTiroDados)
+    {
+        bool puedeTirar = !yaTiroDados && !jugador.GetPierdeSiguienteTurno();
+        bool puedeComprar = false;
+        int precioCompra = 0;
+        string nombrePropiedad = "";
+
+        Casilla? casilla = jugador.ObtenerCasillaActual();
+        if (yaTiroDados && casilla is Propiedad prop && !prop.TienePropietario() && jugador.GetDinero() >= prop.GetPrecioCompra())
+        {
+            puedeComprar = true;
+            precioCompra = prop.GetPrecioCompra();
+            nombrePropiedad = prop.GetNombre();
+        }
+
+        bool puedeTerminar = yaTiroDados || jugador.GetPierdeSiguienteTurno();
+        bool enCarcel = jugador.GetEnCarcel();
+
+        GodotBroadcast($"turno/acciones/{(puedeTirar ? 1 : 0)}/{(puedeComprar ? 1 : 0)}/{precioCompra}/{nombrePropiedad}/{(puedeTerminar ? 1 : 0)}/{(enCarcel ? 1 : 0)}");
+    }
+
+    // Busca una propiedad en el tablero circular por su posición
+    public Propiedad? ObtenerPropiedadPorIndex(int index)
+    {
+        Node? temp = this.tablero.GetHead();
+        for (int i = 0; i < this.tablero.Size(); i++)
+        {
+            if (temp?.GetData() is Propiedad p && p.GetPosicion() == index)
+            {
+                return p;
+            }
+            temp = temp?.GetNext();
+        }
+        return null;
     }
 
     // Avisa a Godot en que casilla quedo el jugador despues de moverse
@@ -410,6 +635,13 @@ public class JuegoMonopoly
             return;
         }
 
+        // VERIFICACIÓN RFID OBLIGATORIA (estilo Apple Pay / contactless con teléfono)
+        if (!AutorizarPagoRFID(jugador, propiedad.GetPrecioCompra(), $"Compra de '{propiedad.GetNombre()}'"))
+        {
+            jugador.EnviarMensaje("❌ Compra cancelada: no se autorizó el pago vía RFID.");
+            return;
+        }
+
         // Ejecuta la transacción de compra
         new Transaccion(propiedad.GetPrecioCompra(), GetTurnoActual(), "Compra de propiedad", jugador, null);
         propiedad.SetPropietario(jugador);
@@ -421,6 +653,7 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"Saldo restante: ${jugador.GetDinero()}");
         Broadcast($"📢 {jugador.GetNombre()} compró '{propiedad.GetNombre()}'!", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/comprar/casilla/{propiedad.GetPosicion()}");
+        AnunciarDinero(jugador);
     }
 
     // Revisa si el jugador es dueño de TODAS las propiedades de ese grupo de color.
@@ -496,6 +729,13 @@ public class JuegoMonopoly
             return;
         }
 
+        // VERIFICACIÓN RFID OBLIGATORIA
+        if (!AutorizarPagoRFID(jugador, costoCasa, $"Construcción en '{propiedad.GetNombre()}'"))
+        {
+            jugador.EnviarMensaje("❌ Construcción cancelada: no se autorizó el pago vía RFID.");
+            return;
+        }
+
         new Transaccion(costoCasa, GetTurnoActual(), "Pago al banco", jugador, null);
         propiedad.SetCantidadCasas(propiedad.GetCantidadCasas() + 1);
         string mejora = propiedad.GetCantidadCasas() == 5 ? "un Hotel" : $"la casa #{propiedad.GetCantidadCasas()}";
@@ -503,6 +743,7 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"Nueva renta: ${propiedad.CalcularRenta()}. Saldo: ${jugador.GetDinero()}");
         Broadcast($"📢 {jugador.GetNombre()} construyó {mejora} en '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/comprarcasa/{propiedad.GetCantidadCasas()}/casilla/{propiedad.GetPosicion()}");
+        AnunciarDinero(jugador);
     }
 
     // Vende una casa/hotel (bajar un nivel). Se recupera la mitad de lo que
@@ -531,6 +772,7 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"🏚️ Vendiste una mejora de '{propiedad.GetNombre()}' y recibiste ${reembolso}. Ahora tiene {quedo}. Saldo: ${jugador.GetDinero()}");
         Broadcast($"📢 {jugador.GetNombre()} vendió una mejora en '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/comprarcasa/{propiedad.GetCantidadCasas()}/casilla/{propiedad.GetPosicion()}");
+        AnunciarDinero(jugador);
     }
 
     // Hipoteca una propiedad: el banco te da la mitad del precio de compra,
@@ -563,6 +805,7 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"🏦 Hipotecaste '{propiedad.GetNombre()}' y recibiste ${valorHipoteca}. Saldo: ${jugador.GetDinero()}");
         Broadcast($"📢 {jugador.GetNombre()} hipotecó '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/hipotecar/casilla/{propiedad.GetPosicion()}");
+        AnunciarDinero(jugador);
     }
 
     // Deshipoteca una propiedad: se paga lo que te dieron por la hipoteca
@@ -588,12 +831,20 @@ public class JuegoMonopoly
             return;
         }
 
+        // VERIFICACIÓN RFID OBLIGATORIA
+        if (!AutorizarPagoRFID(jugador, costo, $"Deshipotecar '{propiedad.GetNombre()}'"))
+        {
+            jugador.EnviarMensaje("❌ Deshipoteca cancelada: no se autorizó el pago vía RFID.");
+            return;
+        }
+
         new Transaccion(costo, GetTurnoActual(), "Pago al banco", jugador, null);
         propiedad.SetIsHipotecada(false);
 
         jugador.EnviarMensaje($"🏦 Deshipotecaste '{propiedad.GetNombre()}' por ${costo}. Saldo: ${jugador.GetDinero()}");
         Broadcast($"📢 {jugador.GetNombre()} deshipotecó '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/deshipotecar/casilla/{propiedad.GetPosicion()}");
+        AnunciarDinero(jugador);
     }
 
     // Mueve al jugador a una casilla específica por su índice numérico (0 a 31).
@@ -680,11 +931,19 @@ public class JuegoMonopoly
             return;
         }
 
+        // VERIFICACIÓN RFID OBLIGATORIA
+        if (!AutorizarPagoRFID(jugador, fianza, "Fianza para salir de la Cárcel"))
+        {
+            jugador.EnviarMensaje("❌ Salida cancelada: no se autorizó el pago de la fianza vía RFID.");
+            return;
+        }
+
         new Transaccion(fianza, GetTurnoActual(), "Pago al banco", jugador, null);
         jugador.SetEnCarcel(false);
         jugador.SetTurnosEnCarcel(0);
         jugador.EnviarMensaje($"💵 Pagaste ${fianza} de fianza y has salido de la Cárcel. Saldo: ${jugador.GetDinero()}");
         Broadcast($"📢 {jugador.GetNombre()} pagó la fianza y salió de la Cárcel.", jugador);
+        AnunciarDinero(jugador);
     }
 
     // Consultar estado del jugador y recorrer su lista enlazada de propiedades.

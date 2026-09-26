@@ -1,0 +1,95 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/turn_actions_hud.gd" id="1_hud"]
+
+[node name="TurnActionsHud" type="Control"]
+custom_minimum_size = Vector2(410, 108)
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -120.0
+offset_right = 422.0
+offset_bottom = -12.0
+grow_vertical = 0
+script = ExtResource("1_hud")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.14, 0.92)
+
+[node name="Margin" type="MarginContainer" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="VBox" type="VBoxContainer" parent="Background/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Header" type="HBoxContainer" parent="Background/Margin/VBox"]
+layout_mode = 2
+
+[node name="TurnLabel" type="Label" parent="Background/Margin/VBox/Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "🎮 Turno: Jugador 1"
+
+[node name="StatusLabel" type="Label" parent="Background/Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.8, 0.82, 0.88, 1)
+theme_override_font_sizes/font_size = 11
+text = "Esperando turno..."
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ButtonRow1" type="HBoxContainer" parent="Background/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RollBtn" type="Button" parent="Background/Margin/VBox/ButtonRow1"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "🎲 Tirar Dados"
+
+[node name="BuyBtn" type="Button" parent="Background/Margin/VBox/ButtonRow1"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "🏠 Comprar Propiedad"
+
+[node name="ButtonRow2" type="HBoxContainer" parent="Background/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="JailBtn" type="Button" parent="Background/Margin/VBox/ButtonRow2"]
+visible = false
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "⛓️ Salir Cárcel ($50)"
+
+[node name="EndTurnBtn" type="Button" parent="Background/Margin/VBox/ButtonRow2"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 13
+text = "⏭️ Terminar Turno"

@@ -196,11 +196,14 @@ public class Propiedad : Casilla
             int renta = CalcularRenta();
             jugador.EnviarMensaje($"💸 Caíste en '{GetNombre()}' de {GetPropietario()!.GetNombre()}. Renta a pagar: ${renta}.");
 
-            // Transferencia de dinero mediante el registro de Transacciones
+            // Transferencia de dinero mediante el registro de Transacciones con verificación RFID
+            juego.AutorizarPagoRFID(jugador, renta, $"Renta a {GetPropietario()!.GetNombre()} por '{GetNombre()}'");
             new Transaccion(renta, juego.GetTurnoActual(), "Pago de alquiler", jugador, GetPropietario());
 
             GetPropietario()!.EnviarMensaje($"💰 ¡Recibiste ${renta} de renta de {jugador.GetNombre()} por '{GetNombre()}'!");
             juego.Broadcast($"📢 {jugador.GetNombre()} pagó ${renta} de renta a {GetPropietario()!.GetNombre()} por {GetNombre()}.", jugador);
+            juego.AnunciarDinero(jugador);
+            juego.AnunciarDinero(GetPropietario()!);
 
             if (jugador.GetDinero() < 0)
             {
@@ -384,9 +387,11 @@ public class CasillaEspecial : Casilla
 
             case "Impuesto":
                 int montoImpuesto = 100;
+                juego.AutorizarPagoRFID(jugador, montoImpuesto, "Impuesto sobre la renta");
                 new Transaccion(montoImpuesto, juego.GetTurnoActual(), "Pago al banco", jugador, null);
                 jugador.EnviarMensaje($"🧾 Impuesto sobre la renta: Pagaste ${montoImpuesto} al banco. Saldo: ${jugador.GetDinero()}");
                 juego.Broadcast($"📢 {jugador.GetNombre()} pagó ${montoImpuesto} de impuestos.", jugador);
+                juego.AnunciarDinero(jugador);
                 break;
 
             case "Carcel":

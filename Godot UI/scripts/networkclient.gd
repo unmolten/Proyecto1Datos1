@@ -21,6 +21,12 @@ signal message_received(raw: String)
 ## Señal para avisar del estado de conexión a la UI (ConnectionHud)
 signal connection_status_changed(connected: bool, message: String)
 
+## Señales para los botones de acción y el flujo de pago RFID
+signal turn_actions_updated(can_roll: bool, can_buy: bool, buy_price: int, buy_name: String, can_end: bool, in_jail: bool)
+signal payment_requested(player_id: int, amount: int, concept: String)
+signal payment_completed(player_id: int, amount: int)
+signal payment_cancelled(player_id: int)
+
 # Variables exportadas que permiten modificarlas desde el editor 2D en vez de aquí
 # en el código, para poner la ip del host, el puerto, el nodo del tablero
 # el intervalo de reconexión
@@ -34,6 +40,8 @@ signal connection_status_changed(connected: bool, message: String)
 @export var reconnect_interval: float = 2.0
 
 # Variables generales
+## ID del jugador que tiene el turno actual
+var current_turn_player_id: int = 1
 ## Variable para guardar el tablero (el objeto al que se llega con la ruta)
 var game_board: GameBoard
 ## Se crea la variable que guarda una instancia de un objeto tipo StreamPeerTCP
@@ -45,6 +53,27 @@ var _buffer: String = ""
 ## cuánto tiempo ha pasado desde el último intento de conexión para volver a intentar la
 ## reconexion
 var _reconnect_timer: float = 0.0
+
+## Envía una línea de texto terminada en \n al servidor por TCP
+func send_line(line: String) -> void:
+	if _socket != null and _socket.get_status() == StreamPeerTCP.STATUS_CONNECTED:
+		var bytes := (line.strip_edges() + "\n").to_utf8_buffer()
+		_socket.put_data(bytes)
+
+## Envía una acción de turno al servidor (ej: accion/1/tirar, accion/1/comprar)
+func send_action(action: String, arg: int = -1) -> void:
+	if arg >= 0:
+		send_line("accion/%d/%s/%d" % [current_turn_player_id, action, arg])
+	else:
+		send_line("accion/%d/%s" % [current_turn_player_id, action])
+
+## Confirma el pago vía RFID/NFC simulado desde la UI
+func confirm_rfid_payment() -> void:
+	send_line("accion/%d/rfid" % current_turn_player_id)
+
+## Cancela la autorización de pago
+func cancel_rfid_payment() -> void:
+	send_line("accion/%d/cancelarpago" % current_turn_player_id)
 
 func is_connected_to_server() -> bool:
 	return _connected
@@ -264,8 +293,42 @@ func _handle_message(raw: String) -> void:
 		game_board.register_property(pos, nombre, precio, alquiler, grupo)
 		return
 
+	## Mensajes de control de turno y acciones disponibles
+	## turno/acciones/<puede_tirar>/<puede_comprar>/<precio>/<nombre>/<puede_terminar>/<en_carcel>
+	if parts.size() >= 7 and parts[0] == "turno" and parts[1] == "acciones":
+		var can_roll := parts[2] == "1"
+		var can_buy := parts[3] == "1"
+		var buy_price := int(parts[4])
+		var buy_name := parts[5]
+		var can_end := parts[6] == "1"
+		var in_jail := parts.size() > 7 and parts[7] == "1"
+		turn_actions_updated.emit(can_roll, can_buy, buy_price, buy_name, can_end, in_jail)
+		return
+
+	## Mensajes de flujo de pago RFID/NFC
+	## pago/solicitar/<id>/<monto>/<concepto>
+	## pago/exito/<id>/<monto>
+	## pago/cancelado/<id>
+	if parts.size() >= 2 and parts[0] == "pago":
+		var sub := parts[1]
+		if sub == "solicitar" and parts.size() >= 5:
+			var pid := int(parts[2])
+			var monto := int(parts[3])
+			var concepto := parts[4]
+			payment_requested.emit(pid, monto, concepto)
+			return
+		elif sub == "exito" and parts.size() >= 4:
+			var pid := int(parts[2])
+			var monto := int(parts[3])
+			payment_completed.emit(pid, monto)
+			return
+		elif sub == "cancelado" and parts.size() >= 3:
+			var pid := int(parts[2])
+			payment_cancelled.emit(pid)
+			return
+
 	## Si la cantidad de partes del mensaje es menor a 2, ya que no hay mensajes de ese tamaño
-	## o la primera de todas las partes no incluye la palabra "jugador",  se toma como un mensaje
+	## o la primera de todas las partes no incluye la palabra "jugador", se toma como un mensaje
 	## no reconocido de una.
 	if parts.size() < 2 or parts[0] != "jugador":
 		push_warning("Mensaje no reconocido: %s" % raw)
@@ -341,6 +404,7 @@ func _handle_message(raw: String) -> void:
 	## tercera parte: jugador/<id>/turno
 	elif parts.size() >= 3 and parts[2] == "turno":
 
+		current_turn_player_id = player_id
 		game_board.set_current_turn(player_id)
 
 	## Si el tamaño de las partes es mayor o igual a 4 e incluye "dinero" en la

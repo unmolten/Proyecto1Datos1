@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" path="res://scenes/TurnHud.tscn" id="9_hud"]
 [ext_resource type="PackedScene" path="res://scenes/PropertyList.tscn" id="10_proplist"]
 [ext_resource type="PackedScene" path="res://scenes/ConnectionHud.tscn" id="11_connhud"]
+[ext_resource type="PackedScene" path="res://scenes/TurnActionsHud.tscn" id="12_turnactions"]
+[ext_resource type="PackedScene" path="res://scenes/PaymentModal.tscn" id="13_paymentmodal"]
 
 [node name="Board" type="Node2D" unique_id=1573359381]
 script = ExtResource("1_rvslj")
@@ -193,4 +195,24 @@ offset_left = 12.0
 offset_top = 10.0
 offset_right = 372.0
 offset_bottom = 48.0
+
+[node name="TurnActionsHud" parent="HudLayer" instance=ExtResource("12_turnactions")]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -120.0
+offset_right = 422.0
+offset_bottom = -12.0
+grow_vertical = 0
+
+[node name="PaymentModal" parent="HudLayer" instance=ExtResource("13_paymentmodal")]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 

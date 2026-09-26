@@ -81,6 +81,9 @@ internal class Program
             }
         }
 
+        juego.ConfigurarHardware(conexion);
+        IniciarLectorConsola(juego);
+
         Console.WriteLine("\n==========================================================");
         Console.WriteLine("                 ¡COMIENZA LA PARTIDA!                    ");
         Console.WriteLine("==========================================================\n");
@@ -168,7 +171,9 @@ internal class Program
 
         while (!turnoTerminado)
         {
-            Console.WriteLine("\nAcciones disponibles:");
+            juego.EnviarEstadoAcciones(jugador, yaTiroDados);
+
+            Console.WriteLine("\nAcciones disponibles (Consola o UI de Godot):");
             if (!yaTiroDados)
             {
                 Console.WriteLine("  1. Tirar dados y avanzar");
@@ -192,13 +197,15 @@ internal class Program
             {
                 Console.WriteLine("  8. Gestionar mis propiedades (construir/vender/hipotecar/deshipotecar)");
             }
-            Console.Write("Selecciona una opción: ");
+            Console.Write("Esperando acción (Consola o Godot)...: ");
 
-            string? eleccion = Console.ReadLine()?.Trim();
+            AccionTurno accion = juego.EsperarAccion(jugador);
+            Console.WriteLine($"\n[ACCIÓN RECIBIDA: {accion.Tipo.ToUpper()}]");
 
-            switch (eleccion)
+            switch (accion.Tipo.ToLower())
             {
                 case "1":
+                case "tirar":
                     if (yaTiroDados)
                     {
                         Console.WriteLine("⚠️ Ya tiraste los dados en este turno.");
@@ -225,15 +232,46 @@ internal class Program
                     break;
 
                 case "2":
+                case "salircarcel":
                     juego.SalirDeCarcelConPago(jugador);
                     break;
 
                 case "3":
+                case "comprar":
                     juego.ComprarPropiedad(jugador);
                     break;
 
                 case "4":
-                    juego.ComprarCasa(jugador);
+                case "comprarcasa":
+                    if (accion.CasillaIndex >= 0 && juego.ObtenerPropiedadPorIndex(accion.CasillaIndex) is Propiedad propDirecta)
+                    {
+                        juego.ComprarCasa(jugador, propDirecta);
+                    }
+                    else
+                    {
+                        juego.ComprarCasa(jugador);
+                    }
+                    break;
+
+                case "vendercasa":
+                    if (accion.CasillaIndex >= 0 && juego.ObtenerPropiedadPorIndex(accion.CasillaIndex) is Propiedad propVender)
+                    {
+                        juego.VenderCasa(jugador, propVender);
+                    }
+                    break;
+
+                case "hipotecar":
+                    if (accion.CasillaIndex >= 0 && juego.ObtenerPropiedadPorIndex(accion.CasillaIndex) is Propiedad propHip)
+                    {
+                        juego.HipotecarPropiedad(jugador, propHip);
+                    }
+                    break;
+
+                case "deshipotecar":
+                    if (accion.CasillaIndex >= 0 && juego.ObtenerPropiedadPorIndex(accion.CasillaIndex) is Propiedad propDeship)
+                    {
+                        juego.DeshipotecarPropiedad(jugador, propDeship);
+                    }
                     break;
 
                 case "5":
@@ -245,6 +283,8 @@ internal class Program
                     break;
 
                 case "7":
+                case "terminar":
+                case "terminarturno":
                     if (!yaTiroDados && !jugador.GetPierdeSiguienteTurno())
                     {
                         Console.WriteLine("⚠️ Debes tirar los dados antes de terminar tu turno.");
@@ -264,7 +304,7 @@ internal class Program
                     break;
             }
 
-            // Actualiza el HUD de dinero de Godot despues de CUALQUIER accion
+            juego.EnviarEstadoAcciones(jugador, yaTiroDados);
             juego.AnunciarDinero(jugador);
 
             // Si el jugador cayó en bancarrota durante una acción
@@ -395,13 +435,15 @@ internal class Program
         Console.WriteLine($"[GODOT] Servidor de espectadores activo en el puerto {puertoGodot}");
         Console.WriteLine("        - En esta misma PC: 127.0.0.1");
 
-        List<string> ips = ObtenerIpsLocales();
-        if (ips.Count > 0)
+        LinkedList ips = ObtenerIpsLocales();
+        if (!ips.IsEmpty())
         {
             Console.WriteLine("        - Para amigos en otra PC (misma red WiFi/LAN o VPN):");
-            foreach (string ip in ips)
+            Node? nodoIp = ips.GetHead();
+            for (int idx = 0; idx < ips.Size(); idx++)
             {
-                Console.WriteLine($"          -> IP: {ip}");
+                Console.WriteLine($"          -> IP: {(string)nodoIp!.GetData()}");
+                nodoIp = nodoIp.GetNext();
             }
         }
         Console.WriteLine("==========================================================\n");
@@ -414,19 +456,76 @@ internal class Program
                 string endpoint = cliente.Client.RemoteEndPoint?.ToString() ?? "desconocido";
                 var writer = new System.IO.StreamWriter(cliente.GetStream(), System.Text.Encoding.UTF8) { AutoFlush = true };
                 juego.ConectarEspectadorGodot(writer);
-                Console.WriteLine($"[GODOT] Se conectó un espectador desde {endpoint}.");
+                Console.WriteLine($"[GODOT] Cliente conectado desde {endpoint}.");
+
+                Thread hiloLectura = new Thread(() => LeerComandosCliente(cliente, juego));
+                hiloLectura.IsBackground = true;
+                hiloLectura.Start();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[GODOT] Error aceptando espectador: {ex.Message}");
+                Console.WriteLine($"[GODOT] Error aceptando cliente: {ex.Message}");
             }
         }
     }
 
-    // Obtiene las direcciones IPv4 de las tarjetas de red activas para compartirlas con amigos
-    private static List<string> ObtenerIpsLocales()
+    // Lee continuamente las acciones enviadas desde una instancia de Godot por TCP
+    private static void LeerComandosCliente(TcpClient cliente, JuegoMonopoly juego)
     {
-        List<string> ips = new List<string>();
+        try
+        {
+            using var reader = new System.IO.StreamReader(cliente.GetStream(), System.Text.Encoding.UTF8);
+            string? linea;
+            while ((linea = reader.ReadLine()) != null)
+            {
+                linea = linea.Trim();
+                if (!string.IsNullOrEmpty(linea))
+                {
+                    juego.ProcesarComandoCliente(linea);
+                }
+            }
+        }
+        catch { }
+    }
+
+    // Lector de comandos de consola en segundo plano para que conviva con los clientes de Godot
+    private static void IniciarLectorConsola(JuegoMonopoly juego)
+    {
+        Thread t = new Thread(() =>
+        {
+            while (true)
+            {
+                try
+                {
+                    string? linea = Console.ReadLine();
+                    if (!string.IsNullOrWhiteSpace(linea))
+                    {
+                        linea = linea.Trim();
+                        if (linea.Equals("p", StringComparison.OrdinalIgnoreCase) || linea.Equals("y", StringComparison.OrdinalIgnoreCase))
+                        {
+                            juego.ConfirmarPagoRfid(0);
+                        }
+                        else if (linea.Equals("c", StringComparison.OrdinalIgnoreCase) || linea.Equals("n", StringComparison.OrdinalIgnoreCase))
+                        {
+                            juego.CancelarPagoRfid(0);
+                        }
+                        else
+                        {
+                            juego.EncolarAccion(new AccionTurno { Tipo = linea });
+                        }
+                    }
+                }
+                catch { break; }
+            }
+        });
+        t.IsBackground = true;
+        t.Start();
+    }
+
+    // Obtiene las direcciones IPv4 de las tarjetas de red activas para compartirlas con amigos
+    private static LinkedList ObtenerIpsLocales()
+    {
+        LinkedList ips = new LinkedList();
         try
         {
             foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
@@ -438,7 +537,7 @@ internal class Program
                     {
                         if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                         {
-                            ips.Add(ip.Address.ToString());
+                            ips.InsertEnd(ip.Address.ToString());
                         }
                     }
                 }

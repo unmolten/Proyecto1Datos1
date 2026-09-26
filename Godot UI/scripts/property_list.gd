@@ -42,7 +42,8 @@ func register_property(casilla_index: int, nombre: String, precio: int, alquiler
 ## Reservado por si más adelante se quiere mostrar el nombre del dueño en la
 ## tarjeta (main_node.gd lo llama junto con set_casas cuando hay dueño)
 func hacer_owner(casilla_index: int, owner_id: int) -> void:
-	pass
+	if cards.has(casilla_index):
+		cards[casilla_index].set_property_owner_id(owner_id)
 
 
 ## Actualiza cuántas casas/hotel tiene una propiedad
