@@ -7,9 +7,10 @@
 [ext_resource type="Script" uid="uid://bsp2eop14mt12" path="res://scripts/networkclient.gd" id="4_rarhs"]
 [ext_resource type="Texture2D" uid="uid://cfcdn40idojam" path="res://sprites/creeper.jpg" id="5_lhr70"]
 [ext_resource type="Texture2D" uid="uid://c5pkwgtufysw4" path="res://sprites/enderman.jpg" id="6_wp0k4"]
-[ext_resource type="Texture2D" uid="uid://dq2wwc0pf5duy" path="res://sprites/tablero.png" id="7_jlsqs"]
-[ext_resource type="PackedScene" path="res://scenes/HouseMarker.tscn" id="8_house"]
+[ext_resource type="Texture2D" uid="uid://47hor6oqhlle" path="res://sprites/tablero.png" id="7_jlsqs"]
+[ext_resource type="PackedScene" uid="uid://cbiynp5qwwjnl" path="res://scenes/HouseMarker.tscn" id="8_house"]
 [ext_resource type="PackedScene" path="res://scenes/TurnHud.tscn" id="9_hud"]
+[ext_resource type="PackedScene" path="res://scenes/PropertyList.tscn" id="10_proplist"]
 
 [node name="Board" type="Node2D" unique_id=1573359381]
 script = ExtResource("1_rvslj")
@@ -19,6 +20,7 @@ players_container_path = NodePath("Visual")
 player_sprites = Array[Texture2D]([ExtResource("3_jlsqs"), ExtResource("4_q8u5g"), ExtResource("5_lhr70"), ExtResource("6_wp0k4")])
 house_scene = ExtResource("8_house")
 hud_path = NodePath("HudLayer/TurnHud")
+property_list_path = NodePath("HudLayer/PropertyList")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1528952713]
 position = Vector2(150, 0)
@@ -162,6 +164,23 @@ scale = Vector2(0.99999994, 0.99999994)
 script = ExtResource("4_rarhs")
 game_board_path = NodePath("..")
 
-[node name="HudLayer" type="CanvasLayer" parent="."]
+[node name="HudLayer" type="CanvasLayer" parent="." unique_id=43929201]
 
-[node name="TurnHud" parent="HudLayer" instance=ExtResource("9_hud")]
+[node name="TurnHud" parent="HudLayer" unique_id=882264488 instance=ExtResource("9_hud")]
+layout_mode = 3
+anchors_preset = 1
+offset_left = -220.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 50.0
+grow_horizontal = 0
+
+[node name="PropertyList" parent="HudLayer" unique_id=1716430224 instance=ExtResource("10_proplist")]
+layout_mode = 3
+anchors_preset = 11
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 2

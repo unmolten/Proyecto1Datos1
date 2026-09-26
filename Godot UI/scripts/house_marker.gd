@@ -44,14 +44,15 @@ func set_level(new_level: int, is_horizontal: bool) -> void:
 	## Pide que se vuelva a dibujar (dispara _draw())
 	queue_redraw()
 
-	## Si ya no quedan casas, tambien se esconde el avatar del dueño
-	if level <= 0 and has_node("OwnerIcon"):
-		$OwnerIcon.visible = false
+	## NOTA: el icono del dueño YA NO se esconde aquí. El dueño se ve desde
+	## que se compra la propiedad, tenga o no casas todavía (eso lo maneja
+	## set_owner_texture por separado, GameBoard lo llama apenas se compra)
 
 
 ## Pone (o quita) el sprite pequeño del dueño de la propiedad, un poco
 ## arriba de donde van las casas. Se llama por separado de set_level porque
-## GameBoard ya sabe qué textura le toca a cada jugador
+## GameBoard ya sabe qué textura le toca a cada jugador. Se usa tanto al
+## comprar la propiedad como al construir casas en ella
 func set_owner_texture(texture: Texture2D) -> void:
 	if not has_node("OwnerIcon"):
 		return
@@ -62,6 +63,23 @@ func set_owner_texture(texture: Texture2D) -> void:
 
 	$OwnerIcon.texture = texture
 	$OwnerIcon.visible = true
+
+
+## Pinta (o despinta) de blanco y negro el avatar del dueño, segun si la
+## propiedad esta hipotecada o no. GameBoard llama esto cuando llega
+## "jugador/<id>/hipotecar/casilla/<n>" o "deshipotecar"
+func set_mortgaged(is_mortgaged: bool) -> void:
+	if not has_node("OwnerIcon"):
+		return
+
+	if is_mortgaged:
+		$OwnerIcon.material = GRAYSCALE_MATERIAL
+	else:
+		$OwnerIcon.material = null
+
+
+## Material de blanco y negro, se carga una sola vez y se reutiliza
+const GRAYSCALE_MATERIAL: ShaderMaterial = preload("res://scenes/grayscale_material.tres")
 
 
 func _draw() -> void:

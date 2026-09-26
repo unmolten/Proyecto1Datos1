@@ -34,6 +34,9 @@ class_name GameBoard
 ## Ruta al nodo TurnHud (el indicador de turno/dinero de la esquina)
 @export var hud_path: NodePath
 
+## Ruta al nodo PropertyList (la lista de propiedades de la derecha)
+@export var property_list_path: NodePath
+
 
 ## Colores que se utilizarán para las fichas si no se les asignó una textura.
 ## El índice 0 corresponde al jugador 1, el 1 al jugador 2, etc
@@ -99,6 +102,9 @@ var house_markers: Dictionary = {}
 ## Referencia al nodo TurnHud (la esquina superior derecha)
 var hud: TurnHud = null
 
+## Referencia al nodo PropertyList (la lista de propiedades de la derecha)
+var property_list: PropertyList = null
+
 ## ID del jugador que tiene el turno actualmente (0 = todavia nadie)
 var current_turn_id: int = 0
 
@@ -119,6 +125,10 @@ func _ready() -> void:
 	# Busca el HUD de turno/dinero, si se asignó una ruta
 	if hud_path != NodePath() and has_node(hud_path):
 		hud = get_node(hud_path)
+
+	# Busca la lista de propiedades, si se asignó una ruta
+	if property_list_path != NodePath() and has_node(property_list_path):
+		property_list = get_node(property_list_path)
 
 
 # -------------- BUSCAR LAS CASILLAS --------------
@@ -333,6 +343,39 @@ func set_player_money(id: int, monto: int) -> void:
 		hud.set_money(monto)
 
 
+## Crea la tarjeta de una propiedad en la lista de la derecha con sus datos
+## fijos (nombre, precio, renta base, grupo de color). Godot no sabe nada de
+## esto por su cuenta, todo sale del servidor. Esta función es llamada
+## cuando NetworkClient recibe: "propiedad/<pos>/<nombre>/<precio>/<alquiler>/<grupo>" (NUEVO)
+func register_property(casilla_index: int, nombre: String, precio: int, alquiler: int, grupo: String) -> void:
+	if property_list != null:
+		property_list.register_property(casilla_index, nombre, precio, alquiler, grupo)
+
+
+## Marca a un jugador como dueño de una propiedad recién comprada (todavía
+## sin casas). Reutiliza set_house_level con nivel 0, que ya crea el
+## marcador y le pone el avatar del dueño arriba de la casilla.
+## Esta función es llamada cuando NetworkClient recibe:
+## "jugador/<id>/comprar/casilla/<n>" (NUEVO)
+func set_property_owner(casilla_index: int, owner_id: int) -> void:
+	set_house_level(casilla_index, 0, owner_id)
+
+
+## Pinta (o despinta) de blanco y negro el avatar del dueño de una propiedad,
+## tanto sobre el tablero como en la tarjeta de la lista de la derecha.
+## Esta función es llamada cuando NetworkClient recibe:
+## "jugador/<id>/hipotecar/casilla/<n>" o "jugador/<id>/deshipotecar/casilla/<n>" (NUEVO)
+func set_property_mortgaged(casilla_index: int, is_mortgaged: bool) -> void:
+
+	# Si ya existe el marcador de casas de esa casilla, le pinta el avatar
+	if house_markers.has(casilla_index):
+		house_markers[casilla_index].set_mortgaged(is_mortgaged)
+
+	# También actualiza la tarjeta correspondiente en la lista de la derecha
+	if property_list != null:
+		property_list.set_mortgaged(casilla_index, is_mortgaged)
+
+
 # -------------- funciones internas --------------
 
 
@@ -522,3 +565,9 @@ func set_house_level(casilla_index: int, level: int, owner_id: int = 0) -> void:
 	## Le pone (o le quita, si owner_id es 0) el avatar pequeño del dueño
 	if owner_id > 0 and owner_id - 1 < player_sprites.size():
 		marker.set_owner_texture(player_sprites[owner_id - 1])
+
+	## Actualiza también la tarjeta de esta propiedad en la lista de la derecha
+	if property_list != null:
+		if owner_id > 0:
+			property_list.hacer_owner(casilla_index, owner_id)
+		property_list.set_casas(casilla_index, level)

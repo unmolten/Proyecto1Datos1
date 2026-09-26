@@ -28,3 +28,22 @@
 6.21/09/2026-07:28:20.1.Pago al banco.100.Jordanny.Banco.Jordanny ha pagado $100 al banco
 7.21/09/2026-07:28:33.2.Compra de propiedad.220.Evan.Banco.Evan ha comprado una propiedad por $220
 8.21/09/2026-07:28:37.2.Compra de propiedad.220.Jordanny.Banco.Jordanny ha comprado una propiedad por $220
+1.24/09/2026-05:42:17.1.Pago al banco.100.Evan.Banco.Evan ha pagado $100 al banco
+2.24/09/2026-05:42:23.1.Compra de propiedad.140.Jordanny.Banco.Jordanny ha comprado una propiedad por $140
+1.26/09/2026-08:39:58.1.Compra de propiedad.200.Evan.Banco.Evan ha comprado una propiedad por $200
+2.26/09/2026-08:40:32.1.Ganancia por evento.100.Evan.Banco.Evan ha ganado $100 por evento
+3.26/09/2026-08:40:43.1.Pago al banco.100.Jordanny.Banco.Jordanny ha pagado $100 al banco
+4.26/09/2026-08:40:49.2.Compra de propiedad.140.Evan.Banco.Evan ha comprado una propiedad por $140
+5.26/09/2026-08:41:13.2.Ganancia por evento.70.Evan.Banco.Evan ha ganado $70 por evento
+6.26/09/2026-08:41:17.2.Pago entre jugadores.25.Jordanny.Evan.Jordanny ha pagado $25 a Evan
+7.26/09/2026-08:41:29.3.Compra de propiedad.200.Evan.Banco.Evan ha comprado una propiedad por $200
+8.26/09/2026-08:41:44.4.Compra de propiedad.280.Evan.Banco.Evan ha comprado una propiedad por $280
+9.26/09/2026-08:42:02.4.Pago de alquiler.30.Jordanny.Evan.Jordanny ha pagado $30 a Evan por alquiler
+10.26/09/2026-08:42:10.5.Premio por pasar por inicio.200.Evan.Banco.Evan ha recibido $200 por pasar por inicio
+11.26/09/2026-08:42:10.5.Pago entre jugadores.20.Jordanny.Evan.Jordanny ha pagado $20 a Evan
+12.26/09/2026-08:42:29.5.Compra de propiedad.100.Jordanny.Banco.Jordanny ha comprado una propiedad por $100
+13.26/09/2026-08:42:36.6.Pago al banco.100.Evan.Banco.Evan ha pagado $100 al banco
+14.26/09/2026-08:42:40.6.Compra de propiedad.220.Jordanny.Banco.Jordanny ha comprado una propiedad por $220
+15.26/09/2026-08:42:50.7.Pago al banco.77.Evan.Banco.Evan ha pagado $77 al banco
+16.26/09/2026-08:42:55.7.Pago al banco.110.Evan.Banco.Evan ha pagado $110 al banco
+1.26/09/2026-08:50:01.1.Ganancia por evento.100.Evan.Banco.Evan ha ganado $100 por evento

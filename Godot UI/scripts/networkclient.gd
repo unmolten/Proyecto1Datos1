@@ -6,9 +6,12 @@ class_name NetworkClient
 ##   jugador/<id>/activar
 ##   jugador/<id>/desactivar
 ##   jugador/<id>/mover/casilla/<n>
+##   jugador/<id>/comprar/casilla/<n>               (NUEVO, <id> es el comprador)
 ##   jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>   (5 = hotel, <id> es el dueño)
-##   jugador/<id>/turno                              (NUEVO, falta que el servidor lo mande)
-##   jugador/<id>/dinero/<monto>                     (NUEVO, falta que el servidor lo mande)
+##   jugador/<id>/hipotecar/casilla/<n>             (NUEVO, <id> es el dueño)
+##   jugador/<id>/deshipotecar/casilla/<n>          (NUEVO, <id> es el dueño)
+##   jugador/<id>/turno
+##   jugador/<id>/dinero/<monto>
 ## Se usa StreamPeerTCP para establecer una conexión TCP con el servidor
 
 ## Señal de tipo string con el mensaje recibido.
@@ -162,6 +165,21 @@ func _handle_message(raw: String) -> void:
 	## Se separa el mensaje por partes en un array, usando "/" como separador (MODIFICABLE)
 	var parts := raw.split("/")
 	
+	## Mensaje de sincronizacion inicial: propiedad/<pos>/<nombre>/<precio>/<alquiler>/<grupo>
+	## Este es el UNICO mensaje que no empieza en "jugador", por eso se revisa
+	## primero, antes del guard de abajo. Godot no sabe nada de las propiedades
+	## por su cuenta, todo lo que se ve en la lista de la derecha sale de aqui
+	if parts.size() >= 6 and parts[0] == "propiedad":
+
+		var pos := int(parts[1])
+		var nombre := parts[2]
+		var precio := int(parts[3])
+		var alquiler := int(parts[4])
+		var grupo := parts[5]
+
+		game_board.register_property(pos, nombre, precio, alquiler, grupo)
+		return
+
 	## Si la cantidad de partes del mensaje es menor a 2, ya que no hay mensajes de ese tamaño
 	## o la primera de todas las partes no incluye la palabra "jugador",  se toma como un mensaje
 	## no reconocido de una.
@@ -195,6 +213,14 @@ func _handle_message(raw: String) -> void:
 		var casilla_index := int(parts[4])
 		game_board.move_player_to_casilla(player_id, casilla_index)
 		
+	## Si el tamaño de las partes es mayor o igual a 5 e incluye "comprar" en la
+	## tercera parte y "casilla" en la cuarta parte: jugador/<id>/comprar/casilla/<n>
+	## (NUEVO, <id> es quien compró la propiedad, todavía sin casas)
+	elif parts.size() >= 5 and parts[2] == "comprar" and parts[3] == "casilla":
+
+		var casilla_index_comprar := int(parts[4])
+		game_board.set_property_owner(casilla_index_comprar, player_id)
+
 	## Si el tamaño de las partes es mayor o igual a 6 e incluye "comprarcasa" en la
 	## tercera parte y "casilla" en la quinta parte:
 	## jugador/<id>/comprarcasa/<1 a 5>/casilla/<n>
@@ -211,16 +237,30 @@ func _handle_message(raw: String) -> void:
 		var casilla_index := int(parts[5])
 		game_board.set_house_level(casilla_index, level, player_id)
 
+	## Si el tamaño de las partes es mayor o igual a 5 e incluye "hipotecar" en la
+	## tercera parte y "casilla" en la cuarta parte: jugador/<id>/hipotecar/casilla/<n>
+	## (NUEVO)
+	elif parts.size() >= 5 and parts[2] == "hipotecar" and parts[3] == "casilla":
+
+		var casilla_index_hip := int(parts[4])
+		game_board.set_property_mortgaged(casilla_index_hip, true)
+
+	## Si el tamaño de las partes es mayor o igual a 5 e incluye "deshipotecar" en la
+	## tercera parte y "casilla" en la cuarta parte: jugador/<id>/deshipotecar/casilla/<n>
+	## (NUEVO)
+	elif parts.size() >= 5 and parts[2] == "deshipotecar" and parts[3] == "casilla":
+
+		var casilla_index_deship := int(parts[4])
+		game_board.set_property_mortgaged(casilla_index_deship, false)
+
 	## Si el tamaño de las partes es mayor o igual a 3 e incluye "turno" en la
 	## tercera parte: jugador/<id>/turno
-	## (NUEVO, todavia falta que el servidor lo mande, pero Godot ya lo entiende)
 	elif parts.size() >= 3 and parts[2] == "turno":
 
 		game_board.set_current_turn(player_id)
 
 	## Si el tamaño de las partes es mayor o igual a 4 e incluye "dinero" en la
 	## tercera parte: jugador/<id>/dinero/<monto>
-	## (NUEVO, todavia falta que el servidor lo mande, pero Godot ya lo entiende)
 	elif parts.size() >= 4 and parts[2] == "dinero":
 
 		var monto := int(parts[3])

@@ -152,9 +152,17 @@ public class JuegoMonopoly
     // guardado en una lista
 
     // Conexiones de las instancias de Godot que estan viendo la partida
+    // HAY QUE MODIFICAR ESTO PORQUE ESTA HECHO CON LISTAS DE C#, NO LISTA ENLAZADA
     private List<StreamWriter> espectadoresGodot = new List<StreamWriter>();
 
-    // Program.cs llama esto cada vez que una instancia de Godot se conecta
+    // Quien tiene el turno ahora mismo (para poder sincronizar a un
+    // espectador de Godot que se conecta a mitad de partida)
+    private Jugador? jugadorEnTurno = null;
+
+    // Program.cs llama esto cada vez que una instancia de Godot se conecta.
+    // Godot no sabe NADA por su cuenta (ni siquiera qué propiedades existen),
+    // solo refleja lo que el servidor le manda, asi que aqui le mandamos
+    // TODO el estado, en el orden correcto para que lo pueda armar solo
     public void ConectarEspectadorGodot(StreamWriter writer)
     {
         lock (this.espectadoresGodot)
@@ -162,10 +170,44 @@ public class JuegoMonopoly
             this.espectadoresGodot.Add(writer);
         }
 
-        // Como la partida puede que ya haya empezado, le mandamos el estado
-        // actual para que no arranque con el tablero vacio
+        // 1) Los datos fijos de cada propiedad: nombre, precio, renta base
+        // y grupo de color. Sin esto Godot ni siquiera sabria que existen,
+        // asi que esto se manda SIEMPRE primero, antes que cualquier otra cosa
+        Node? nodoDatos = this.tablero.GetHead();
+        for (int i = 0; i < this.tablero.Size(); i++)
+        {
+            if (nodoDatos?.GetData() is Propiedad prop)
+            {
+                EnviarAEspectador(writer, $"propiedad/{prop.GetPosicion()}/{prop.GetNombre()}/{prop.GetPrecioCompra()}/{prop.GetAlquilerBase()}/{prop.GetColorGrupo()}");
+            }
+            nodoDatos = nodoDatos?.GetNext();
+        }
 
-        // Sincroniza a los jugadores que ya estaban
+        // 2) El estado actual de cada propiedad: dueño, casas y si esta
+        // hipotecada (en ese orden, porque construir/hipotecar en Godot
+        // dependen de que el dueño ya este puesto primero)
+        Node? nodoCasilla = this.tablero.GetHead();
+        for (int i = 0; i < this.tablero.Size(); i++)
+        {
+            if (nodoCasilla?.GetData() is Propiedad p && p.GetPropietario() != null)
+            {
+                int dueñoId = p.GetPropietario()!.GetId();
+                EnviarAEspectador(writer, $"jugador/{dueñoId}/comprar/casilla/{p.GetPosicion()}");
+
+                if (p.GetCantidadCasas() > 0)
+                {
+                    EnviarAEspectador(writer, $"jugador/{dueñoId}/comprarcasa/{p.GetCantidadCasas()}/casilla/{p.GetPosicion()}");
+                }
+
+                if (p.GetIsHipotecada())
+                {
+                    EnviarAEspectador(writer, $"jugador/{dueñoId}/hipotecar/casilla/{p.GetPosicion()}");
+                }
+            }
+            nodoCasilla = nodoCasilla?.GetNext();
+        }
+
+        // 3) Los jugadores que ya estaban registrados y donde estan parados
         Node? nodoJugador = this.jugadores.GetHead();
         for (int i = 0; i < this.jugadores.Size(); i++)
         {
@@ -181,15 +223,12 @@ public class JuegoMonopoly
             nodoJugador = nodoJugador?.GetNext();
         }
 
-        // Sincroniza las casas/hoteles que ya se hayan construido
-        Node? nodoCasilla = this.tablero.GetHead();
-        for (int i = 0; i < this.tablero.Size(); i++)
+        // 4) Por último, de quién es el turno ahora mismo (para el aro de
+        // color y el HUD de dinero), si la partida ya empezó
+        if (this.jugadorEnTurno != null)
         {
-            if (nodoCasilla?.GetData() is Propiedad p && p.GetCantidadCasas() > 0)
-            {
-                EnviarAEspectador(writer, $"jugador/0/comprarcasa/{p.GetCantidadCasas()}/casilla/{p.GetPosicion()}");
-            }
-            nodoCasilla = nodoCasilla?.GetNext();
+            EnviarAEspectador(writer, $"jugador/{this.jugadorEnTurno.GetId()}/turno");
+            EnviarAEspectador(writer, $"jugador/{this.jugadorEnTurno.GetId()}/dinero/{this.jugadorEnTurno.GetDinero()}");
         }
     }
 
@@ -229,6 +268,23 @@ public class JuegoMonopoly
         {
             GodotBroadcast($"jugador/{jugador.GetId()}/mover/casilla/{actual.GetPosicion()}");
         }
+    }
+
+    // Avisa a Godot de quien es el turno actual (para el aro de color) y de
+    // paso le manda su dinero actual (para que el HUD arranque con el numero correcto)
+    public void AnunciarTurno(Jugador jugador)
+    {
+        this.jugadorEnTurno = jugador;
+        GodotBroadcast($"jugador/{jugador.GetId()}/turno");
+        AnunciarDinero(jugador);
+    }
+
+    // Avisa a Godot cuanto dinero tiene un jugador. El HUD de la esquina solo
+    // le hace caso a esto si es del jugador que tiene el turno actual, pero
+    // eso lo decide Godot, aqui simplemente se manda
+    public void AnunciarDinero(Jugador jugador)
+    {
+        GodotBroadcast($"jugador/{jugador.GetId()}/dinero/{jugador.GetDinero()}");
     }
 
     // El Program.cs llama esto cuando un jugador queda eliminado por bancarrota
@@ -364,15 +420,66 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"🎉 ¡Has comprado '{propiedad.GetNombre()}' por ${propiedad.GetPrecioCompra()}!");
         jugador.EnviarMensaje($"Saldo restante: ${jugador.GetDinero()}");
         Broadcast($"📢 {jugador.GetNombre()} compró '{propiedad.GetNombre()}'!", jugador);
+        GodotBroadcast($"jugador/{jugador.GetId()}/comprar/casilla/{propiedad.GetPosicion()}");
     }
 
-    // Comprar una casa u hotel en la propiedad actual si le pertenece al jugador.
+    // Revisa si el jugador es dueño de TODAS las propiedades de ese grupo de color.
+    // Los "Tren" nunca cuentan para monopolio (en el Monopoly real los ferrocarriles
+    // tampoco admiten casas), por eso ComprarCasa los rechaza directamente.
+    public bool TieneMonopolio(Jugador jugador, string colorGrupo)
+    {
+        Node? actual = this.tablero.GetHead();
+        for (int i = 0; i < this.tablero.Size(); i++)
+        {
+            if (actual?.GetData() is Propiedad p && p.GetColorGrupo() == colorGrupo && p.GetPropietario() != jugador)
+            {
+                return false;
+            }
+            actual = actual?.GetNext();
+        }
+        return true;
+    }
+
+    // Atajo: construye en la propiedad donde el jugador está parado actualmente
+    // (se usa cuando cae en una propiedad suya y quiere construir ahí mismo).
     public void ComprarCasa(Jugador jugador)
     {
-        Casilla? actual = jugador.ObtenerCasillaActual();
-        if (actual is not Propiedad propiedad || propiedad.GetPropietario() != jugador)
+        if (jugador.ObtenerCasillaActual() is Propiedad propiedad)
         {
-            jugador.EnviarMensaje("❌ Debes estar en una propiedad que te pertenezca para construir.");
+            ComprarCasa(jugador, propiedad);
+        }
+        else
+        {
+            jugador.EnviarMensaje("❌ Debes estar en una propiedad para construir aquí.");
+        }
+    }
+
+    // Comprar una casa u hotel en una propiedad especifica (ya no solo la actual,
+    // asi se puede construir en cualquier propiedad propia desde el menu de gestión).
+    // Ahora exige tener el monopolio completo del grupo de color.
+    public void ComprarCasa(Jugador jugador, Propiedad propiedad)
+    {
+        if (propiedad.GetPropietario() != jugador)
+        {
+            jugador.EnviarMensaje("❌ Esa propiedad no te pertenece.");
+            return;
+        }
+
+        if (propiedad.GetColorGrupo() == "Tren")
+        {
+            jugador.EnviarMensaje("❌ Los ferrocarriles no admiten casas.");
+            return;
+        }
+
+        if (propiedad.GetIsHipotecada())
+        {
+            jugador.EnviarMensaje("❌ No puedes construir en una propiedad hipotecada.");
+            return;
+        }
+
+        if (!TieneMonopolio(jugador, propiedad.GetColorGrupo()))
+        {
+            jugador.EnviarMensaje($"❌ Necesitas ser dueño de TODAS las propiedades del grupo '{propiedad.GetColorGrupo()}' para construir aquí.");
             return;
         }
 
@@ -396,6 +503,97 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"Nueva renta: ${propiedad.CalcularRenta()}. Saldo: ${jugador.GetDinero()}");
         Broadcast($"📢 {jugador.GetNombre()} construyó {mejora} en '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/comprarcasa/{propiedad.GetCantidadCasas()}/casilla/{propiedad.GetPosicion()}");
+    }
+
+    // Vende una casa/hotel (bajar un nivel). Se recupera la mitad de lo que
+    // costó construirla, igual que la regla clásica del Monopoly de mesa.
+    public void VenderCasa(Jugador jugador, Propiedad propiedad)
+    {
+        if (propiedad.GetPropietario() != jugador)
+        {
+            jugador.EnviarMensaje("❌ Esa propiedad no te pertenece.");
+            return;
+        }
+
+        if (propiedad.GetCantidadCasas() <= 0)
+        {
+            jugador.EnviarMensaje("❌ Esta propiedad no tiene casas para vender.");
+            return;
+        }
+
+        int costoCasa = propiedad.GetPrecioCompra() / 2;
+        int reembolso = costoCasa / 2;
+
+        propiedad.SetCantidadCasas(propiedad.GetCantidadCasas() - 1);
+        new Transaccion(reembolso, GetTurnoActual(), "Ganancia por evento", jugador, null);
+
+        string quedo = propiedad.GetCantidadCasas() == 0 ? "sin casas" : $"{propiedad.GetCantidadCasas()} casas";
+        jugador.EnviarMensaje($"🏚️ Vendiste una mejora de '{propiedad.GetNombre()}' y recibiste ${reembolso}. Ahora tiene {quedo}. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"📢 {jugador.GetNombre()} vendió una mejora en '{propiedad.GetNombre()}'.", jugador);
+        GodotBroadcast($"jugador/{jugador.GetId()}/comprarcasa/{propiedad.GetCantidadCasas()}/casilla/{propiedad.GetPosicion()}");
+    }
+
+    // Hipoteca una propiedad: el banco te da la mitad del precio de compra,
+    // pero deja de cobrar renta hasta que se deshipoteque. No se puede
+    // hipotecar si todavía tiene casas construidas encima.
+    public void HipotecarPropiedad(Jugador jugador, Propiedad propiedad)
+    {
+        if (propiedad.GetPropietario() != jugador)
+        {
+            jugador.EnviarMensaje("❌ Esa propiedad no te pertenece.");
+            return;
+        }
+
+        if (propiedad.GetIsHipotecada())
+        {
+            jugador.EnviarMensaje("❌ Esa propiedad ya está hipotecada.");
+            return;
+        }
+
+        if (propiedad.GetCantidadCasas() > 0)
+        {
+            jugador.EnviarMensaje("❌ Debes vender las casas/hotel antes de hipotecar esta propiedad.");
+            return;
+        }
+
+        int valorHipoteca = propiedad.GetPrecioCompra() / 2;
+        propiedad.SetIsHipotecada(true);
+        new Transaccion(valorHipoteca, GetTurnoActual(), "Ganancia por evento", jugador, null);
+
+        jugador.EnviarMensaje($"🏦 Hipotecaste '{propiedad.GetNombre()}' y recibiste ${valorHipoteca}. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"📢 {jugador.GetNombre()} hipotecó '{propiedad.GetNombre()}'.", jugador);
+        GodotBroadcast($"jugador/{jugador.GetId()}/hipotecar/casilla/{propiedad.GetPosicion()}");
+    }
+
+    // Deshipoteca una propiedad: se paga lo que te dieron por la hipoteca
+    // más un 10% de interés (la regla clásica del Monopoly de mesa).
+    public void DeshipotecarPropiedad(Jugador jugador, Propiedad propiedad)
+    {
+        if (propiedad.GetPropietario() != jugador)
+        {
+            jugador.EnviarMensaje("❌ Esa propiedad no te pertenece.");
+            return;
+        }
+
+        if (!propiedad.GetIsHipotecada())
+        {
+            jugador.EnviarMensaje("❌ Esa propiedad no está hipotecada.");
+            return;
+        }
+
+        int costo = (int)(propiedad.GetPrecioCompra() / 2 * 1.1);
+        if (jugador.GetDinero() < costo)
+        {
+            jugador.EnviarMensaje($"❌ Necesitas ${costo} para deshipotecarla y tienes ${jugador.GetDinero()}.");
+            return;
+        }
+
+        new Transaccion(costo, GetTurnoActual(), "Pago al banco", jugador, null);
+        propiedad.SetIsHipotecada(false);
+
+        jugador.EnviarMensaje($"🏦 Deshipotecaste '{propiedad.GetNombre()}' por ${costo}. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"📢 {jugador.GetNombre()} deshipotecó '{propiedad.GetNombre()}'.", jugador);
+        GodotBroadcast($"jugador/{jugador.GetId()}/deshipotecar/casilla/{propiedad.GetPosicion()}");
     }
 
     // Mueve al jugador a una casilla específica por su índice numérico (0 a 31).

@@ -113,6 +113,7 @@ internal class Program
                             break;
                         }
 
+                        juego.AnunciarTurno(jugadorActual);
                         EjecutarTurnoJugador(juego, jugadorActual, dadosHardware);
                     }
 
@@ -187,6 +188,10 @@ internal class Program
             Console.WriteLine("  5. Ver mi estado y propiedades");
             Console.WriteLine("  6. Ver tablero completo");
             Console.WriteLine("  7. Terminar turno");
+            if (jugador.GetPropiedades().Size() > 0)
+            {
+                Console.WriteLine("  8. Gestionar mis propiedades (construir/vender/hipotecar/deshipotecar)");
+            }
             Console.Write("Selecciona una opción: ");
 
             string? eleccion = Console.ReadLine()?.Trim();
@@ -250,10 +255,17 @@ internal class Program
                     }
                     break;
 
+                case "8":
+                    GestionarPropiedades(juego, jugador);
+                    break;
+
                 default:
                     Console.WriteLine("Opción no válida.");
                     break;
             }
+
+            // Actualiza el HUD de dinero de Godot despues de CUALQUIER accion
+            juego.AnunciarDinero(jugador);
 
             // Si el jugador cayó en bancarrota durante una acción
             if (jugador.GetDinero() <= 0)
@@ -263,6 +275,81 @@ internal class Program
                 turnoTerminado = true;
             }
         }
+    }
+
+    // Submenú para hipotecar, deshipotecar, construir o vender casas en
+    // CUALQUIERA de las propiedades del jugador, no solo la que está pisando
+    private static void GestionarPropiedades(JuegoMonopoly juego, Jugador jugador)
+    {
+        if (jugador.GetPropiedades().Size() == 0)
+        {
+            Console.WriteLine("Todavía no tienes ninguna propiedad.");
+            return;
+        }
+
+        Propiedad? elegida = SeleccionarPropiedad(jugador);
+        if (elegida == null)
+        {
+            Console.WriteLine("Cancelado.");
+            return;
+        }
+
+        string nivelActual = elegida.GetCantidadCasas() == 5 ? "Hotel" : elegida.GetCantidadCasas().ToString();
+        Console.WriteLine($"\n-- {elegida.GetNombre()} --");
+        Console.WriteLine($"Precio: ${elegida.GetPrecioCompra()} | Renta actual: ${elegida.CalcularRenta()} | Casas: {nivelActual} | Hipotecada: {(elegida.GetIsHipotecada() ? "Sí" : "No")}");
+        Console.WriteLine("  1. Comprar casa/hotel");
+        Console.WriteLine("  2. Vender casa/hotel");
+        Console.WriteLine("  3. Hipotecar");
+        Console.WriteLine("  4. Deshipotecar");
+        Console.WriteLine("  5. Cancelar");
+        Console.Write("Opción: ");
+
+        switch (Console.ReadLine()?.Trim())
+        {
+            case "1":
+                juego.ComprarCasa(jugador, elegida);
+                break;
+            case "2":
+                juego.VenderCasa(jugador, elegida);
+                break;
+            case "3":
+                juego.HipotecarPropiedad(jugador, elegida);
+                break;
+            case "4":
+                juego.DeshipotecarPropiedad(jugador, elegida);
+                break;
+            default:
+                Console.WriteLine("Cancelado.");
+                break;
+        }
+    }
+
+    // Muestra la lista de propiedades del jugador numerada y devuelve la que elija.
+    // Usa GetDataNode de la propia LinkedList del jugador, no un List de C#
+    private static Propiedad? SeleccionarPropiedad(Jugador jugador)
+    {
+        int total = jugador.GetPropiedades().Size();
+
+        Console.WriteLine("\nTus propiedades:");
+        Node? temp = jugador.GetPropiedades().GetHead();
+        for (int i = 0; i < total; i++)
+        {
+            if (temp?.GetData() is Propiedad p)
+            {
+                string nivel = p.GetCantidadCasas() == 5 ? "Hotel" : $"{p.GetCantidadCasas()} casas";
+                string hip = p.GetIsHipotecada() ? " [HIPOTECADA]" : "";
+                Console.WriteLine($"  {i + 1}. {p.GetNombre()} ({nivel}){hip}");
+            }
+            temp = temp?.GetNext();
+        }
+
+        Console.Write("Elige el número de la propiedad (0 para cancelar): ");
+        if (!int.TryParse(Console.ReadLine(), out int idx) || idx <= 0 || idx > total)
+        {
+            return null;
+        }
+
+        return jugador.GetPropiedades().GetDataNode(idx - 1) as Propiedad;
     }
 
     // Cuenta cuántos jugadores aún tienen dinero positivo
