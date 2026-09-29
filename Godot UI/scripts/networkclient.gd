@@ -22,10 +22,12 @@ signal message_received(raw: String)
 signal connection_status_changed(connected: bool, message: String)
 
 ## Señales para los botones de acción y el flujo de pago RFID
-signal turn_actions_updated(can_roll: bool, can_buy: bool, buy_price: int, buy_name: String, can_end: bool, in_jail: bool)
+signal turn_actions_updated(can_roll: bool, can_buy: bool, buy_price: int, buy_name: String, can_end: bool, in_jail: bool, can_build: bool, build_cost: int, build_name: String)
+signal dice_rolled(player_id: int, d1: int, d2: int, total: int)
 signal payment_requested(player_id: int, amount: int, concept: String)
 signal payment_completed(player_id: int, amount: int)
 signal payment_cancelled(player_id: int)
+signal payment_card_wrong(player_id: int)
 
 # Variables exportadas que permiten modificarlas desde el editor 2D en vez de aquí
 # en el código, para poner la ip del host, el puerto, el nodo del tablero
@@ -67,13 +69,12 @@ func send_action(action: String, arg: int = -1) -> void:
 	else:
 		send_line("accion/%d/%s" % [current_turn_player_id, action])
 
-## Confirma el pago vía RFID/NFC simulado desde la UI
+## El pago solo se autoriza mediante la tarjeta física del jugador en el lector RFID
 func confirm_rfid_payment() -> void:
-	send_line("accion/%d/rfid" % current_turn_player_id)
+	pass
 
-## Cancela la autorización de pago
 func cancel_rfid_payment() -> void:
-	send_line("accion/%d/cancelarpago" % current_turn_player_id)
+	pass
 
 func is_connected_to_server() -> bool:
 	return _connected
@@ -294,7 +295,7 @@ func _handle_message(raw: String) -> void:
 		return
 
 	## Mensajes de control de turno y acciones disponibles
-	## turno/acciones/<puede_tirar>/<puede_comprar>/<precio>/<nombre>/<puede_terminar>/<en_carcel>
+	## turno/acciones/<puede_tirar>/<puede_comprar>/<precio>/<nombre>/<puede_terminar>/<en_carcel>/<puede_construir>/<costo_construir>/<nombre_construir>
 	if parts.size() >= 7 and parts[0] == "turno" and parts[1] == "acciones":
 		var can_roll := parts[2] == "1"
 		var can_buy := parts[3] == "1"
@@ -302,12 +303,16 @@ func _handle_message(raw: String) -> void:
 		var buy_name := parts[5]
 		var can_end := parts[6] == "1"
 		var in_jail := parts.size() > 7 and parts[7] == "1"
-		turn_actions_updated.emit(can_roll, can_buy, buy_price, buy_name, can_end, in_jail)
+		var can_build := parts.size() > 8 and parts[8] == "1"
+		var build_cost := int(parts[9]) if parts.size() > 9 else 0
+		var build_name := parts[10] if parts.size() > 10 else ""
+		turn_actions_updated.emit(can_roll, can_buy, buy_price, buy_name, can_end, in_jail, can_build, build_cost, build_name)
 		return
 
-	## Mensajes de flujo de pago RFID/NFC
+	## Mensajes de flujo de pago RFID
 	## pago/solicitar/<id>/<monto>/<concepto>
 	## pago/exito/<id>/<monto>
+	## pago/tarjetaincorrecta/<id>
 	## pago/cancelado/<id>
 	if parts.size() >= 2 and parts[0] == "pago":
 		var sub := parts[1]
@@ -322,10 +327,23 @@ func _handle_message(raw: String) -> void:
 			var monto := int(parts[3])
 			payment_completed.emit(pid, monto)
 			return
+		elif sub == "tarjetaincorrecta" and parts.size() >= 3:
+			var pid := int(parts[2])
+			payment_card_wrong.emit(pid)
+			return
 		elif sub == "cancelado" and parts.size() >= 3:
 			var pid := int(parts[2])
 			payment_cancelled.emit(pid)
 			return
+
+	## Mensajes de tirada de dados: dados/<id>/<d1>/<d2>/<total>
+	if parts.size() >= 5 and parts[0] == "dados":
+		var pid := int(parts[1])
+		var d1 := int(parts[2])
+		var d2 := int(parts[3])
+		var total := int(parts[4])
+		dice_rolled.emit(pid, d1, d2, total)
+		return
 
 	## Si la cantidad de partes del mensaje es menor a 2, ya que no hay mensajes de ese tamaño
 	## o la primera de todas las partes no incluye la palabra "jugador", se toma como un mensaje

@@ -62,7 +62,7 @@ theme_override_constants/separation = 10
 layout_mode = 2
 theme_override_colors/font_color = Color(0.38, 0.72, 1, 1)
 theme_override_font_sizes/font_size = 17
-text = "💳 AUTORIZACIÓN DE PAGO (RFID / NFC)"
+text = "AUTORIZACION RFID REQUERIDA"
 horizontal_alignment = 1
 
 [node name="HSeparator" type="HSeparator" parent="CenterContainer/ModalPanel/Margin/VBox"]
@@ -71,7 +71,7 @@ layout_mode = 2
 [node name="PlayerLabel" type="Label" parent="CenterContainer/ModalPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "👤 Jugador 1"
+text = "Jugador 1"
 horizontal_alignment = 1
 
 [node name="ConceptLabel" type="Label" parent="CenterContainer/ModalPanel/Margin/VBox"]
@@ -94,13 +94,13 @@ custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.78, 0.85, 1)
 theme_override_font_sizes/font_size = 12
-text = "Acerque su tarjeta/celular RFID al sensor físico
-o presione el botón para autorizar."
+text = "Acerque la tarjeta RFID del jugador al sensor físico..."
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
 [node name="BtnRow" type="HBoxContainer" parent="CenterContainer/ModalPanel/Margin/VBox"]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = 12
 
@@ -109,10 +109,10 @@ custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 13
-text = "📱💳 Pagar con RFID / Teléfono"
+text = "Tarjeta RFID"
 
 [node name="CancelBtn" type="Button" parent="CenterContainer/ModalPanel/Margin/VBox/BtnRow"]
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
-text = "❌ Cancelar"
+text = "Cancelar"

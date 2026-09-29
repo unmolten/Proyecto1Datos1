@@ -1,13 +1,37 @@
-// Lista circular doblemente enlazada que mantiene referencias al primer nodo (head),
-// al ultimo nodo (tail) y a la cantidad de elementos (size).
-// Cada nodo apunta tanto a su siguiente como a su anterior de forma circular.
+using System;
+
+/**
+ * @file Linked_List.cs
+ * @brief Implementacion de una lista circular doblemente enlazada.
+ *
+ * Esta estructura de datos es el pilar fundamental del proyecto. Se utiliza para:
+ * 1. Modelar el tablero de Monopoly donde la ultima casilla se enlaza con la primera.
+ * 2. Gestionar la rotacion de los mazos de cartas (Fortuna y Arca Comunal).
+ * 3. Mantener el registro dinamico de jugadores y el inventario de propiedades de cada uno.
+ */
+
+/**
+ * @class LinkedList
+ * @brief Estructura de lista circular doblemente enlazada.
+ *
+ * Mantiene referencias al primer elemento (head), al ultimo elemento (tail)
+ * y un contador entero con la cantidad de nodos (size). En una configuracion circular,
+ * head.GetPrevious() apunta a tail y tail.GetNext() apunta a head.
+ */
 public class LinkedList
 {
+    /** @brief Referencia al primer nodo de la lista. */
     private Node? head;
+
+    /** @brief Cantidad total de elementos almacenados en la lista. */
     private int size;
+
+    /** @brief Referencia al ultimo nodo de la lista. */
     private Node? tail;
 
-    // Crea una lista circular vacia.
+    /**
+     * @brief Constructor por defecto. Inicializa una lista vacia.
+     */
     public LinkedList()
     {
         this.head = null;
@@ -15,31 +39,47 @@ public class LinkedList
         this.size = 0;
     }
 
-    // Indica si la lista no contiene nodos.
+    /**
+     * @brief Determina si la lista carece de elementos.
+     * @return true si la lista esta vacia (head es null); de lo contrario, false.
+     */
     public Boolean IsEmpty()
     {
         return this.head == null;
     }
 
-    // Devuelve la cantidad actual de nodos.
+    /**
+     * @brief Devuelve la cantidad de nodos presentes en la lista.
+     * @return Entero con el tamaño actual de la lista.
+     */
     public int Size()
     {
         return this.size;
     }
 
-    // Devuelve la referencia al primer nodo (head).
+    /**
+     * @brief Obtiene el primer nodo de la lista (cabeza).
+     * @return Nodo inicial o null si la lista esta vacia.
+     */
     public Node? GetHead()
     {
         return this.head;
     }
 
-    // Devuelve la referencia al ultimo nodo (tail).
+    /**
+     * @brief Obtiene el ultimo nodo de la lista (cola).
+     * @return Nodo final o null si la lista esta vacia.
+     */
     public Node? GetTail()
     {
         return this.tail;
     }
 
-    // Actualiza tail recorriendo la lista si fuera necesario.
+    /**
+     * @brief Recorre la lista para actualizar la referencia del nodo cola (tail).
+     *
+     * Utilizado para recalcular el final de la lista si los enlaces sufrieron modificaciones.
+     */
     private void UpdateTail()
     {
         if (this.head == null)
@@ -60,11 +100,18 @@ public class LinkedList
         this.tail = current;
     }
 
-    // Inserta un nodo al principio de la lista manteniendo la circularidad doble.
+    /**
+     * @brief Inserta un nuevo nodo al inicio de la lista.
+     *
+     * Ajusta los enlaces anterior y siguiente para mantener la circularidad doble.
+     * El nuevo nodo pasa a ser el nuevo head.
+     * @param data Informacion u objeto a almacenar.
+     */
     public void InsertFirst(Object data)
     {
         Node newNode = new Node(data);
 
+        // Si la lista estaba vacia, el nodo se apunta a si mismo
         if (this.head == null)
         {
             newNode.SetNext(newNode);
@@ -74,6 +121,7 @@ public class LinkedList
         }
         else
         {
+            // El nuevo nodo se intercala entre el tail y el antiguo head
             newNode.SetNext(this.head);
             newNode.SetPrevious(this.tail);
             this.tail!.SetNext(newNode);
@@ -85,8 +133,12 @@ public class LinkedList
         Console.WriteLine("Nodo insertado al inicio: " + newNode.GetData());
     }
 
-    // Inserta un nodo inmediatamente despues de head.
-    // Si la lista esta vacia, el dato se convierte en el primer nodo.
+    /**
+     * @brief Inserta un nuevo elemento inmediatamente despues de la cabeza (head).
+     *
+     * Si la lista esta vacia, el elemento se inserta como el primer nodo.
+     * @param data Informacion u objeto a almacenar.
+     */
     public void InsertAfterHead(Object data)
     {
         if (this.head == null)
@@ -112,7 +164,13 @@ public class LinkedList
         Console.WriteLine("Nodo insertado despues del head: " + newNode.GetData());
     }
 
-    // Inserta un nodo al final de la lista manteniendo la circularidad doble.
+    /**
+     * @brief Inserta un nuevo nodo al final de la lista.
+     *
+     * Mantiene los enlaces bidireccionales y circulares. El nuevo nodo
+     * se convierte en el nuevo tail y apunta de vuelta al head.
+     * @param data Informacion u objeto a almacenar.
+     */
     public void InsertEnd(Object data)
     {
         Node newNode = new Node(data);
@@ -135,7 +193,10 @@ public class LinkedList
         this.size++;
     }
 
-    // Elimina y devuelve el primer nodo. Devuelve null si la lista esta vacia.
+    /**
+     * @brief Elimina y extrae el primer nodo (head) de la lista.
+     * @return El nodo extraido, o null si la lista se encuentra vacia.
+     */
     public Node? DeleteFirst()
     {
         if (this.head == null)
@@ -145,6 +206,7 @@ public class LinkedList
 
         Node temp = this.head;
 
+        // Si solo habia un nodo en la lista
         if (this.head == this.tail)
         {
             this.head = null;
@@ -159,12 +221,16 @@ public class LinkedList
             this.size--;
         }
 
+        // Se limpian los punteros del nodo extraido
         temp.SetNext(null);
         temp.SetPrevious(null);
         return temp;
     }
 
-    // Elimina y devuelve el ultimo nodo. Devuelve null si la lista esta vacia.
+    /**
+     * @brief Elimina y extrae el ultimo nodo (tail) de la lista.
+     * @return El nodo extraido, o null si la lista se encuentra vacia.
+     */
     public Node? DeleteLast()
     {
         if (this.head == null)
@@ -174,6 +240,7 @@ public class LinkedList
 
         Node temp = this.tail!;
 
+        // Caso con un unico elemento
         if (this.head == this.tail)
         {
             this.head = null;
@@ -193,8 +260,11 @@ public class LinkedList
         return temp;
     }
 
-    // Elimina la primera aparicion del dato especificado en la lista circular.
-    // Devuelve true si el elemento fue encontrado y eliminado; false en caso contrario.
+    /**
+     * @brief Busca y elimina la primera aparicion de un objeto en la lista.
+     * @param data Objeto a buscar y remover.
+     * @return true si el nodo fue encontrado y eliminado con exito; false si no existe.
+     */
     public bool Delete(Object data)
     {
         if (this.head == null)
@@ -202,21 +272,21 @@ public class LinkedList
             return false;
         }
 
-        // Si el dato esta en la cabeza
+        // Si el elemento coincide con la cabeza
         if (object.Equals(this.head.GetData(), data))
         {
             DeleteFirst();
             return true;
         }
 
-        // Si el dato esta en la cola
+        // Si el elemento coincide con la cola
         if (object.Equals(this.tail!.GetData(), data))
         {
             DeleteLast();
             return true;
         }
 
-        // Busca en los nodos intermedios
+        // Recorrido por los nodos intermedios
         Node current = this.head.GetNext()!;
         int visited = 1;
 
@@ -227,6 +297,7 @@ public class LinkedList
                 Node prev = current.GetPrevious()!;
                 Node next = current.GetNext()!;
 
+                // Re-enlazar nodos vecinos salteando el actual
                 prev.SetNext(next);
                 next.SetPrevious(prev);
 
@@ -244,13 +315,19 @@ public class LinkedList
         return false;
     }
 
-    // Elimina la primera aparicion del dato especificado (alias de Delete).
+    /**
+     * @brief Metodo de conveniencia (alias) equivalente a Delete.
+     * @param data Objeto a remover.
+     * @return true si se removio correctamente; false en caso contrario.
+     */
     public bool Remove(Object data)
     {
         return Delete(data);
     }
 
-    // Imprime la lista mostrando los enlaces bidireccionales hasta completar una vuelta.
+    /**
+     * @brief Imprime en la consola los elementos de la lista enlazada hasta completar un ciclo.
+     */
     public void PrintList()
     {
         if (this.head == null)
@@ -276,7 +353,11 @@ public class LinkedList
         Console.WriteLine("(circular: head)");
     }
 
-    // Asegura que tail y head se encuentren conectados bidireccionalmente.
+    /**
+     * @brief Conecta explicitamente el nodo cola con el nodo cabeza de forma bidireccional.
+     *
+     * Asegura la propiedad de circularidad tras operaciones manuales o de barajado.
+     */
     public void MakeCircular()
     {
         if (this.head != null && this.tail != null)
@@ -286,7 +367,9 @@ public class LinkedList
         }
     }
 
-    // Imprime exactamente size nodos para recorrer el ciclo hacia adelante una vez.
+    /**
+     * @brief Recorre la lista circular hacia adelante e imprime exactamente 'size' elementos.
+     */
     public void PrintCircular()
     {
         if (this.head == null)
@@ -306,7 +389,9 @@ public class LinkedList
         } while (visited < this.size);
     }
 
-    // Imprime exactamente size nodos en sentido contrario usando los enlaces previos.
+    /**
+     * @brief Recorre la lista circular en sentido inverso (hacia atras) usando GetPrevious().
+     */
     public void PrintCircularReverse()
     {
         if (this.tail == null)
@@ -326,8 +411,13 @@ public class LinkedList
         } while (visited < this.size);
     }
 
-    // Devuelve el dato ubicado en una posicion basada en cero.
-    // Por ejemplo, la posicion 4 corresponde al quinto nodo.
+    /**
+     * @brief Obtiene el dato almacenado en un indice de posicion (indexado desde 0).
+     * @param position Indice entero del nodo deseado (0 <= position < size).
+     * @return El objeto almacenado en la posicion solicitada.
+     * @throws InvalidOperationException Si la lista esta vacia.
+     * @throws ArgumentOutOfRangeException Si el indice esta fuera del rango valido.
+     */
     public Object GetDataNode(int position)
     {
         if (this.head == null)
@@ -350,7 +440,13 @@ public class LinkedList
         return current.GetData();
     }
 
-    // Devuelve el nodo ubicado en una posicion basada en cero.
+    /**
+     * @brief Obtiene la referencia al nodo ubicado en una posicion especifica.
+     * @param position Indice basado en cero.
+     * @return El nodo ubicado en esa posicion.
+     * @throws InvalidOperationException Si la lista esta vacia o corrupta.
+     * @throws ArgumentOutOfRangeException Si el indice es negativo o mayor al tamaño.
+     */
     public Node GetNodeAt(int position)
     {
         if (this.head == null)

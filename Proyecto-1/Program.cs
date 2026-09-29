@@ -2,24 +2,35 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 
-// Punto de entrada: inicializa el juego de Monopoly con la lista circular de casillas,
-// registra a los jugadores (vía consola o RFID) y ejecuta el ciclo de turnos interactivo.
+/**
+ * @file Program.cs
+ * @brief Punto de entrada principal y bucle del servidor para Monopoly.
+ *
+ * Configura los modos de juego (Consola o Hardware con Raspberry Pi Pico),
+ * levanta el servidor de red TCP en un hilo secundario para los clientes de Godot,
+ * gestiona el flujo de turnos interactivo y concluye con el reporte de transacciones.
+ */
+
+/**
+ * @class Program
+ * @brief Clase interna que alberga la funcion Main y la orquestacion de la partida.
+ */
 internal class Program
 {
+    /**
+     * @brief Metodo de entrada principal de la aplicacion de servidor.
+     */
     public static void Main()
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         Console.WriteLine("==========================================================");
-        Console.WriteLine("             🎮 MONOPOLY - EDICIÓN AYEDD 🎮               ");
+        Console.WriteLine("               MONOPOLY - EDICION AYEDD                   ");
         Console.WriteLine("==========================================================");
 
         var juego = JuegoMonopoly.Instancia;
         Console.WriteLine($"Tablero cargado con {juego.GetTablero().Size()} casillas en lista circular.\n");
 
-        // Arrancamos el servidor para Godot en un hilo aparte, para que la
-        // consola pueda seguir pidiendo cosas normal sin quedar bloqueada
-        // esperando conexiones. Por ahora Godot solo VE la partida, no manda
-        // nada (eso lo conectamos despues con los botones de la UI)
+        // Servidor para interfaces graficas (Godot) en un hilo aparte
         Thread hiloGodot = new Thread(() => IniciarServidorGodot(juego));
         hiloGodot.IsBackground = true;
         hiloGodot.Start();
@@ -27,7 +38,7 @@ internal class Program
         Console.WriteLine("Seleccione el modo de juego:");
         Console.WriteLine("1. Modo Consola (Registro de jugadores manual)");
         Console.WriteLine("2. Modo Hardware (Raspberry Pi Pico: RFID + Dados)");
-        Console.Write("Opción (1 o 2, por defecto 1): ");
+        Console.Write("Opcion (1 o 2, por defecto 1): ");
         string? opcionModo = Console.ReadLine();
 
         ConexionPico? conexion = null;
@@ -35,9 +46,13 @@ internal class Program
 
         if (opcionModo == "2")
         {
-            Console.Write("Ingrese el puerto serial de la Pico (ej. COM3 o /dev/ttyACM0): ");
+            string puertoDefault = DetectarPuertoPico();
+            string[] puertosDetectados = System.IO.Ports.SerialPort.GetPortNames();
+            Console.WriteLine($"\n[Hardware] Puertos COM detectados: {string.Join(", ", puertosDetectados)}");
+            Console.Write($"Ingrese el puerto serial de la Pico (Enter para {puertoDefault}): ");
             string? puerto = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(puerto)) puerto = "COM3";
+            if (string.IsNullOrWhiteSpace(puerto)) puerto = puertoDefault;
+            puerto = puerto.Trim().ToUpper();
 
             conexion = new ConexionPico();
             conexion.IniciarConexion(puerto);
@@ -60,10 +75,10 @@ internal class Program
             }
         }
 
-        // Si no se usó la Pico o falló, registrar jugadores por consola
+        // Si no se uso la Pico o fallo la conexion, registrar participantes por consola
         if (juego.GetJugadores().Size() == 0)
         {
-            Console.Write("\n¿Cuántos jugadores participarán? (2-4): ");
+            Console.Write("\n¿Cuantos jugadores participaran? (2-4): ");
             if (!int.TryParse(Console.ReadLine(), out int cantidad) || cantidad < 2)
             {
                 cantidad = 2;
@@ -81,7 +96,7 @@ internal class Program
             }
         }
 
-        juego.ConfigurarHardware(conexion);
+        juego.ConfigurarHardware(conexion, dadosHardware);
         IniciarLectorConsola(juego);
 
         Console.WriteLine("\n==========================================================");
@@ -92,12 +107,12 @@ internal class Program
         {
             int turnoGlobal = 1;
 
-            // Bucle principal de la partida: continúa mientras haya más de un jugador con saldo positivo
+            // Bucle principal de la partida mientras queden al menos dos competidores con saldo
             while (ContarJugadoresActivos(juego) > 1)
             {
                 juego.SetTurnoActual(turnoGlobal);
 
-                // Recorremos la lista enlazada de jugadores activos
+                // Recorrido de la lista enlazada de jugadores
                 Node? nodoJugador = juego.GetJugadores().GetHead();
                 int totalJugadores = juego.GetJugadores().Size();
 
@@ -126,12 +141,12 @@ internal class Program
                 turnoGlobal++;
             }
 
-            // Anuncio del ganador
+            // Anuncio del participante victorioso
             Jugador? ganador = ObtenerGanador(juego);
             Console.WriteLine("\n==========================================================");
             if (ganador != null)
             {
-                Console.WriteLine($"🏆 ¡FELICITACIONES, {ganador.GetNombre().ToUpper()}! ¡HAS GANADO LA PARTIDA!");
+                Console.WriteLine($"[VICTORIA] ¡FELICITACIONES, {ganador.GetNombre().ToUpper()}! ¡HAS GANADO LA PARTIDA!");
                 Console.WriteLine($"Saldo final: ${ganador.GetDinero()} | Propiedades: {ganador.GetPropiedades().Size()}");
             }
             else
@@ -140,9 +155,9 @@ internal class Program
             }
             Console.WriteLine("==========================================================\n");
 
-            // Generar informe final de transacciones
+            // Persistencia del reporte general de transacciones
             Transaccion.ImprimirTransacciones();
-            Console.WriteLine("📄 Se ha generado el reporte de transacciones en 'Reporte.txt'.");
+            Console.WriteLine("[REPORTE] Se ha generado el reporte de transacciones en 'Reporte.txt'.");
         }
         finally
         {
@@ -154,20 +169,28 @@ internal class Program
         }
     }
 
-    // Ejecuta el turno individual de un jugador con menú de acciones
+    /**
+     * @brief Ejecuta el ciclo de decisiones y acciones correspondientes al turno de un jugador.
+     * @param juego Instancia del controlador global del juego.
+     * @param jugador Participante que posee el turno.
+     * @param dadosHardware Controlador de dados fisicos (si esta disponible).
+     */
     private static void EjecutarTurnoJugador(JuegoMonopoly juego, Jugador jugador, ControlDados? dadosHardware)
     {
-        Console.WriteLine($"\n----------------------------------------------------------");
-        Console.WriteLine($"🎲 TURNO #{juego.GetTurnoActual()} DE: {jugador.GetNombre().ToUpper()}");
-        Console.WriteLine($"Saldo: ${jugador.GetDinero()} | Posición: {jugador.ObtenerCasillaActual()?.GetNombre() ?? "Salida"}");
+        Console.WriteLine("\n----------------------------------------------------------");
+        Console.WriteLine($"[TURNO] #{juego.GetTurnoActual()} DE: {jugador.GetNombre().ToUpper()}");
+        Console.WriteLine($"Saldo: ${jugador.GetDinero()} | Posicion: {jugador.ObtenerCasillaActual()?.GetNombre() ?? "Salida"}");
         if (jugador.GetEnCarcel())
         {
-            Console.WriteLine($"🔒 ¡Estás en la Cárcel! (Turnos cumplidos: {jugador.GetTurnosEnCarcel()}/3)");
+            Console.WriteLine($"[CARCEL] ¡Estas en la Carcel! (Turnos cumplidos: {jugador.GetTurnosEnCarcel()}/3)");
         }
-        Console.WriteLine($"----------------------------------------------------------");
+        Console.WriteLine("----------------------------------------------------------");
 
         bool turnoTerminado = false;
         bool yaTiroDados = false;
+
+        juego.LimpiarColaAcciones();
+        dadosHardware?.IniciarNuevoTurno();
 
         while (!turnoTerminado)
         {
@@ -176,13 +199,13 @@ internal class Program
             Console.WriteLine("\nAcciones disponibles (Consola o UI de Godot):");
             if (!yaTiroDados)
             {
-                Console.WriteLine("  1. Tirar dados y avanzar");
+                Console.WriteLine("  1. Tirar dados y avanzar (o presiona el boton fisico en la Pico)");
             }
             if (jugador.GetEnCarcel())
             {
-                Console.WriteLine("  2. Pagar fianza ($50) o usar carta para salir de la cárcel");
+                Console.WriteLine("  2. Pagar fianza ($50) o usar carta para salir de la carcel");
             }
-            if (yaTiroDados && jugador.ObtenerCasillaActual() is Propiedad prop && !prop.TienePropietario() && jugador.GetDinero() >= prop.GetPrecioCompra())
+            if (yaTiroDados && jugador.ObtenerCasillaActual() is Propiedad prop && !prop.TienePropietario())
             {
                 Console.WriteLine($"  3. Comprar la propiedad actual ({prop.GetNombre()} por ${prop.GetPrecioCompra()})");
             }
@@ -197,10 +220,28 @@ internal class Program
             {
                 Console.WriteLine("  8. Gestionar mis propiedades (construir/vender/hipotecar/deshipotecar)");
             }
-            Console.Write("Esperando acción (Consola o Godot)...: ");
+            Console.Write("Esperando accion (Consola, Godot o boton en la Pico)...: ");
 
-            AccionTurno accion = juego.EsperarAccion(jugador);
-            Console.WriteLine($"\n[ACCIÓN RECIBIDA: {accion.Tipo.ToUpper()}]");
+            AccionTurno? accion = null;
+            while (accion == null)
+            {
+                accion = juego.IntentarObtenerAccion(jugador);
+                if (accion != null) break;
+
+                if (!yaTiroDados && dadosHardware != null && dadosHardware.EstaConectado())
+                {
+                    int tiradaBoton = dadosHardware.LeerCasillas();
+                    if (tiradaBoton > 0)
+                    {
+                        accion = new AccionTurno { Tipo = "tirar", CasillaIndex = tiradaBoton };
+                        break;
+                    }
+                }
+
+                Thread.Sleep(50);
+            }
+
+            Console.WriteLine($"\n[ACCION RECIBIDA: {accion.Tipo.ToUpper()}]");
 
             switch (accion.Tipo.ToLower())
             {
@@ -208,20 +249,58 @@ internal class Program
                 case "tirar":
                     if (yaTiroDados)
                     {
-                        Console.WriteLine("⚠️ Ya tiraste los dados en este turno.");
+                        Console.WriteLine("[AVISO] Ya tiraste los dados en este turno.");
                     }
                     else
                     {
-                        if (dadosHardware != null && dadosHardware.EstaConectado())
+                        int casillasPico = (accion.CasillaIndex > 0) ? accion.CasillaIndex : -1;
+                        int d1 = dadosHardware?.GetUltimoDado1() ?? -1;
+                        int d2 = dadosHardware?.GetUltimoDado2() ?? -1;
+
+                        if (casillasPico <= 0 && dadosHardware != null && dadosHardware.EstaConectado())
                         {
-                            Console.WriteLine("Esperando tirada desde la Pico 2 W...");
-                            int casillasPico = -1;
+                            Console.WriteLine("[DADOS] Esperando tirada desde la Pico (presiona el boton en la Pico, o escribe 'v' para tirada virtual)...");
                             while (casillasPico < 0)
                             {
                                 casillasPico = dadosHardware.LeerCasillas();
+                                if (casillasPico > 0)
+                                {
+                                    d1 = dadosHardware.GetUltimoDado1();
+                                    d2 = dadosHardware.GetUltimoDado2();
+                                    break;
+                                }
+
+                                AccionTurno? accionManual = juego.IntentarObtenerAccion(jugador);
+                                if (accionManual != null)
+                                {
+                                    if (int.TryParse(accionManual.Tipo, out int numManual) && numManual >= 1 && numManual <= 12)
+                                    {
+                                        casillasPico = numManual;
+                                        Console.WriteLine($"[DADOS] Tirada manual por consola ingresada: {casillasPico}");
+                                        break;
+                                    }
+                                    else if (accionManual.Tipo.Equals("v", StringComparison.OrdinalIgnoreCase) ||
+                                             accionManual.Tipo.Equals("tirar", StringComparison.OrdinalIgnoreCase) ||
+                                             accionManual.Tipo.Equals("1", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        Console.WriteLine("[DADOS] Usando tirada virtual de respaldo...");
+                                        casillasPico = -999;
+                                        break;
+                                    }
+                                }
+
+                                Thread.Sleep(50);
                             }
-                            Console.WriteLine($"🎲 Tirada obtenida de la Pico: {casillasPico}");
-                            juego.MoverJugadorCasillas(jugador, casillasPico);
+                        }
+
+                        if (casillasPico == -999)
+                        {
+                            juego.TirarDados(jugador);
+                        }
+                        else if (casillasPico > 0)
+                        {
+                            Console.WriteLine($"[DADOS] Tirada fisica procesada: [{d1}] + [{d2}] = {casillasPico}");
+                            juego.TirarDados(jugador, casillasPico, d1, d2);
                         }
                         else
                         {
@@ -287,7 +366,7 @@ internal class Program
                 case "terminarturno":
                     if (!yaTiroDados && !jugador.GetPierdeSiguienteTurno())
                     {
-                        Console.WriteLine("⚠️ Debes tirar los dados antes de terminar tu turno.");
+                        Console.WriteLine("[AVISO] Debes tirar los dados antes de terminar tu turno.");
                     }
                     else
                     {
@@ -300,30 +379,35 @@ internal class Program
                     break;
 
                 default:
-                    Console.WriteLine("Opción no válida.");
+                    Console.WriteLine("Opcion no valida.");
                     break;
             }
 
             juego.EnviarEstadoAcciones(jugador, yaTiroDados);
             juego.AnunciarDinero(jugador);
 
-            // Si el jugador cayó en bancarrota durante una acción
             if (jugador.GetDinero() <= 0)
             {
-                Console.WriteLine($"\n💀 {jugador.GetNombre()} ha quedado eliminado por bancarrota.");
+                Console.WriteLine($"\n[ELIMINACION] {jugador.GetNombre()} ha quedado eliminado por bancarrota.");
                 juego.NotificarEliminacion(jugador);
                 turnoTerminado = true;
             }
         }
+
+        dadosHardware?.LimpiarTiradasPrevias();
+        juego.LimpiarColaAcciones();
     }
 
-    // Submenú para hipotecar, deshipotecar, construir o vender casas en
-    // CUALQUIERA de las propiedades del jugador, no solo la que está pisando
+    /**
+     * @brief Despliega el menu para hipotecar, deshipotecar, edificar o vender en propiedades propias.
+     * @param juego Instancia del juego.
+     * @param jugador Participante en turno.
+     */
     private static void GestionarPropiedades(JuegoMonopoly juego, Jugador jugador)
     {
         if (jugador.GetPropiedades().Size() == 0)
         {
-            Console.WriteLine("Todavía no tienes ninguna propiedad.");
+            Console.WriteLine("Todavia no tienes ninguna propiedad.");
             return;
         }
 
@@ -336,13 +420,13 @@ internal class Program
 
         string nivelActual = elegida.GetCantidadCasas() == 5 ? "Hotel" : elegida.GetCantidadCasas().ToString();
         Console.WriteLine($"\n-- {elegida.GetNombre()} --");
-        Console.WriteLine($"Precio: ${elegida.GetPrecioCompra()} | Renta actual: ${elegida.CalcularRenta()} | Casas: {nivelActual} | Hipotecada: {(elegida.GetIsHipotecada() ? "Sí" : "No")}");
+        Console.WriteLine($"Precio: ${elegida.GetPrecioCompra()} | Renta actual: ${elegida.CalcularRenta()} | Casas: {nivelActual} | Hipotecada: {(elegida.GetIsHipotecada() ? "Si" : "No")}");
         Console.WriteLine("  1. Comprar casa/hotel");
         Console.WriteLine("  2. Vender casa/hotel");
         Console.WriteLine("  3. Hipotecar");
         Console.WriteLine("  4. Deshipotecar");
         Console.WriteLine("  5. Cancelar");
-        Console.Write("Opción: ");
+        Console.Write("Opcion: ");
 
         switch (Console.ReadLine()?.Trim())
         {
@@ -364,8 +448,11 @@ internal class Program
         }
     }
 
-    // Muestra la lista de propiedades del jugador numerada y devuelve la que elija.
-    // Usa GetDataNode de la propia LinkedList del jugador, no un List de C#
+    /**
+     * @brief Presenta la lista de propiedades adquiridas por el participante y permite elegir una.
+     * @param jugador Participante a consultar.
+     * @return La propiedad elegida o null si cancela.
+     */
     private static Propiedad? SeleccionarPropiedad(Jugador jugador)
     {
         int total = jugador.GetPropiedades().Size();
@@ -383,7 +470,7 @@ internal class Program
             temp = temp?.GetNext();
         }
 
-        Console.Write("Elige el número de la propiedad (0 para cancelar): ");
+        Console.Write("Elige el numero de la propiedad (0 para cancelar): ");
         if (!int.TryParse(Console.ReadLine(), out int idx) || idx <= 0 || idx > total)
         {
             return null;
@@ -392,7 +479,11 @@ internal class Program
         return jugador.GetPropiedades().GetDataNode(idx - 1) as Propiedad;
     }
 
-    // Cuenta cuántos jugadores aún tienen dinero positivo
+    /**
+     * @brief Determina la cantidad de participantes con saldo disponible en la partida.
+     * @param juego Instancia del juego.
+     * @return Conteo de participantes con dinero > 0.
+     */
     private static int ContarJugadoresActivos(JuegoMonopoly juego)
     {
         int activos = 0;
@@ -408,7 +499,11 @@ internal class Program
         return activos;
     }
 
-    // Encuentra al último jugador en pie
+    /**
+     * @brief Localiza al ultimo participante con saldo solvente al finalizar la partida.
+     * @param juego Instancia del juego.
+     * @return El jugador ganador, o null si ninguno califica.
+     */
     private static Jugador? ObtenerGanador(JuegoMonopoly juego)
     {
         Node? actual = juego.GetJugadores().GetHead();
@@ -423,8 +518,10 @@ internal class Program
         return null;
     }
 
-    // Se queda esperando conexiones de instancias de Godot y las va agregando
-    // como espectadores. Corre en su propio hilo, separado de la consola
+    /**
+     * @brief Inicia el servidor socket TCP para la conexion y difusion hacia clientes de Godot.
+     * @param juego Instancia de JuegoMonopoly a vincular.
+     */
     private static void IniciarServidorGodot(JuegoMonopoly juego)
     {
         const int puertoGodot = 6767;
@@ -438,7 +535,7 @@ internal class Program
         LinkedList ips = ObtenerIpsLocales();
         if (!ips.IsEmpty())
         {
-            Console.WriteLine("        - Para amigos en otra PC (misma red WiFi/LAN o VPN):");
+            Console.WriteLine("        - Para otras PCs en la misma red o VPN:");
             Node? nodoIp = ips.GetHead();
             for (int idx = 0; idx < ips.Size(); idx++)
             {
@@ -469,7 +566,11 @@ internal class Program
         }
     }
 
-    // Lee continuamente las acciones enviadas desde una instancia de Godot por TCP
+    /**
+     * @brief Hilo de recepcion continua de comandos enviados desde un cliente de red TCP.
+     * @param cliente Socket del cliente conectado.
+     * @param juego Instancia del juego para despachar los comandos recibidos.
+     */
     private static void LeerComandosCliente(TcpClient cliente, JuegoMonopoly juego)
     {
         try
@@ -488,7 +589,10 @@ internal class Program
         catch { }
     }
 
-    // Lector de comandos de consola en segundo plano para que conviva con los clientes de Godot
+    /**
+     * @brief Inicializa el hilo de lectura por consola para admitir entradas concurrentes.
+     * @param juego Instancia del juego.
+     */
     private static void IniciarLectorConsola(JuegoMonopoly juego)
     {
         Thread t = new Thread(() =>
@@ -503,11 +607,7 @@ internal class Program
                         linea = linea.Trim();
                         if (linea.Equals("p", StringComparison.OrdinalIgnoreCase) || linea.Equals("y", StringComparison.OrdinalIgnoreCase))
                         {
-                            juego.ConfirmarPagoRfid(0);
-                        }
-                        else if (linea.Equals("c", StringComparison.OrdinalIgnoreCase) || linea.Equals("n", StringComparison.OrdinalIgnoreCase))
-                        {
-                            juego.CancelarPagoRfid(0);
+                            juego.ConfirmarPagoRfidConsola();
                         }
                         else
                         {
@@ -522,7 +622,10 @@ internal class Program
         t.Start();
     }
 
-    // Obtiene las direcciones IPv4 de las tarjetas de red activas para compartirlas con amigos
+    /**
+     * @brief Enumera las direcciones IPv4 de las interfaces de red locales activas.
+     * @return LinkedList conteniendo las cadenas con las direcciones IP.
+     */
     private static LinkedList ObtenerIpsLocales()
     {
         LinkedList ips = new LinkedList();
@@ -545,5 +648,27 @@ internal class Program
         }
         catch { }
         return ips;
+    }
+
+    /**
+     * @brief Busca e identifica el puerto COM asignado a la Raspberry Pi Pico.
+     * @return Nombre del puerto detectado o "COM4" por defecto.
+     */
+    private static string DetectarPuertoPico()
+    {
+        try
+        {
+            string[] puertos = System.IO.Ports.SerialPort.GetPortNames();
+            foreach (var p in puertos)
+            {
+                if (p.Equals("COM4", StringComparison.OrdinalIgnoreCase)) return p;
+            }
+            if (puertos.Length > 0)
+            {
+                return puertos[0];
+            }
+        }
+        catch { }
+        return "COM4";
     }
 }

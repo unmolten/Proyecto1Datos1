@@ -1,0 +1,136 @@
+# Doxyfile para el proyecto Monopoly - Algoritmos y Estructuras de Datos 1
+# Proyecto 1 - Datos 1
+
+# ---------------------------------------------------------------------------
+# Informacion del proyecto
+# ---------------------------------------------------------------------------
+PROJECT_NAME           = "Monopoly - Proyecto 1 Datos 1"
+PROJECT_NUMBER         = "1.0"
+PROJECT_BRIEF          = "Sistema de Monopoly desarrollado en C# y Godot con integracion de Raspberry Pi Pico (RFID y dados) y estructuras de datos enlazadas."
+PROJECT_LOGO           = 
+
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = NO
+ALLOW_UNICODE_NAMES    = YES
+OUTPUT_LANGUAGE        = Spanish
+BRIEF_MEMBER_DESC      = YES
+REPEAT_BRIEF           = YES
+ALWAYS_DETAILED_SEC    = NO
+INLINE_INHERITED_MEMB  = NO
+FULL_PATH_NAMES        = NO
+SHORT_NAMES            = NO
+JAVADOC_AUTOBRIEF      = YES
+JAVADOC_BANNER         = NO
+QT_AUTOBRIEF           = NO
+MULTILINE_CPP_IS_BRIEF = NO
+INHERIT_DOCS           = YES
+SEPARATE_MEMBER_PAGES  = NO
+TAB_SIZE               = 4
+OPTIMIZE_OUTPUT_JAVA   = YES
+
+# ---------------------------------------------------------------------------
+# Opciones de extraccion y visibilidad
+# ---------------------------------------------------------------------------
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_PRIV_VIRTUAL   = YES
+EXTRACT_PACKAGE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_METHODS  = YES
+EXTRACT_ANON_NSPACES   = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+HIDE_FRIEND_COMPOUNDS  = NO
+HIDE_IN_BODY_DOCS      = NO
+INTERNAL_DOCS          = NO
+CASE_SENSE_NAMES       = NO
+HIDE_SCOPE_NAMES       = NO
+HIDE_COMPOUND_REFERENCE= NO
+SHOW_INCLUDE_FILES     = YES
+SHOW_GROUPED_MEMB_INC  = NO
+FORCE_LOCAL_INCLUDES   = NO
+INLINE_INFO            = YES
+SORT_MEMBER_DOCS       = YES
+SORT_BRIEF_DOCS        = NO
+SORT_MEMBERS_CTORS_1ST = YES
+SORT_GROUP_NAMES       = NO
+SORT_BY_SCOPE_NAME     = NO
+
+# ---------------------------------------------------------------------------
+# Entrada de archivos fuente
+# ---------------------------------------------------------------------------
+INPUT                  = Proyecto-1 \
+                         Proyecto1Cliente \
+                         "Godot UI/scripts"
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.cs \
+                         *.gd \
+                         *.py \
+                         *.md
+RECURSIVE              = YES
+EXCLUDE                = bin \
+                         obj \
+                         .git \
+                         .godot \
+                         __pycache__
+EXCLUDE_SYMLINKS       = NO
+EXAMPLE_PATTERNS       = *
+EXAMPLE_RECURSIVE      = NO
+IMAGE_PATH             = 
+
+# ---------------------------------------------------------------------------
+# Opciones de explorador de codigo fuente
+# ---------------------------------------------------------------------------
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+STRIP_CODE_COMMENTS    = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+REFERENCES_LINK_SOURCE = YES
+SOURCE_TOOLTIPS        = YES
+USE_HTAGS              = NO
+VERBATIM_HEADERS       = YES
+
+# ---------------------------------------------------------------------------
+# Formato de salida HTML
+# ---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
+HTML_TIMESTAMP         = YES
+HTML_DYNAMIC_MENUS     = YES
+HTML_DYNAMIC_SECTIONS  = NO
+GENERATE_DOCSET        = NO
+GENERATE_HTMLHELP      = NO
+GENERATE_CHI           = NO
+GENERATE_QHP           = NO
+GENERATE_ECLIPSEHELP   = NO
+DISABLE_INDEX          = NO
+GENERATE_TREEVIEW      = YES
+ENUM_VALUES_PER_LINE   = 4
+TREEVIEW_WIDTH         = 250
+EXT_LINKS_IN_WINDOW    = NO
+SEARCHENGINE           = YES
+
+# ---------------------------------------------------------------------------
+# Formatos deshabilitados (solo HTML)
+# ---------------------------------------------------------------------------
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_XML           = NO
+GENERATE_DOCBOOK       = NO
+GENERATE_AUTOGEN_DEF   = NO
+GENERATE_PERLMOD       = NO
+
+# ---------------------------------------------------------------------------
+# Graficos y diagramas (si graphviz / dot no esta instalado, deshabilitar dot)
+# ---------------------------------------------------------------------------
+CLASS_DIAGRAMS         = YES
+HAVE_DOT               = NO
+DOT_IMAGE_FORMAT       = png
+INTERACTIVE_SVG        = NO

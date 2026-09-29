@@ -1,119 +1,210 @@
-/*
-En este archivo se manejan las transacciones de la partida
-incluyendo instanciacion de las mismas, Almacenamiento e
-impresion
-
-Esta pensado para manejar los datos que tambien se mostraran
-al usuario final. O sea, ninguna clase deberia aceptar datos
-como el ID del jugador sino el nombre como tal de este mismo,
-o no un ID de propiedad sino su nombre real.
-*/
-
-using Microsoft.VisualBasic;
+using System;
 using System.IO;
+using System.Threading;
+using Microsoft.VisualBasic;
 
+/**
+ * @file Transacciones.cs
+ * @brief Registro, procesamiento y almacenamiento de transacciones financieras.
+ *
+ * Cada movimiento de dinero (compras, alquileres, pagos al banco, ganancias por eventos)
+ * se procesa y persiste en un archivo de texto secuencial ('Almacenamiento.txt'),
+ * permitiendo generar reportes contables e historiales filtrados.
+ */
 
-
+/**
+ * @class Transaccion
+ * @brief Modela una operacion monetaria entre participantes o con la banca.
+ */
 class Transaccion
 {
-    private const string rutaAlmacenamiento = "../../../Almacenamiento.txt"; // Se suben 3 directorios para crearlo en Proyecto1Datos1/Proyecto-1. Cambiar ruta de ser requerido
-    private const string rutaReporte = "../../../Reporte.txt"; // Cambiar ruta de ser requerido;
-    private static int refID = 0; //ID de referencia para cada instancia
-    private int transaccionID; //ID propio de cada instancia
-    private int monto; //Monto transferido de jugadorOrigen a jugadorDestino
-    private int turno; //Turno en el que el jugador genero la transaccion
-    private string fechaYHora; //Fecha con formato "dd/MM/yyyy//hh:mm:ss"
-    private string tipo; //Tipo de transaccion (predefinida)
-    private Jugador? jugadorOrigen; // NOMBRE del jugador de origen. USAR NULL SI PROVIENE DEL BANCO
-    private Jugador? jugadorDestino; // NOMBRE del jugador destinado. USAR NULL SI VA AL BANCO
-    private string descripcion; //Descripcion autogenerada segun el tipo de transaccion
+    /** @brief Ruta relativa al archivo donde se almacenan las transacciones en crudo. */
+    private const string rutaAlmacenamiento = "../../../Almacenamiento.txt";
 
-    // Métodos individuales para obtener y definir (Getters y Setters)
+    /** @brief Ruta relativa al archivo de reporte formateado para lectura humana. */
+    private const string rutaReporte = "../../../Reporte.txt";
+
+    /** @brief Contador atomico para la generacion incremental de identificadores unicos. */
+    private static int refID = 0;
+
+    /** @brief Identificador secuencial unico de la transaccion. */
+    private int transaccionID;
+
+    /** @brief Cantidad de dinero transferida. */
+    private int monto;
+
+    /** @brief Numero de turno en el que se efectuo la operacion. */
+    private int turno;
+
+    /** @brief Estampa de tiempo de la transaccion con formato "dd/MM/yyyy-hh:mm:ss". */
+    private string fechaYHora;
+
+    /** @brief Categoria funcional de la operacion (ej: "Compra de propiedad", "Pago de alquiler"). */
+    private string tipo;
+
+    /** @brief Jugador pagador o emisor de fondos (null representa el Banco). */
+    private Jugador? jugadorOrigen;
+
+    /** @brief Jugador cobrador o receptor de fondos (null representa el Banco). */
+    private Jugador? jugadorDestino;
+
+    /** @brief Mensaje explicativo generado automaticamente para la operacion. */
+    private string descripcion;
+
+    /**
+     * @brief Obtiene el ID unico de la transaccion.
+     * @return Entero con el identificador.
+     */
     public int GetTransaccionID()
     {
         return this.transaccionID;
     }
 
+    /**
+     * @brief Asigna el ID unico de la transaccion.
+     * @param transaccionID Nuevo identificador entero.
+     */
     public void SetTransaccionID(int transaccionID)
     {
         this.transaccionID = transaccionID;
     }
 
+    /**
+     * @brief Obtiene el importe monetario involucrado.
+     * @return Monto en dinero.
+     */
     public int GetMonto()
     {
         return this.monto;
     }
 
+    /**
+     * @brief Asigna el monto monetario involucrado.
+     * @param monto Nuevo monto.
+     */
     public void SetMonto(int monto)
     {
         this.monto = monto;
     }
 
+    /**
+     * @brief Obtiene el numero de turno en el que ocurrio.
+     * @return Turno numerico.
+     */
     public int GetTurno()
     {
         return this.turno;
     }
 
+    /**
+     * @brief Asigna el numero de turno.
+     * @param turno Numero de turno.
+     */
     public void SetTurno(int turno)
     {
         this.turno = turno;
     }
 
+    /**
+     * @brief Obtiene la fecha y hora de la transaccion.
+     * @return Cadena con la estampa temporal.
+     */
     public string GetFechaYHora()
     {
         return this.fechaYHora;
     }
 
+    /**
+     * @brief Asigna la fecha y hora de la transaccion.
+     * @param fechaYHora Cadena formateada.
+     */
     public void SetFechaYHora(string fechaYHora)
     {
         this.fechaYHora = fechaYHora;
     }
 
+    /**
+     * @brief Obtiene el tipo de transaccion.
+     * @return Nombre del tipo.
+     */
     public string GetTipo()
     {
         return this.tipo;
     }
 
+    /**
+     * @brief Asigna el tipo de transaccion.
+     * @param tipo Cadena con el nuevo tipo.
+     */
     public void SetTipo(string tipo)
     {
         this.tipo = tipo;
     }
 
+    /**
+     * @brief Obtiene el jugador emisor de fondos.
+     * @return Jugador emisor o null si proviene del Banco.
+     */
     public Jugador? GetJugadorOrigen()
     {
         return this.jugadorOrigen;
     }
 
+    /**
+     * @brief Asigna el jugador emisor de fondos.
+     * @param jugadorOrigen Jugador emisor o null para el Banco.
+     */
     public void SetJugadorOrigen(Jugador? jugadorOrigen)
     {
         this.jugadorOrigen = jugadorOrigen;
     }
 
+    /**
+     * @brief Obtiene el jugador receptor de fondos.
+     * @return Jugador receptor o null si va al Banco.
+     */
     public Jugador? GetJugadorDestino()
     {
         return this.jugadorDestino;
     }
 
+    /**
+     * @brief Asigna el jugador receptor de fondos.
+     * @param jugadorDestino Jugador receptor o null para el Banco.
+     */
     public void SetJugadorDestino(Jugador? jugadorDestino)
     {
         this.jugadorDestino = jugadorDestino;
     }
 
+    /**
+     * @brief Obtiene el texto descriptivo de la operacion.
+     * @return Descripcion textual.
+     */
     public string GetDescripcion()
     {
         return this.descripcion;
     }
 
+    /**
+     * @brief Asigna el texto descriptivo de la operacion.
+     * @param descripcion Nueva descripcion textual.
+     */
     public void SetDescripcion(string descripcion)
     {
         this.descripcion = descripcion;
     }
 
-
-
+    /**
+     * @brief Constructor que inicializa, procesa y persiste una transaccion.
+     * @param monto Cantidad de dinero transferido.
+     * @param turno Turno de juego en el que ocurre.
+     * @param tipo Categoria descriptiva de la operacion.
+     * @param jugadorOrigen Participante que paga (null si paga el Banco).
+     * @param jugadorDestino Participante que cobra (null si cobra el Banco).
+     */
     public Transaccion(int monto, int turno, string tipo, Jugador? jugadorOrigen, Jugador? jugadorDestino)
     {   
-        //Datos iniciales
         this.transaccionID = Interlocked.Increment(ref refID);
         this.monto = monto;
         this.turno = turno;
@@ -123,109 +214,102 @@ class Transaccion
         this.jugadorDestino = jugadorDestino;
         this.descripcion = this.GenerarDescripcion();
 
-        // Procesar los datos
+        // Actualizar saldos de los participantes involucrados
         this.ProcesarTransaccion();
 
-        // Almacenar la transaccion tras procesarla
+        // Registrar la operacion en el archivo persistente
         this.AlmacenarTransaccion();
     }
 
-    // Metodo para procesar la transaccion dentro del juego
-
+    /**
+     * @brief Modifica los balances financieros de origen y destino segun el tipo de operacion.
+     */
     private void ProcesarTransaccion()
     {
         switch (this.tipo)
         {
             case "Compra de propiedad":
-
                 if (jugadorOrigen == null)
                 {
                     Console.WriteLine("ERROR: Intento de comprar propiedad cuando jugadorOrigen es null");
                     return;
                 }
-
                 jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
-
                 break;
-            case "Pago de alquiler":
 
+            case "Pago de alquiler":
                 if (jugadorOrigen == null || jugadorDestino == null)
                 {
                     Console.WriteLine("ERROR: Intento de pagar alquiler cuando jugadorOrigen o jugadorDestino es null");
                     return;
                 }
-
                 jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
                 jugadorDestino.SetBalance(jugadorDestino.GetBalance() + monto);
                 break;
-            case "Pago al banco":
 
+            case "Pago al banco":
                 if (jugadorOrigen == null)
                 {
                     Console.WriteLine("ERROR: Intento de pagar al banco cuando jugadorOrigen es null");
                     return;
                 }
-
                 jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
                 break;
-            case "Pago entre jugadores":
 
+            case "Pago entre jugadores":
                 if (jugadorOrigen == null || jugadorDestino == null)
                 {
                     Console.WriteLine("ERROR: Intento de pago entre jugadores cuando jugadorOrigen o jugadorDestino es null");
                     return;
                 }
-
                 jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
                 jugadorDestino.SetBalance(jugadorDestino.GetBalance() + monto);
                 break;
+
             case "Ganancia por evento":
-                
                 if (jugadorOrigen == null)
                 {
                     Console.WriteLine("ERROR: Intento de ganancia por evento cuando jugadorOrigen es null");
                     return;
                 }
-
                 jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() + monto);
                 break;
-            case "Perdida por evento":
 
+            case "Perdida por evento":
                 if (jugadorOrigen == null)
                 {
                     Console.WriteLine("ERROR: Intento de perdida por evento cuando jugadorOrigen es null");
                     return;
                 }
-
                 jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() - monto);
                 break;
-            case "Premio por pasar por inicio":
 
+            case "Premio por pasar por inicio":
                 if (jugadorOrigen == null)
                 {
                     Console.WriteLine("ERROR: Intento de premio por pasar por inicio cuando jugadorOrigen es null");
                     return;
                 }
-
                 jugadorOrigen.SetBalance(jugadorOrigen.GetBalance() + monto);
                 break;
+
             default:
                 Console.WriteLine("ERROR: Tipo de transaccion no reconocido");
                 break;
         }
     }
 
-    // Metodo para autogenerar descripciones segun el tipo
+    /**
+     * @brief Genera un texto explicativo legible en lenguaje natural sobre la transaccion.
+     * @return Cadena que resume quien pago a quien y por que concepto.
+     */
     private string GenerarDescripcion()
     {
-        
         string mensajeDescripcion;
-        
 
         string origen = this.jugadorOrigen?.GetNombre() ?? "El Banco";
         string destino = this.jugadorDestino?.GetNombre() ?? "el Banco";
 
-        //Mensajes en mayuscula deben ser reemplazados por el dato correspondiente
         switch (this.tipo)
         {
             case "Compra de propiedad":
@@ -250,19 +334,21 @@ class Transaccion
                 mensajeDescripcion = $"{origen} ha recibido ${monto} por pasar por inicio";
                 break;
             default:
-                mensajeDescripcion = $"{origen} realizó {tipo} por ${monto}";
+                mensajeDescripcion = $"{origen} realizo {tipo} por ${monto}";
                 break;
         }
 
         return mensajeDescripcion;
     }
 
-    //Método para almacenar la transacción en el archivo Almacenamiento.txt
+    /**
+     * @brief Escribe una linea con formato delimitado por puntos en 'Almacenamiento.txt'.
+     */
     public void AlmacenarTransaccion()
     {
         string nomOrigen = this.jugadorOrigen?.GetNombre() ?? "Banco";
         string nomDestino = this.jugadorDestino?.GetNombre() ?? "Banco";
-        string contenido = $"{transaccionID}.{fechaYHora}.{turno}.{tipo}.{monto}.{nomOrigen}.{nomDestino}.{descripcion}"; //La informacion se almacena con separador de punto. EVITAR NOMBRES Y DATOS QUE PUEDAN CONTENER UN PUNTO
+        string contenido = $"{transaccionID}.{fechaYHora}.{turno}.{tipo}.{monto}.{nomOrigen}.{nomDestino}.{descripcion}";
 
         try
         {
@@ -270,10 +356,14 @@ class Transaccion
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al almacenar la transacción: {ex.Message}");
+            Console.WriteLine($"Error al almacenar la transaccion: {ex.Message}");
         }
     }
 
+    /**
+     * @brief Imprime los campos de una transaccion en la terminal con formato ordenado.
+     * @param datos Arreglo de strings con los campos desglosados.
+     */
     private static void ImprimirTransaccionEnTerminal(string[] datos)
     {
         Console.WriteLine("\n--------------------------\n");
@@ -288,16 +378,13 @@ class Transaccion
         Console.WriteLine("\n--------------------------\n");
     }
 
-    // -- Metodos estaticos para manejar el historial de transacciones --
-
-    //Metodo estatico para buscar transacciones en el archivo historial.txt
-    //      atributo: Es el atributo al cual se va a realizar la busqueda (solo jugadorOrigen, jugadorDestino y tipo), si es null, imprime todas las transacciones
-    //      valor: Valor el cual sera buscado en el atributo. Se ignora si atributo es null
-    //      ordenar: Orden en el que se mostraran las transacciones. Puede ser:
-    //          "AntiguoAReciente": Ordena de la transaccion mas antigua a la mas reciente.
-    //          "RecienteAAntiguo": Ordena de la transaccion mas reciente a la mas antigua.
-    //          
-    //      imprimirYEsperar: Si es true, imprime la informacion en la terminal y espera a que el usuario presione enter para continuar. De lo contrario imprime toda la informacion en terminal sin esperar.
+    /**
+     * @brief Busca y filtra transacciones en el archivo persistente segun un atributo y valor.
+     * @param atributo Campo por el cual filtrar ("jugadorOrigen", "jugadorDestino", "tipo" o null para todos).
+     * @param valor Valor esperado en dicho atributo.
+     * @param ordenar Criterio de ordenacion ("AntiguoAReciente" o "RecienteAAntiguo").
+     * @param imprimirYEsperar Si es true, pausa tras cada registro solicitando confirmacion al usuario.
+     */
     public static void BuscarTransaccion(string atributo, string valor, string ordenar = "AntiguoAReciente", bool imprimirYEsperar = false)
     {
         try
@@ -360,20 +447,18 @@ class Transaccion
         }
     }
 
-
-    //Metodo para imprimir la informacion en un archivo de texto con formato para usuario final
+    /**
+     * @brief Vuelca todas las transacciones almacenadas a un archivo de reporte formateado ('Reporte.txt').
+     */
     public static void ImprimirTransacciones()
     {
-        //string encabezado = "En este archivo se encuentra la informacion";
-
         try
         {
             string[] lineas = File.ReadAllLines(rutaAlmacenamiento);
 
             foreach (var linea in lineas)
             {
-                string[] datos = linea.Split("."); //Separa los datos de las lineas por un punto
-
+                string[] datos = linea.Split(".");
                 
                 File.AppendAllText(rutaReporte, "\n--------------------------\n");
                 File.AppendAllText(rutaReporte, "ID: " + datos[0] + '\n');

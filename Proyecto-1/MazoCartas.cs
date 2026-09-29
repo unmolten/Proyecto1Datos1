@@ -1,54 +1,28 @@
-/*
-MazoCartas se encarga de crear TODAS las cartas de cada mazo (Fortuna y Arca Comunal) de una sola vez,
-randomizar el orden de cada mazo apenas se crea, guardar cada mazo dentro de una LinkedList, y robar
-una carta: la saca de la cabeza y la vuelve a insertar al final
-
-Uso esperado desde donde se maneje la partida :
-
-    LinkedList mazoFortuna = MazoCartas.CrearMazoFortuna();
-    LinkedList mazoArca    = MazoCartas.CrearMazoArcaComunal();
-
-    Cuando un jugador cae en una casilla de Fortuna:
-
-        CartaEvento carta = MazoCartas.RobarCarta(mazoFortuna);
-        jugador.EnviarMensaje(carta.Descripcion);
-
-    luego, segun carta.Tipo, se aplica el efecto
-*/
-
 using System;
 
+/**
+ * @file MazoCartas.cs
+ * @brief Fabricador y administrador de los mazos de cartas de evento.
+ *
+ * Crea de manera estatica las barajas completas de cartas para Fortuna y Arca Comunal,
+ * las baraja al inicio mediante el algoritmo de Fisher-Yates, las estructura en una
+ * LinkedList circular y provee el mecanismo de rotacion: cada carta robada de la cabeza
+ * se reinserta al final del mazo.
+ */
+
+/**
+ * @class MazoCartas
+ * @brief Clase utilitaria estatica para la creacion y manipulacion de cartas de evento.
+ */
 public static class MazoCartas
 {
+    /** @brief Generador de aleatoriedad para el barajado inicial de cartas. */
     private static readonly Random random = new Random();
 
-/*
-    ---------------------------------------------------------------
-    El formato es siempre:
-
-    new CartaEvento("texto de la descripcion para el jugador", TipoEfectoCarta.tipo, parametros...)
-
-    Segun el tipo, los parametros que importan son:
-
-    GanarDinero - PerderDinero - PerderDineroPorPropiedad - PagarACadaJugador - CobrarDeCadaJugador
-        monto: numero
-
-    PerderDineroPorConstruccion
-        montoPorCasa: numero
-        montoPorHotel: numero
-
-    MoverACasilla
-        casillaDestino: indice de la casilla, 0 a 31
-
-    MoverCasillas
-        cantidadCasillas: numero, positivo avanza, negativo retrocede
-
-    IrACarcel - SalirDeCarcelGratis
-        no necesitan parametros extra
-    ---------------------------------------------------------------
-*/
-
-    // Construye el mazo de Fortuna con todas sus cartas random
+    /**
+     * @brief Instancia y baraja el mazo completo de cartas de Fortuna.
+     * @return LinkedList circular con todas las cartas de Fortuna barajadas.
+     */
     public static LinkedList CrearMazoFortuna()
     {
         LinkedList mazo = new LinkedList();
@@ -98,26 +72,29 @@ public static class MazoCartas
         return ConstruirMazoRandomizado(mazo);
     }
 
-    // Construye el mazo de Arca Comunal con todas sus cartas random
+    /**
+     * @brief Instancia y baraja el mazo completo de cartas de Arca Comunal.
+     * @return LinkedList circular con todas las cartas de Arca Comunal barajadas.
+     */
     public static LinkedList CrearMazoArcaComunal()
     {
         LinkedList mazo = new LinkedList();
 
         mazo.InsertEnd(new CartaEvento("¡Héroe de la aldea! Acabaste con los asaltos, los aldeanos te dan 100 esmeraldas.",
             TipoEfectoCarta.GanarDinero, monto: 100));
-            
+
         mazo.InsertEnd(new CartaEvento("¡Robaste nuestras cosas! Vaya directo a la cárcel sin cobrar Salida.",
             TipoEfectoCarta.IrACarcel));
-            
+
         mazo.InsertEnd(new CartaEvento("¡Impuestos! Has pasado mucho tiempo en las minas, le debes 25 esmeraldas a cada jugador.",
             TipoEfectoCarta.PagarACadaJugador, monto: 25));
-            
+
         mazo.InsertEnd(new CartaEvento("¡Creepers! Paga 25 esmeraldas por cada propiedad adquirida para reparar los daños.",
             TipoEfectoCarta.PerderDineroPorPropiedad, monto: 25));
-            
+
         mazo.InsertEnd(new CartaEvento("¡Están en llamas! Paga 25 por cada casa y 100 por cada hotel para reparar los daños.",
             TipoEfectoCarta.PerderDineroPorConstruccion, montoPorCasa: 25, montoPorHotel: 100));
-            
+
         mazo.InsertEnd(new CartaEvento("¡Prestacion de servicios! Por tu ayuda recolectando recursos, todos te pagan 25 esmeraldas.",
             TipoEfectoCarta.CobrarDeCadaJugador, monto: 25));
 
@@ -151,14 +128,16 @@ public static class MazoCartas
         return ConstruirMazoRandomizado(mazo);
     }
 
-    // Recibe la lista enlazada de cartas ya creadas, las mezcla (por Fisher-Yates) y
-    // arma con ellas una LinkedList circular lista para usarse como mazo
+    /**
+     * @brief Baraja los elementos de la lista enlazada aplicando el algoritmo de Fisher-Yates
+     * y garantiza su enlace circular.
+     * @param mazo Lista lineal con las cartas recien creadas.
+     * @return La misma lista mazo con sus elementos permutados aleatoriamente y enlazada de forma circular.
+     */
     private static LinkedList ConstruirMazoRandomizado(LinkedList mazo)
     {
-        // Randomiza el orden mediante Fisher-Yates intercambiando los datos en los nodos
         for (int i = mazo.Size() - 1; i > 0; i--)
         {
-            // Elije una posicion random
             int j = random.Next(i + 1);
 
             Node nodoI = mazo.GetNodeAt(i);
@@ -173,9 +152,14 @@ public static class MazoCartas
         return mazo;
     }
 
-    // Roba la carta que esta en la cabeza del mazo y la vuelve a insertar
-    // al final
-    // Devuelve la CartaEvento robada
+    /**
+     * @brief Extrae la carta en la cabeza de la lista y la reinserta al final de la misma.
+     *
+     * Cumple con la especificacion del diseno donde los mazos rotan indefinidamente.
+     * @param mazo Lista enlazada circular que contiene las cartas del mazo.
+     * @return La CartaEvento obtenida para ser aplicada al jugador.
+     * @throws InvalidOperationException Si el mazo no contiene elementos validos.
+     */
     public static CartaEvento RobarCarta(LinkedList mazo)
     {
         Node? nodo = mazo.DeleteFirst();
@@ -185,7 +169,7 @@ public static class MazoCartas
             throw new InvalidOperationException("El mazo esta vacio o contiene datos invalidos.");
         }
 
-        // Lleva la carta sacada al final
+        // Reinserta la carta extraida en la cola del mazo para rotacion continua
         mazo.InsertEnd(carta);
 
         return carta;

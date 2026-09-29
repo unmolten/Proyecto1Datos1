@@ -1,26 +1,30 @@
 extends Control
 class_name PropertyCard
 
-## Representa UNA tarjeta de la lista de propiedades de la derecha.
-## Tiene una cara de "frente" (nombre, precio, renta actual, casas y botones de construir/vender)
-## y una de "atrás" (hipoteca y botón de hipotecar/deshipotecar). Se voltea con 🔄.
-## Cuando la propiedad está hipotecada, TODA la tarjeta se pinta en blanco y negro.
+## Representa la tarjeta individual de una propiedad en la lista lateral derecha.
+## Posee una cara frontal (nombre, precio de compra, renta vigente segun mejoras,
+## cantidad de casas/hotel y botones de construir o vender mejoras) y una cara posterior
+## (valor de hipoteca y costo para deshipotecar).
+## Si la propiedad es hipotecada, se aplica un sombreado en escala de grises.
 
+## Datos identificadores y economicos de la casilla
 var casilla_index: int = -1
 var precio_compra: int = 0
 var alquiler_base: int = 0
 var color_grupo: String = ""
 var owner_id: int = 0
 
+## Estado actual de construcciones e hipoteca
 var casas: int = 0
 var is_mortgaged: bool = false
 var flipped: bool = false
 
 var network_client: NetworkClient = null
 
-## Mismo material de blanco y negro que usa el avatar sobre el tablero
+## Material de escala de grises compartido para representar hipoteca
 const GRAYSCALE_MATERIAL: ShaderMaterial = preload("res://scenes/grayscale_material.tres")
 
+## Nodos hijos de la interfaz
 @onready var front_panel: Control = $Front
 @onready var back_panel: Control = $Back
 @onready var name_label: Label = $Front/NameLabel
@@ -40,6 +44,7 @@ func _ready() -> void:
 	if mortgage_btn:
 		mortgage_btn.pressed.connect(_on_mortgage_pressed)
 
+## Obtiene la referencia activa al cliente de comunicacion de red
 func _get_network_client() -> NetworkClient:
 	if network_client != null:
 		return network_client
@@ -47,7 +52,7 @@ func _get_network_client() -> NetworkClient:
 		network_client = get_node("/root/Board/Game")
 	return network_client
 
-## Llena la tarjeta con los datos fijos de la propiedad
+## Inicializa la tarjeta con los atributos inmutables de la propiedad
 func setup(pos: int, nombre: String, precio: int, alquiler: int, grupo: String) -> void:
 	casilla_index = pos
 	precio_compra = precio
@@ -61,37 +66,41 @@ func setup(pos: int, nombre: String, precio: int, alquiler: int, grupo: String) 
 
 	_refresh()
 
+## Asigna el identificador del jugador propietario
 func set_property_owner_id(id: int) -> void:
 	owner_id = id
 	_refresh()
 
-## Actualiza cuántas casas/hotel tiene (0 a 4 = casas, 5 = hotel)
+## Actualiza el conteo de mejoras (0 a 4 = casas, 5 = hotel)
 func set_casas(nivel: int) -> void:
 	casas = nivel
 	_refresh()
 
-## Pinta o despinta la tarjeta completa de blanco y negro
+## Cambia el estado visual entre activo y en escala de grises segun la hipoteca
 func set_mortgaged(mortgaged: bool) -> void:
 	is_mortgaged = mortgaged
 	material = GRAYSCALE_MATERIAL if mortgaged else null
 	_refresh()
 
-## Voltea la tarjeta al presionar el botón
+## Alterna entre la vista frontal y la vista trasera de la tarjeta
 func _on_flip_pressed() -> void:
 	flipped = not flipped
 	front_panel.visible = not flipped
 	back_panel.visible = flipped
 
+## Envia la solicitud de adquisicion de una casa al servidor
 func _on_buy_house_pressed() -> void:
 	var client := _get_network_client()
 	if client:
 		client.send_action("comprarcasa", casilla_index)
 
+## Envia la solicitud de venta de una mejora al servidor
 func _on_sell_house_pressed() -> void:
 	var client := _get_network_client()
 	if client:
 		client.send_action("vendercasa", casilla_index)
 
+## Alterna el estado de hipoteca comunicandose con el servidor
 func _on_mortgage_pressed() -> void:
 	var client := _get_network_client()
 	if client:
@@ -100,7 +109,7 @@ func _on_mortgage_pressed() -> void:
 		else:
 			client.send_action("hipotecar", casilla_index)
 
-## Misma fórmula de renta que usa JuegoMonopoly.cs (CalcularRenta)
+## Calcula el valor actual de renta segun las reglas del juego
 func _calcular_renta() -> int:
 	if is_mortgaged:
 		return 0
@@ -110,6 +119,7 @@ func _calcular_renta() -> int:
 		return alquiler_base * 8
 	return alquiler_base * (1 + casas * 2)
 
+## Refresca las etiquetas de texto de la tarjeta con los datos vigentes
 func _refresh() -> void:
 	if not is_inside_tree() or rent_label == null:
 		return
@@ -117,9 +127,9 @@ func _refresh() -> void:
 	rent_label.text = "Renta: $%d" % _calcular_renta()
 
 	if casas >= 5:
-		houses_label.text = "🏨 Hotel"
+		houses_label.text = "Hotel"
 	elif casas > 0:
-		houses_label.text = "🏠 %d casa(s)" % casas
+		houses_label.text = "%d casa(s)" % casas
 	else:
 		houses_label.text = "Sin casas"
 
@@ -128,6 +138,6 @@ func _refresh() -> void:
 	mortgage_label.text = "Hipoteca: $%d\nDeshipotecar: $%d" % [valor_hipoteca, costo_deshipotecar]
 
 	if is_mortgaged:
-		mortgage_btn.text = "🔓 Deshipotecar"
+		mortgage_btn.text = "Deshipotecar"
 	else:
-		mortgage_btn.text = "💰 Hipotecar"
+		mortgage_btn.text = "Hipotecar"

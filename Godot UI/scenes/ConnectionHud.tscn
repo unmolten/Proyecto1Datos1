@@ -44,14 +44,14 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 13
-text = "🔴 Desconectado (127.0.0.1:6767)"
+text = "[DESCONECTADO] 127.0.0.1:6767"
 vertical_alignment = 1
 
 [node name="ToggleBtn" type="Button" parent="Background/Margin/VBox/StatusRow"]
 custom_minimum_size = Vector2(30, 24)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
-text = "⚙️"
+text = "Config"
 
 [node name="InputRow" type="HBoxContainer" parent="Background/Margin/VBox"]
 visible = false

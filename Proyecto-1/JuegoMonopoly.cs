@@ -1,81 +1,131 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-
 using System.Threading;
 
-// Representa una acción de juego solicitada desde la UI de Godot o la consola
+/**
+ * @file JuegoMonopoly.cs
+ * @brief Nucleo de logica y coordinacion del juego Monopoly.
+ *
+ * Administra el estado completo de la partida:
+ * - El tablero como una lista circular doblemente enlazada (LinkedList + MakeCircular()).
+ * - Los participantes en una lista enlazada (LinkedList).
+ * - Los mazos de cartas (Fortuna y Arca Comunal) como listas circulares rotativas.
+ * - La comunicacion y difusion hacia espectadores e interfaces graficas (Godot).
+ * - La integracion con hardware externo (Raspberry Pi Pico: RFID y dados).
+ */
+
+/**
+ * @class AccionTurno
+ * @brief Representa una solicitud de accion recibida desde la UI de Godot o la consola.
+ */
 public class AccionTurno
 {
+    /** @brief Tipo de accion solicitada ("tirar", "comprar", "comprarcasa", "terminar", etc.). */
     public string Tipo { get; set; } = "";
+
+    /** @brief Indice opcional de casilla o parametro numerico asociado a la accion. */
     public int CasillaIndex { get; set; } = -1;
+
+    /** @brief Identificador del jugador emisor de la accion. */
     public int JugadorId { get; set; } = 0;
 }
 
-// PLANTILLA BASE: JuegoMonopoly
-// 
-// Esta clase coordina el juego de Monopoly en el servidor, conectando las casillas,
-// los mazos de eventos, las transacciones y las listas enlazadas.
-// 
-// Conexión con Listas Enlazadas:
-// - El tablero es una lista enlazada circular ('LinkedList' + 'MakeCircular()').
-// - Los jugadores avanzan en el tablero de nodo en nodo con 'jugador.Posicion = jugador.Posicion.GetNext()'.
-// - Cada jugador tiene su propia lista enlazada ('jugador.Propiedades') para guardar sus compras.
-// - Los jugadores conectados se almacenan en una lista enlazada ('LinkedList').
-// - Los mazos de cartas (Fortuna y Arca Comunal) son listas enlazadas circulares que rotan al robar.
+/**
+ * @class JuegoMonopoly
+ * @brief Clase controladora principal implementada bajo el patron de diseno Singleton.
+ *
+ * Conecta las casillas del tablero, los mazos de eventos, las transacciones financieras
+ * y las estructuras de datos enlazadas requeridas por la arquitectura del proyecto.
+ */
 public class JuegoMonopoly
 {
-    // Patrón Singleton: Una única instancia para coordinar el juego en el servidor
+    /** @brief Instancia unica de la clase para el patron Singleton. */
     private static JuegoMonopoly? instancia;
+
+    /**
+     * @brief Propiedad estatica para acceder a la instancia unica del juego.
+     */
     public static JuegoMonopoly Instancia => instancia ??= new JuegoMonopoly();
 
-    // Estructura de datos del tablero (Lista Enlazada Circular)
+    /** @brief Estructura de datos del tablero (Lista circular doblemente enlazada). */
     private LinkedList tablero;
 
-    // Lista de jugadores conectados al servidor (Lista Enlazada)
+    /** @brief Lista de jugadores registrados en la partida. */
     private LinkedList jugadores;
 
-    // Mazos de cartas de eventos (Listas Enlazadas Circulares)
+    /** @brief Mazo de cartas de evento de tipo Fortuna. */
     private LinkedList mazoFortuna;
+
+    /** @brief Mazo de cartas de evento de tipo Arca Comunal. */
     private LinkedList mazoArcaComunal;
 
-    // Contador de turnos y asignador de IDs
+    /** @brief Contador global del turno en ejecucion. */
     private int turnoActual = 1;
+
+    /** @brief Asignador incremental para los identificadores numericos de jugadores. */
     private int contadorJugadores = 1;
 
+    /** @brief Generador de valores aleatorios para tiradas virtuales de dados. */
+    private Random random = new Random();
+
+    /**
+     * @brief Obtiene el numero de turno global actual.
+     * @return Entero con el turno en curso.
+     */
     public int GetTurnoActual()
     {
         return this.turnoActual;
     }
 
+    /**
+     * @brief Establece el numero de turno global actual.
+     * @param turnoActual Nuevo numero de turno.
+     */
     public void SetTurnoActual(int turnoActual)
     {
         this.turnoActual = turnoActual;
     }
 
+    /**
+     * @brief Obtiene la lista enlazada del tablero de casillas.
+     * @return LinkedList circular del tablero.
+     */
     public LinkedList GetTablero()
     {
         return this.tablero;
     }
 
+    /**
+     * @brief Obtiene la lista enlazada de jugadores registrados.
+     * @return LinkedList con los participantes.
+     */
     public LinkedList GetJugadores()
     {
         return this.jugadores;
     }
 
+    /**
+     * @brief Obtiene el mazo circular de cartas de Fortuna.
+     * @return LinkedList con la baraja de Fortuna.
+     */
     public LinkedList GetMazoFortuna()
     {
         return this.mazoFortuna;
     }
 
+    /**
+     * @brief Obtiene el mazo circular de cartas de Arca Comunal.
+     * @return LinkedList con la baraja de Arca Comunal.
+     */
     public LinkedList GetMazoArcaComunal()
     {
         return this.mazoArcaComunal;
     }
 
-    // Generador de números aleatorios para los dados
-    private Random random = new Random();
-
+    /**
+     * @brief Constructor privado del Singleton. Inicializa estructuras, mazos y el tablero.
+     */
     public JuegoMonopoly()
     {
         this.tablero = new LinkedList();
@@ -85,7 +135,9 @@ public class JuegoMonopoly
         InicializarTablero();
     }
 
-    // Inicializa las casillas del tablero en la lista enlazada circular con sus clases polimórficas.
+    /**
+     * @brief Crea las 32 casillas polimorficas del tablero y cierra la circularidad doble.
+     */
     private void InicializarTablero()
     {
         this.tablero.InsertEnd(new CasillaEspecial(0, "Salida (GO)", "Salida"));
@@ -119,17 +171,21 @@ public class JuegoMonopoly
         this.tablero.InsertEnd(new Propiedad(28, "Tren a las Farlands", "Propiedad", 200, 25, colorGrupo: "Tren"));
         this.tablero.InsertEnd(new Propiedad(29, "Ciudad del End", "Propiedad", 350, 35, colorGrupo: "Azul"));
         this.tablero.InsertEnd(new CasillaEvento(30, "Fortuna", "Fortuna"));
-        this.tablero.InsertEnd(new Propiedad(31, "Barco del End", "Propiedad", 350, 35, colorGrupo: "Azul"));        
+        this.tablero.InsertEnd(new Propiedad(31, "Barco del End", "Propiedad", 350, 35, colorGrupo: "Azul"));
 
-        // LISTA CIRCULAR: Conecta la cola con la cabeza para que el tablero dé vueltas continuas
+        // Asegura que el tablero sea completamente circular
         this.tablero.MakeCircular();
     }
 
-    // Registra a un nuevo cliente en la partida y lo posiciona en la cabeza de la lista (Salida).
+    /**
+     * @brief Registra a un nuevo cliente en la partida asignandole la posicion de Salida.
+     * @param writer Flujo de salida de red correspondiente al socket del jugador.
+     * @return La nueva instancia de Jugador creada.
+     */
     public Jugador RegistrarJugador(StreamWriter writer)
     {
         Jugador nuevo = new Jugador(contadorJugadores, $"Jugador_{contadorJugadores}", writer);
-        nuevo.SetPosicion(this.tablero.GetHead()); // Inicia en la cabeza de la lista enlazada
+        nuevo.SetPosicion(this.tablero.GetHead());
         contadorJugadores++;
 
         this.jugadores.InsertEnd(nuevo);
@@ -138,7 +194,10 @@ public class JuegoMonopoly
         return nuevo;
     }
 
-    // Registra a un jugador ya existente (creado por RFID o consola) en la lista de jugadores.
+    /**
+     * @brief Registra un jugador ya instanciado (por RFID o consola) en la estructura del juego.
+     * @param jugador Instancia de Jugador a registrar.
+     */
     public void RegistrarJugadorExistente(Jugador jugador)
     {
         if (jugador.GetId() == 0)
@@ -150,29 +209,26 @@ public class JuegoMonopoly
             jugador.SetPosicion(this.tablero.GetHead());
         }
         this.jugadores.InsertEnd(jugador);
-        Broadcast($"[SISTEMA] {jugador.GetNombre()} (ID: {jugador.GetId()}) está listo en el tablero.");
+        Broadcast($"[SISTEMA] {jugador.GetNombre()} (ID: {jugador.GetId()}) esta listo en el tablero.");
         GodotBroadcast($"jugador/{jugador.GetId()}/activar");
     }
 
-    // ---------------- CONEXION CON GODOT ----------------
-    //
-    // Esto es aparte de los jugadores de consola/RFID de arriba, un espectador
-    // de Godot solo recibe info, todavia no manda nada (eso lo conectamos
-    // despues con los botones). Por eso no son Jugador, son solo un StreamWriter
-    // guardado en una lista
-
-    // Conexiones de las instancias de Godot que estan viendo la partida
-    // HAY QUE MODIFICAR ESTO PORQUE ESTA HECHO CON LISTAS DE C#, NO LISTA ENLAZADA
+    /** @brief Lista de canales de salida hacia clientes espectadores de Godot conectados. */
     private List<StreamWriter> espectadoresGodot = new List<StreamWriter>();
 
-    // Quien tiene el turno ahora mismo (para poder sincronizar a un
-    // espectador de Godot que se conecta a mitad de partida)
+    /** @brief Referencia al jugador que ostenta el turno en este momento. */
     private Jugador? jugadorEnTurno = null;
 
-    // Program.cs llama esto cada vez que una instancia de Godot se conecta.
-    // Godot no sabe NADA por su cuenta (ni siquiera qué propiedades existen),
-    // solo refleja lo que el servidor le manda, asi que aqui le mandamos
-    // TODO el estado, en el orden correcto para que lo pueda armar solo
+    /**
+     * @brief Sincroniza el estado completo del juego con un cliente Godot recien conectado.
+     *
+     * Envia en orden:
+     * 1. Propiedades y sus datos estaticos (precio, renta, grupo).
+     * 2. Estado de dueños, casas construidas e hipotecas.
+     * 3. Participantes y sus casillas de ubicacion.
+     * 4. Turno actual y saldo del jugador activo.
+     * @param writer Canal de transmision de red de la nueva sesion de Godot.
+     */
     public void ConectarEspectadorGodot(StreamWriter writer)
     {
         lock (this.espectadoresGodot)
@@ -180,9 +236,7 @@ public class JuegoMonopoly
             this.espectadoresGodot.Add(writer);
         }
 
-        // 1) Los datos fijos de cada propiedad: nombre, precio, renta base
-        // y grupo de color. Sin esto Godot ni siquiera sabria que existen,
-        // asi que esto se manda SIEMPRE primero, antes que cualquier otra cosa
+        // 1. Datos estaticos de las propiedades
         Node? nodoDatos = this.tablero.GetHead();
         for (int i = 0; i < this.tablero.Size(); i++)
         {
@@ -193,9 +247,7 @@ public class JuegoMonopoly
             nodoDatos = nodoDatos?.GetNext();
         }
 
-        // 2) El estado actual de cada propiedad: dueño, casas y si esta
-        // hipotecada (en ese orden, porque construir/hipotecar en Godot
-        // dependen de que el dueño ya este puesto primero)
+        // 2. Estado dinamico de cada propiedad (dueño, mejoras, hipotecas)
         Node? nodoCasilla = this.tablero.GetHead();
         for (int i = 0; i < this.tablero.Size(); i++)
         {
@@ -217,7 +269,7 @@ public class JuegoMonopoly
             nodoCasilla = nodoCasilla?.GetNext();
         }
 
-        // 3) Los jugadores que ya estaban registrados y donde estan parados
+        // 3. Jugadores registrados y su posicion actual en el tablero
         Node? nodoJugador = this.jugadores.GetHead();
         for (int i = 0; i < this.jugadores.Size(); i++)
         {
@@ -233,29 +285,46 @@ public class JuegoMonopoly
             nodoJugador = nodoJugador?.GetNext();
         }
 
-        // 4) Por último, de quién es el turno ahora mismo (para el aro de
-        // color y el HUD de dinero), si la partida ya empezó
+        // 4. Sincronizacion del turno activo y fondos
         if (this.jugadorEnTurno != null)
         {
             EnviarAEspectador(writer, $"jugador/{this.jugadorEnTurno.GetId()}/turno");
             EnviarAEspectador(writer, $"jugador/{this.jugadorEnTurno.GetId()}/dinero/{this.jugadorEnTurno.GetDinero()}");
 
             Casilla? cActual = this.jugadorEnTurno.ObtenerCasillaActual();
-            bool puedeComprar = cActual is Propiedad pr && !pr.TienePropietario() && this.jugadorEnTurno.GetDinero() >= pr.GetPrecioCompra();
+            bool puedeComprar = cActual is Propiedad pr && !pr.TienePropietario();
             int precio = (cActual is Propiedad pr2) ? pr2.GetPrecioCompra() : 0;
             string nom = cActual?.GetNombre() ?? "";
-            EnviarAEspectador(writer, $"turno/acciones/1/{(puedeComprar ? 1 : 0)}/{precio}/{nom}/0/{(this.jugadorEnTurno.GetEnCarcel() ? 1 : 0)}");
+
+            bool puedeConstruir = false;
+            int costoConstruir = 0;
+            string nomConstruir = "";
+
+            if (cActual is Propiedad miP && miP.GetPropietario() == this.jugadorEnTurno && miP.GetCantidadCasas() < 5 && miP.GetColorGrupo() != "Tren" && !miP.GetIsHipotecada() && TieneMonopolio(this.jugadorEnTurno, miP.GetColorGrupo()))
+            {
+                puedeConstruir = true;
+                costoConstruir = miP.GetPrecioCompra() / 2;
+                nomConstruir = miP.GetNombre();
+            }
+
+            EnviarAEspectador(writer, $"turno/acciones/1/{(puedeComprar ? 1 : 0)}/{precio}/{nom}/0/{(this.jugadorEnTurno.GetEnCarcel() ? 1 : 0)}/{(puedeConstruir ? 1 : 0)}/{costoConstruir}/{nomConstruir}");
         }
     }
 
-    // Manda una linea nada mas a un espectador (usado para la sincronizacion inicial)
+    /**
+     * @brief Transmite un comando de texto a un espectador individual de Godot.
+     * @param writer Canal de salida del socket.
+     * @param mensaje Cadena de protocolo.
+     */
     private void EnviarAEspectador(StreamWriter writer, string mensaje)
     {
-        try { writer.WriteLine(mensaje); } catch { /* se limpia sola cuando falle el broadcast normal */ }
+        try { writer.WriteLine(mensaje); } catch { }
     }
 
-    // Manda una linea a TODAS las instancias de Godot conectadas
-    // esto usa el protocolo que ya entiende networkclient.gd (jugador/id/accion/...)
+    /**
+     * @brief Transmite un mensaje del protocolo a todas las ventanas e instancias de Godot activas.
+     * @param mensaje Cadena formateada para el cliente grafico.
+     */
     public void GodotBroadcast(string mensaje)
     {
         lock (this.espectadoresGodot)
@@ -268,45 +337,92 @@ public class JuegoMonopoly
                 }
                 catch
                 {
-                    // se cayo la conexion, la sacamos de la lista
                     this.espectadoresGodot.RemoveAt(i);
                 }
             }
         }
     }
 
-    // ---------------- INTEGRACIÓN HARDWARE RFID / DADOS ----------------
+    /** @brief Referencia al gestor de la conexion serial con la Pico. */
     private ConexionPico? conexionPico;
+
+    /** @brief Referencia al lector de tarjetas RFID. */
     private ObtenerID? lectorRfid;
 
-    public void ConfigurarHardware(ConexionPico? conexion)
+    /** @brief Referencia al controlador de dados digitales de la Pico. */
+    private ControlDados? controlDados;
+
+    /**
+     * @brief Configura las dependencias de hardware serial de la Raspberry Pi Pico.
+     * @param conexion Instancia activa de ConexionPico.
+     * @param dados Instancia de ControlDados (opcional).
+     */
+    public void ConfigurarHardware(ConexionPico? conexion, ControlDados? dados = null)
     {
         this.conexionPico = conexion;
         if (conexion != null)
         {
             this.lectorRfid = new ObtenerID(conexion);
+            this.controlDados = dados ?? new ControlDados(conexion);
         }
     }
 
+    /**
+     * @brief Obtiene la conexion serial configurada con la Pico.
+     * @return Instancia de ConexionPico o null si no se configuro.
+     */
     public ConexionPico? GetConexionPico()
     {
         return this.conexionPico;
     }
 
-    // ---------------- COLA DE ACCIONES DE TURNOS (GODOT + CONSOLA) ----------------
-    // Cola implementada con la lista enlazada propia + Monitor para bloqueo entre hilos
+    /**
+     * @brief Obtiene el controlador de dados configurado.
+     * @return Instancia de ControlDados o null si no se configuro.
+     */
+    public ControlDados? GetControlDados()
+    {
+        return this.controlDados;
+    }
+
+    /** @brief Cola FIFO de solicitudes de accion de turnos implementada sobre LinkedList. */
     private LinkedList colaAcciones = new LinkedList();
+
+    /** @brief Objeto de bloqueo para exclusion mutua en la cola de acciones. */
     private readonly object colaLock = new object();
 
+    /**
+     * @brief Agrega una nueva accion a la cola e interactua con hilos en espera mediante Monitor.
+     * @param accion Instancia de AccionTurno a encolar.
+     */
     public void EncolarAccion(AccionTurno accion)
     {
         lock (colaLock)
         {
             colaAcciones.InsertEnd(accion);
-            Monitor.Pulse(colaLock); // Despierta al hilo que espera en EsperarAccion
+            Monitor.Pulse(colaLock);
         }
     }
 
+    /**
+     * @brief Limpia todas las acciones pendientes en la cola.
+     */
+    public void LimpiarColaAcciones()
+    {
+        lock (colaLock)
+        {
+            while (!colaAcciones.IsEmpty())
+            {
+                colaAcciones.DeleteFirst();
+            }
+        }
+    }
+
+    /**
+     * @brief Espera de forma bloqueante hasta que arribe una accion valida para el jugador en turno.
+     * @param jugador Participante activo en el turno.
+     * @return La AccionTurno recibida.
+     */
     public AccionTurno EsperarAccion(Jugador jugador)
     {
         while (true)
@@ -314,16 +430,13 @@ public class JuegoMonopoly
             AccionTurno accion;
             lock (colaLock)
             {
-                // Espera bloqueante hasta que haya al menos un elemento en la cola
                 while (colaAcciones.IsEmpty())
                 {
                     Monitor.Wait(colaLock);
                 }
-                // Saca el primer elemento (FIFO) de la lista enlazada
                 Node? nodo = colaAcciones.DeleteFirst();
                 accion = (AccionTurno)nodo!.GetData();
             }
-            // Acciones generales o asignadas al jugador en turno
             if (accion.JugadorId == 0 || accion.JugadorId == jugador.GetId())
             {
                 return accion;
@@ -331,7 +444,38 @@ public class JuegoMonopoly
         }
     }
 
-    // Procesa comandos enviados por los clientes Godot vía TCP (ej: accion/1/tirar)
+    /**
+     * @brief Intenta extraer de forma no bloqueante una accion de la cola si esta disponible.
+     * @param jugador Participante activo en el turno.
+     * @return La AccionTurno si habia una en cola; de lo contrario null.
+     */
+    public AccionTurno? IntentarObtenerAccion(Jugador jugador)
+    {
+        lock (colaLock)
+        {
+            if (colaAcciones.IsEmpty())
+            {
+                return null;
+            }
+
+            Node? nodo = colaAcciones.GetHead();
+            if (nodo?.GetData() is AccionTurno accion)
+            {
+                if (accion.JugadorId == 0 || accion.JugadorId == jugador.GetId())
+                {
+                    colaAcciones.DeleteFirst();
+                    return accion;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * @brief Desglosa y procesa cadenas de accion enviadas desde la red (ej: "accion/1/tirar").
+     * @param comando Cadena con formato delimitado por barras inclinadas.
+     */
     public void ProcesarComandoCliente(string comando)
     {
         string[] partes = comando.Split('/');
@@ -352,17 +496,6 @@ public class JuegoMonopoly
             int.TryParse(partes[3], out arg);
         }
 
-        if (tipo == "rfid" || tipo == "rfid_confirmar" || tipo == "confirmarpago")
-        {
-            ConfirmarPagoRfid(jugadorId);
-            return;
-        }
-        if (tipo == "cancelarpago")
-        {
-            CancelarPagoRfid(jugadorId);
-            return;
-        }
-
         EncolarAccion(new AccionTurno
         {
             JugadorId = jugadorId,
@@ -371,38 +504,49 @@ public class JuegoMonopoly
         });
     }
 
-    // ---------------- AUTORIZACIÓN DE PAGO VIA RFID (ESTILO COMPRA CON TELÉFONO) ----------------
+    /** @brief Indicador volatil de confirmacion de cobro RFID. */
     private volatile bool pagoRfidConfirmado = false;
-    private volatile bool pagoRfidCancelado = false;
 
-    public void ConfirmarPagoRfid(int jugadorId)
+    /**
+     * @brief Permite autorizar el pago por consola cuando se juega en modo sin hardware.
+     */
+    public void ConfirmarPagoRfidConsola()
     {
-        pagoRfidConfirmado = true;
+        bool hardwareDisponible = this.conexionPico != null && this.conexionPico.EstaConectado();
+        if (!hardwareDisponible)
+        {
+            pagoRfidConfirmado = true;
+        }
     }
 
-    public void CancelarPagoRfid(int jugadorId)
-    {
-        pagoRfidCancelado = true;
-    }
-
-    public bool AutorizarPagoRFID(Jugador jugador, int monto, string concepto)
+    /**
+     * @brief Bloquea la ejecucion hasta que el jugador valide la transaccion pasando su tarjeta RFID fisica.
+     *
+     * Compara estrictamente el UID leido con el UID registrado del participante.
+     * Notifica a la interfaz de Godot para mostrar el modal de espera.
+     * @param jugador Jugador que debe abonar el monto.
+     * @param monto Importe a pagar.
+     * @param concepto Motivo del cobro.
+     */
+    public void AutorizarPagoRFID(Jugador jugador, int monto, string concepto)
     {
         pagoRfidConfirmado = false;
-        pagoRfidCancelado = false;
 
         Console.WriteLine("\n==========================================================");
-        Console.WriteLine("📲 [AUTORIZACIÓN DE PAGO REQUERIDA (RFID / CONTACTLESS)]");
+        Console.WriteLine("[PAGO RFID REQUERIDO]");
         Console.WriteLine($"   Jugador: {jugador.GetNombre()} (Saldo actual: ${jugador.GetDinero()})");
         Console.WriteLine($"   Monto a pagar: ${monto}");
         Console.WriteLine($"   Concepto: {concepto}");
-        Console.WriteLine("   -> Acerca tu tarjeta RFID al lector físico, o presiona");
-        Console.WriteLine("      [Pagar con RFID / NFC] en Godot, o escribe 'p' en consola...");
+        Console.WriteLine($"   -> {jugador.GetNombre()}, pasa tu tarjeta RFID por el lector para confirmar.");
         Console.WriteLine("==========================================================");
 
-        // Notifica a todas las pantallas de Godot para abrir el modal de pago
+        // Notifica a Godot para que abra el modal
         GodotBroadcast($"pago/solicitar/{jugador.GetId()}/{monto}/{concepto}");
 
         bool hardwareDisponible = this.conexionPico != null && this.conexionPico.EstaConectado();
+        string tarjetaJugador = jugador.GetIdTarjeta();
+        bool tieneTarjeta = !string.IsNullOrEmpty(tarjetaJugador);
+
         if (hardwareDisponible && this.lectorRfid != null)
         {
             try
@@ -412,18 +556,27 @@ public class JuegoMonopoly
             catch { }
         }
 
-        while (!pagoRfidConfirmado && !pagoRfidCancelado)
+        // Bucle de espera bloqueante de la tarjeta RFID correcta
+        while (!pagoRfidConfirmado)
         {
-            if (hardwareDisponible && this.lectorRfid != null)
+            if (hardwareDisponible && this.lectorRfid != null && tieneTarjeta)
             {
                 try
                 {
                     string uid = this.lectorRfid.LeerTarjeta();
                     if (!string.IsNullOrEmpty(uid))
                     {
-                        Console.WriteLine($"💳 [Pico RFID] ¡Tarjeta física detectada! UID: {uid}. Pago aprobado.");
-                        pagoRfidConfirmado = true;
-                        break;
+                        if (uid.Equals(tarjetaJugador, StringComparison.OrdinalIgnoreCase))
+                        {
+                            Console.WriteLine($"[RFID] Tarjeta de {jugador.GetNombre()} detectada. UID: {uid}. Pago autorizado.");
+                            pagoRfidConfirmado = true;
+                            break;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[RFID] Tarjeta incorrecta (UID: {uid}). Se necesita la tarjeta de {jugador.GetNombre()}.");
+                            GodotBroadcast($"pago/tarjetaincorrecta/{jugador.GetId()}");
+                        }
                     }
                 }
                 catch { }
@@ -432,22 +585,26 @@ public class JuegoMonopoly
             Thread.Sleep(50);
         }
 
-        if (pagoRfidConfirmado)
+        Console.WriteLine($"[PAGO APROBADO] Pago de ${monto} completado para {jugador.GetNombre()}.\n");
+        GodotBroadcast($"pago/exito/{jugador.GetId()}/{monto}");
+        Thread.Sleep(300);
+
+        // Retorna la Pico a modo dados tras culminar el cobro
+        if (hardwareDisponible && this.controlDados != null)
         {
-            Console.WriteLine($"✅ [PAGO APROBADO] Pago de ${monto} completado exitosamente para {jugador.GetNombre()}.\n");
-            GodotBroadcast($"pago/exito/{jugador.GetId()}/{monto}");
-            Thread.Sleep(300);
-            return true;
-        }
-        else
-        {
-            Console.WriteLine($"❌ [PAGO CANCELADO] La transacción de ${monto} fue cancelada.\n");
-            GodotBroadcast($"pago/cancelado/{jugador.GetId()}");
-            return false;
+            try
+            {
+                this.controlDados.IniciarModoDados();
+            }
+            catch { }
         }
     }
 
-    // Sincroniza con Godot qué botones de acción están habilitados en el turno actual
+    /**
+     * @brief Envia el estado de disponibilidad de los botones de accion a Godot para el turno vigente.
+     * @param jugador Participante en turno.
+     * @param yaTiroDados Indica si ya efectuo el lanzamiento de dados en este turno.
+     */
     public void EnviarEstadoAcciones(Jugador jugador, bool yaTiroDados)
     {
         bool puedeTirar = !yaTiroDados && !jugador.GetPierdeSiguienteTurno();
@@ -456,7 +613,7 @@ public class JuegoMonopoly
         string nombrePropiedad = "";
 
         Casilla? casilla = jugador.ObtenerCasillaActual();
-        if (yaTiroDados && casilla is Propiedad prop && !prop.TienePropietario() && jugador.GetDinero() >= prop.GetPrecioCompra())
+        if (yaTiroDados && casilla is Propiedad prop && !prop.TienePropietario())
         {
             puedeComprar = true;
             precioCompra = prop.GetPrecioCompra();
@@ -466,10 +623,24 @@ public class JuegoMonopoly
         bool puedeTerminar = yaTiroDados || jugador.GetPierdeSiguienteTurno();
         bool enCarcel = jugador.GetEnCarcel();
 
-        GodotBroadcast($"turno/acciones/{(puedeTirar ? 1 : 0)}/{(puedeComprar ? 1 : 0)}/{precioCompra}/{nombrePropiedad}/{(puedeTerminar ? 1 : 0)}/{(enCarcel ? 1 : 0)}");
+        bool puedeConstruir = false;
+        int costoConstruir = 0;
+        string nombreConstruir = "";
+        if (casilla is Propiedad miProp && miProp.GetPropietario() == jugador && miProp.GetCantidadCasas() < 5 && miProp.GetColorGrupo() != "Tren" && !miProp.GetIsHipotecada() && TieneMonopolio(jugador, miProp.GetColorGrupo()))
+        {
+            puedeConstruir = true;
+            costoConstruir = miProp.GetPrecioCompra() / 2;
+            nombreConstruir = miProp.GetNombre();
+        }
+
+        GodotBroadcast($"turno/acciones/{(puedeTirar ? 1 : 0)}/{(puedeComprar ? 1 : 0)}/{precioCompra}/{nombrePropiedad}/{(puedeTerminar ? 1 : 0)}/{(enCarcel ? 1 : 0)}/{(puedeConstruir ? 1 : 0)}/{costoConstruir}/{nombreConstruir}");
     }
 
-    // Busca una propiedad en el tablero circular por su posición
+    /**
+     * @brief Localiza una propiedad en la lista circular segun su numero de posicion.
+     * @param index Indice de la casilla buscada (0 a 31).
+     * @return Referencia a la Propiedad o null si no se encuentra o no es propiedad.
+     */
     public Propiedad? ObtenerPropiedadPorIndex(int index)
     {
         Node? temp = this.tablero.GetHead();
@@ -484,8 +655,10 @@ public class JuegoMonopoly
         return null;
     }
 
-    // Avisa a Godot en que casilla quedo el jugador despues de moverse
-    // se llama siempre que jugador.Posicion cambia y ya se asento
+    /**
+     * @brief Emite a los clientes de Godot la coordenada o casilla actual del jugador.
+     * @param jugador Participante cuya posicion cambio.
+     */
     private void AnunciarPosicion(Jugador jugador)
     {
         Casilla? actual = jugador.ObtenerCasillaActual();
@@ -495,8 +668,10 @@ public class JuegoMonopoly
         }
     }
 
-    // Avisa a Godot de quien es el turno actual (para el aro de color) y de
-    // paso le manda su dinero actual (para que el HUD arranque con el numero correcto)
+    /**
+     * @brief Notifica el cambio de turno a las interfaces de red y actualiza saldos.
+     * @param jugador Participante que asume el turno.
+     */
     public void AnunciarTurno(Jugador jugador)
     {
         this.jugadorEnTurno = jugador;
@@ -504,28 +679,39 @@ public class JuegoMonopoly
         AnunciarDinero(jugador);
     }
 
-    // Avisa a Godot cuanto dinero tiene un jugador. El HUD de la esquina solo
-    // le hace caso a esto si es del jugador que tiene el turno actual, pero
-    // eso lo decide Godot, aqui simplemente se manda
+    /**
+     * @brief Transmite el saldo actual del jugador a las interfaces conectadas.
+     * @param jugador Participante a consultar.
+     */
     public void AnunciarDinero(Jugador jugador)
     {
         GodotBroadcast($"jugador/{jugador.GetId()}/dinero/{jugador.GetDinero()}");
     }
 
-    // El Program.cs llama esto cuando un jugador queda eliminado por bancarrota
+    /**
+     * @brief Envia el aviso de retiro por bancarrota para ocultar la ficha del jugador en pantalla.
+     * @param jugador Participante eliminado.
+     */
     public void NotificarEliminacion(Jugador jugador)
     {
         GodotBroadcast($"jugador/{jugador.GetId()}/desactivar");
     }
 
-    // Remueve a un jugador cuando se desconecta.
+    /**
+     * @brief Retira a un participante de la lista de jugadores conectados.
+     * @param jugador Participante a remover.
+     */
     public void DesconectarJugador(Jugador jugador)
     {
         this.jugadores.Delete(jugador);
         Broadcast($"[SISTEMA] {jugador.GetNombre()} ha salido de la partida.");
     }
 
-    // Envía un mensaje a todos los jugadores conectados recorriendo la lista enlazada.
+    /**
+     * @brief Emite un mensaje de texto general a todos los participantes conectados.
+     * @param mensaje Contenido textual a difundir.
+     * @param excluir Participante opcional a omitir de la difusion.
+     */
     public void Broadcast(string mensaje, Jugador? excluir = null)
     {
         Node? actual = this.jugadores.GetHead();
@@ -544,43 +730,90 @@ public class JuegoMonopoly
         }
     }
 
-    // Tirar dados, gestionar cárcel, avanzar en la lista circular y activar la casilla polimórficamente.
-    public void TirarDados(Jugador jugador)
+    /**
+     * @brief Ejecuta el lanzamiento de dados, avance en la lista circular y accion de la casilla.
+     *
+     * Valida penalizaciones de turno previo, comprueba reglas de liberacion o permanencia
+     * en prision, otorga bono de $200 si pasa por la casilla de Salida (nodo 0), y activa
+     * de forma polimorfica el metodo Accion() de la casilla destino.
+     * @param jugador Participante que lanza los dados.
+     * @param totalExterno Suma de dados proveniente de la Pico (-1 para generar virtual).
+     * @param d1Externo Valor de dado 1 del hardware (-1 si no aplica).
+     * @param d2Externo Valor de dado 2 del hardware (-1 si no aplica).
+     */
+    public void TirarDados(Jugador jugador, int totalExterno = -1, int d1Externo = -1, int d2Externo = -1)
     {
         // 1. Verifica si debe perder su turno por efecto de carta
         if (jugador.GetPierdeSiguienteTurno())
         {
             jugador.SetPierdeSiguienteTurno(false);
-            jugador.EnviarMensaje("⏳ Perdiste este turno debido a un evento anterior.");
-            Broadcast($"📢 {jugador.GetNombre()} perdió su turno.", jugador);
+            jugador.EnviarMensaje("[AVISO] Perdiste este turno debido a un evento anterior.");
+            Broadcast($"[AVISO] {jugador.GetNombre()} perdio su turno.", jugador);
             return;
         }
 
-        // 2. Tirar dos dados
-        int dado1 = random.Next(1, 7);
-        int dado2 = random.Next(1, 7);
-        int total = dado1 + dado2;
+        // 2. Determinar valores de los dados
+        bool esHardware = totalExterno > 0;
+        int dado1;
+        int dado2;
+        int total;
 
-        jugador.EnviarMensaje($"🎲 Tiraste: [{dado1}] + [{dado2}] = {total}");
+        if (esHardware)
+        {
+            total = totalExterno;
+            if (d1Externo > 0 && d2Externo > 0)
+            {
+                dado1 = d1Externo;
+                dado2 = d2Externo;
+            }
+            else
+            {
+                dado1 = Math.Max(1, Math.Min(6, total / 2));
+                dado2 = total - dado1;
+            }
+            jugador.EnviarMensaje($"[DADOS] Dados fisicos: [{dado1}] + [{dado2}] = {total} casillas.");
+            Broadcast($"[DADOS] {jugador.GetNombre()} tiro dados fisicos: [{dado1}] + [{dado2}] = {total}", jugador);
+        }
+        else
+        {
+            dado1 = random.Next(1, 7);
+            dado2 = random.Next(1, 7);
+            total = dado1 + dado2;
+            jugador.EnviarMensaje($"[DADOS] Tiraste: [{dado1}] + [{dado2}] = {total}");
+            Broadcast($"[DADOS] {jugador.GetNombre()} tiro: [{dado1}] + [{dado2}] = {total}", jugador);
+        }
 
-        // 3. Manejo de estado en la cárcel
+        // Sincronizar con los displays de la Pico si hay hardware conectado
+        if (this.controlDados != null && this.controlDados.EstaConectado())
+        {
+            try
+            {
+                this.controlDados.EnviarResultadoDados(dado1, dado2);
+            }
+            catch { }
+        }
+
+        // Notificar a Godot para que muestre visualmente los dados a todos los jugadores
+        GodotBroadcast($"dados/{jugador.GetId()}/{dado1}/{dado2}/{total}");
+
+        // 3. Manejo de estado en la carcel
         if (jugador.GetEnCarcel())
         {
             if (dado1 == dado2)
             {
                 jugador.SetEnCarcel(false);
                 jugador.SetTurnosEnCarcel(0);
-                jugador.EnviarMensaje("🎉 ¡Sacaste dobles! Quedas libre de la Cárcel.");
-                Broadcast($"📢 {jugador.GetNombre()} sacó dobles y salió libre de la Cárcel.", jugador);
+                jugador.EnviarMensaje("[CARCEL] Sacaste dobles. Quedas libre de la Carcel.");
+                Broadcast($"[AVISO] {jugador.GetNombre()} saco dobles y salio libre de la Carcel.", jugador);
             }
             else
             {
                 jugador.SetTurnosEnCarcel(jugador.GetTurnosEnCarcel() + 1);
-                jugador.EnviarMensaje($"🔒 No sacaste dobles. Sigues en la Cárcel ({jugador.GetTurnosEnCarcel()}/3 turnos).");
+                jugador.EnviarMensaje($"[CARCEL] No sacaste dobles. Sigues en la Carcel ({jugador.GetTurnosEnCarcel()}/3 turnos).");
 
                 if (jugador.GetTurnosEnCarcel() >= 3)
                 {
-                    jugador.EnviarMensaje("⚠️ Cumpliste 3 turnos en prisión. Debes pagar fianza de $50 para salir.");
+                    jugador.EnviarMensaje("[CARCEL] Cumpliste 3 turnos en prision. Debes pagar fianza de $50 para salir.");
                     SalirDeCarcelConPago(jugador);
                 }
                 return;
@@ -597,20 +830,26 @@ public class JuegoMonopoly
             if (jugador.ObtenerCasillaActual()?.GetPosicion() == 0 && i < total - 1)
             {
                 new Transaccion(200, GetTurnoActual(), "Premio por pasar por inicio", jugador, null);
-                jugador.EnviarMensaje("💵 ¡Pasaste por Salida! Cobraste $200 de bono.");
-                Broadcast($"📢 {jugador.GetNombre()} pasó por Salida y cobró $200.", jugador);
+                jugador.EnviarMensaje("[SALIDA] Pasaste por Salida. Cobraste $200 de bono.");
+                Broadcast($"[AVISO] {jugador.GetNombre()} paso por Salida y cobro $200.", jugador);
             }
         }
 
         Casilla? actual = jugador.ObtenerCasillaActual();
-        jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.GetNombre()} ({actual?.GetTipo()})");
+        jugador.EnviarMensaje($"[POSICION] Ahora estas en: {actual?.GetNombre()} ({actual?.GetTipo()})");
         AnunciarPosicion(jugador);
 
-        // POLIMORFISMO: Se delega la acción a la casilla en la que aterrizó
+        // Delegacion polimorfica de accion
         actual?.Accion(jugador);
     }
 
-    // Comprar la propiedad de la casilla actual.
+    /**
+     * @brief Permite al jugador adquirir la propiedad correspondiente a la casilla donde esta situado.
+     *
+     * Requiere confirmacion con tarjeta RFID, persiste la transaccion, almacena la casilla
+     * en el inventario propio del jugador (LinkedList) y valida situaciones de bancarrota.
+     * @param jugador Participante que efectua la compra.
+     */
     public void ComprarPropiedad(Jugador jugador)
     {
         Casilla? casilla = jugador.ObtenerCasillaActual();
@@ -618,47 +857,47 @@ public class JuegoMonopoly
 
         if (casilla is not Propiedad propiedad)
         {
-            jugador.EnviarMensaje("❌ Esta casilla no es una propiedad comprable.");
+            jugador.EnviarMensaje("[ERROR] Esta casilla no es una propiedad comprable.");
             return;
         }
 
         if (propiedad.TienePropietario())
         {
             string dueño = propiedad.GetPropietario() == jugador ? "ya te pertenece" : $"le pertenece a {propiedad.GetPropietario()!.GetNombre()}";
-            jugador.EnviarMensaje($"❌ Esta propiedad {dueño}.");
+            jugador.EnviarMensaje($"[ERROR] Esta propiedad {dueño}.");
             return;
         }
 
-        if (jugador.GetDinero() < propiedad.GetPrecioCompra())
-        {
-            jugador.EnviarMensaje($"❌ Saldo insuficiente. Tienes ${jugador.GetDinero()} y cuesta ${propiedad.GetPrecioCompra()}.");
-            return;
-        }
+        // Verificacion RFID obligatoria
+        AutorizarPagoRFID(jugador, propiedad.GetPrecioCompra(), $"Compra de '{propiedad.GetNombre()}'");
 
-        // VERIFICACIÓN RFID OBLIGATORIA (estilo Apple Pay / contactless con teléfono)
-        if (!AutorizarPagoRFID(jugador, propiedad.GetPrecioCompra(), $"Compra de '{propiedad.GetNombre()}'"))
-        {
-            jugador.EnviarMensaje("❌ Compra cancelada: no se autorizó el pago vía RFID.");
-            return;
-        }
-
-        // Ejecuta la transacción de compra
         new Transaccion(propiedad.GetPrecioCompra(), GetTurnoActual(), "Compra de propiedad", jugador, null);
         propiedad.SetPropietario(jugador);
 
-        // USO DE LISTA ENLAZADA: Guardamos la casilla en el inventario del jugador
+        // Guardamos la casilla en el inventario del jugador (LinkedList propia)
         jugador.GetPropiedades().InsertEnd(propiedad);
 
-        jugador.EnviarMensaje($"🎉 ¡Has comprado '{propiedad.GetNombre()}' por ${propiedad.GetPrecioCompra()}!");
+        jugador.EnviarMensaje($"[COMPRA] Has comprado '{propiedad.GetNombre()}' por ${propiedad.GetPrecioCompra()}.");
         jugador.EnviarMensaje($"Saldo restante: ${jugador.GetDinero()}");
-        Broadcast($"📢 {jugador.GetNombre()} compró '{propiedad.GetNombre()}'!", jugador);
+        Broadcast($"[AVISO] {jugador.GetNombre()} compro '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/comprar/casilla/{propiedad.GetPosicion()}");
         AnunciarDinero(jugador);
+
+        // Bancarrota si el saldo resulto negativo
+        if (jugador.GetDinero() < 0)
+        {
+            jugador.EnviarMensaje("[BANCARROTA] No tenias suficiente dinero para esta compra.");
+            Broadcast($"[BANCARROTA] {jugador.GetNombre()} ha caido en bancarrota.", jugador);
+            NotificarEliminacion(jugador);
+        }
     }
 
-    // Revisa si el jugador es dueño de TODAS las propiedades de ese grupo de color.
-    // Los "Tren" nunca cuentan para monopolio (en el Monopoly real los ferrocarriles
-    // tampoco admiten casas), por eso ComprarCasa los rechaza directamente.
+    /**
+     * @brief Verifica si un jugador es propietario de la totalidad de bienes de un grupo de color.
+     * @param jugador Participante a verificar.
+     * @param colorGrupo Nombre del grupo de color.
+     * @return true si posee todas las propiedades del grupo; false en caso contrario.
+     */
     public bool TieneMonopolio(Jugador jugador, string colorGrupo)
     {
         Node? actual = this.tablero.GetHead();
@@ -673,8 +912,10 @@ public class JuegoMonopoly
         return true;
     }
 
-    // Atajo: construye en la propiedad donde el jugador está parado actualmente
-    // (se usa cuando cae en una propiedad suya y quiere construir ahí mismo).
+    /**
+     * @brief Metodo de conveniencia para construir en la propiedad actual del jugador.
+     * @param jugador Participante que construye.
+     */
     public void ComprarCasa(Jugador jugador)
     {
         if (jugador.ObtenerCasillaActual() is Propiedad propiedad)
@@ -683,82 +924,87 @@ public class JuegoMonopoly
         }
         else
         {
-            jugador.EnviarMensaje("❌ Debes estar en una propiedad para construir aquí.");
+            jugador.EnviarMensaje("[ERROR] Debes estar en una propiedad para construir aqui.");
         }
     }
 
-    // Comprar una casa u hotel en una propiedad especifica (ya no solo la actual,
-    // asi se puede construir en cualquier propiedad propia desde el menu de gestión).
-    // Ahora exige tener el monopolio completo del grupo de color.
+    /**
+     * @brief Construye una casa o asciende a hotel en una propiedad especifica.
+     *
+     * Requiere que el jugador tenga el monopolio completo del grupo y que la propiedad
+     * no este hipotecada. Requiere validacion RFID del costo.
+     * @param jugador Participante que edifica.
+     * @param propiedad Propiedad a mejorar.
+     */
     public void ComprarCasa(Jugador jugador, Propiedad propiedad)
     {
         if (propiedad.GetPropietario() != jugador)
         {
-            jugador.EnviarMensaje("❌ Esa propiedad no te pertenece.");
+            jugador.EnviarMensaje("[ERROR] Esa propiedad no te pertenece.");
             return;
         }
 
         if (propiedad.GetColorGrupo() == "Tren")
         {
-            jugador.EnviarMensaje("❌ Los ferrocarriles no admiten casas.");
+            jugador.EnviarMensaje("[ERROR] Los ferrocarriles no admiten casas.");
             return;
         }
 
         if (propiedad.GetIsHipotecada())
         {
-            jugador.EnviarMensaje("❌ No puedes construir en una propiedad hipotecada.");
+            jugador.EnviarMensaje("[ERROR] No puedes construir en una propiedad hipotecada.");
             return;
         }
 
         if (!TieneMonopolio(jugador, propiedad.GetColorGrupo()))
         {
-            jugador.EnviarMensaje($"❌ Necesitas ser dueño de TODAS las propiedades del grupo '{propiedad.GetColorGrupo()}' para construir aquí.");
+            jugador.EnviarMensaje($"[ERROR] Necesitas ser dueño de todas las propiedades del grupo '{propiedad.GetColorGrupo()}' para construir aqui.");
             return;
         }
 
         if (propiedad.GetCantidadCasas() >= 5)
         {
-            jugador.EnviarMensaje("❌ Esta propiedad ya tiene un Hotel construido (nivel máximo).");
+            jugador.EnviarMensaje("[ERROR] Esta propiedad ya tiene un Hotel construido (nivel maximo).");
             return;
         }
 
         int costoCasa = propiedad.GetPrecioCompra() / 2;
-        if (jugador.GetDinero() < costoCasa)
-        {
-            jugador.EnviarMensaje($"❌ Saldo insuficiente. Construir cuesta ${costoCasa} y tienes ${jugador.GetDinero()}.");
-            return;
-        }
 
-        // VERIFICACIÓN RFID OBLIGATORIA
-        if (!AutorizarPagoRFID(jugador, costoCasa, $"Construcción en '{propiedad.GetNombre()}'"))
-        {
-            jugador.EnviarMensaje("❌ Construcción cancelada: no se autorizó el pago vía RFID.");
-            return;
-        }
+        AutorizarPagoRFID(jugador, costoCasa, $"Construccion en '{propiedad.GetNombre()}'");
 
         new Transaccion(costoCasa, GetTurnoActual(), "Pago al banco", jugador, null);
         propiedad.SetCantidadCasas(propiedad.GetCantidadCasas() + 1);
         string mejora = propiedad.GetCantidadCasas() == 5 ? "un Hotel" : $"la casa #{propiedad.GetCantidadCasas()}";
-        jugador.EnviarMensaje($"🏗️ ¡Construiste {mejora} en '{propiedad.GetNombre()}' por ${costoCasa}!");
+        jugador.EnviarMensaje($"[CONSTRUCCION] Construiste {mejora} en '{propiedad.GetNombre()}' por ${costoCasa}.");
         jugador.EnviarMensaje($"Nueva renta: ${propiedad.CalcularRenta()}. Saldo: ${jugador.GetDinero()}");
-        Broadcast($"📢 {jugador.GetNombre()} construyó {mejora} en '{propiedad.GetNombre()}'.", jugador);
+        Broadcast($"[AVISO] {jugador.GetNombre()} construyo {mejora} en '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/comprarcasa/{propiedad.GetCantidadCasas()}/casilla/{propiedad.GetPosicion()}");
         AnunciarDinero(jugador);
+
+        if (jugador.GetDinero() < 0)
+        {
+            jugador.EnviarMensaje("[BANCARROTA] No tenias suficiente dinero para esta construccion.");
+            Broadcast($"[BANCARROTA] {jugador.GetNombre()} ha caido en bancarrota.", jugador);
+            NotificarEliminacion(jugador);
+        }
     }
 
-    // Vende una casa/hotel (bajar un nivel). Se recupera la mitad de lo que
-    // costó construirla, igual que la regla clásica del Monopoly de mesa.
+    /**
+     * @brief Vende una casa u hotel de una propiedad recuperando la mitad de su costo.
+     * @param jugador Participante dueño del inmueble.
+     * @param propiedad Propiedad a desmejorar.
+     */
     public void VenderCasa(Jugador jugador, Propiedad propiedad)
     {
         if (propiedad.GetPropietario() != jugador)
         {
-            jugador.EnviarMensaje("❌ Esa propiedad no te pertenece.");
+            jugador.EnviarMensaje("[ERROR] Esa propiedad no te pertenece.");
             return;
         }
 
         if (propiedad.GetCantidadCasas() <= 0)
         {
-            jugador.EnviarMensaje("❌ Esta propiedad no tiene casas para vender.");
+            jugador.EnviarMensaje("[ERROR] Esta propiedad no tiene casas para vender.");
             return;
         }
 
@@ -769,32 +1015,34 @@ public class JuegoMonopoly
         new Transaccion(reembolso, GetTurnoActual(), "Ganancia por evento", jugador, null);
 
         string quedo = propiedad.GetCantidadCasas() == 0 ? "sin casas" : $"{propiedad.GetCantidadCasas()} casas";
-        jugador.EnviarMensaje($"🏚️ Vendiste una mejora de '{propiedad.GetNombre()}' y recibiste ${reembolso}. Ahora tiene {quedo}. Saldo: ${jugador.GetDinero()}");
-        Broadcast($"📢 {jugador.GetNombre()} vendió una mejora en '{propiedad.GetNombre()}'.", jugador);
+        jugador.EnviarMensaje($"[VENTA] Vendiste una mejora de '{propiedad.GetNombre()}' y recibiste ${reembolso}. Ahora tiene {quedo}. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"[AVISO] {jugador.GetNombre()} vendio una mejora en '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/comprarcasa/{propiedad.GetCantidadCasas()}/casilla/{propiedad.GetPosicion()}");
         AnunciarDinero(jugador);
     }
 
-    // Hipoteca una propiedad: el banco te da la mitad del precio de compra,
-    // pero deja de cobrar renta hasta que se deshipoteque. No se puede
-    // hipotecar si todavía tiene casas construidas encima.
+    /**
+     * @brief Hipoteca una propiedad transfiriendo el 50% de su valor al dueño y congelando su renta.
+     * @param jugador Participante dueño.
+     * @param propiedad Propiedad a hipotecar.
+     */
     public void HipotecarPropiedad(Jugador jugador, Propiedad propiedad)
     {
         if (propiedad.GetPropietario() != jugador)
         {
-            jugador.EnviarMensaje("❌ Esa propiedad no te pertenece.");
+            jugador.EnviarMensaje("[ERROR] Esa propiedad no te pertenece.");
             return;
         }
 
         if (propiedad.GetIsHipotecada())
         {
-            jugador.EnviarMensaje("❌ Esa propiedad ya está hipotecada.");
+            jugador.EnviarMensaje("[ERROR] Esa propiedad ya esta hipotecada.");
             return;
         }
 
         if (propiedad.GetCantidadCasas() > 0)
         {
-            jugador.EnviarMensaje("❌ Debes vender las casas/hotel antes de hipotecar esta propiedad.");
+            jugador.EnviarMensaje("[ERROR] Debes vender las casas u hotel antes de hipotecar esta propiedad.");
             return;
         }
 
@@ -802,52 +1050,56 @@ public class JuegoMonopoly
         propiedad.SetIsHipotecada(true);
         new Transaccion(valorHipoteca, GetTurnoActual(), "Ganancia por evento", jugador, null);
 
-        jugador.EnviarMensaje($"🏦 Hipotecaste '{propiedad.GetNombre()}' y recibiste ${valorHipoteca}. Saldo: ${jugador.GetDinero()}");
-        Broadcast($"📢 {jugador.GetNombre()} hipotecó '{propiedad.GetNombre()}'.", jugador);
+        jugador.EnviarMensaje($"[HIPOTECA] Hipotecaste '{propiedad.GetNombre()}' y recibiste ${valorHipoteca}. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"[AVISO] {jugador.GetNombre()} hipoteco '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/hipotecar/casilla/{propiedad.GetPosicion()}");
         AnunciarDinero(jugador);
     }
 
-    // Deshipoteca una propiedad: se paga lo que te dieron por la hipoteca
-    // más un 10% de interés (la regla clásica del Monopoly de mesa).
+    /**
+     * @brief Deshipoteca una propiedad abonando el valor recibido mas un 10% de interes reglamentario.
+     * @param jugador Participante dueño.
+     * @param propiedad Propiedad a deshipotecar.
+     */
     public void DeshipotecarPropiedad(Jugador jugador, Propiedad propiedad)
     {
         if (propiedad.GetPropietario() != jugador)
         {
-            jugador.EnviarMensaje("❌ Esa propiedad no te pertenece.");
+            jugador.EnviarMensaje("[ERROR] Esa propiedad no te pertenece.");
             return;
         }
 
         if (!propiedad.GetIsHipotecada())
         {
-            jugador.EnviarMensaje("❌ Esa propiedad no está hipotecada.");
+            jugador.EnviarMensaje("[ERROR] Esa propiedad no esta hipotecada.");
             return;
         }
 
         int costo = (int)(propiedad.GetPrecioCompra() / 2 * 1.1);
-        if (jugador.GetDinero() < costo)
-        {
-            jugador.EnviarMensaje($"❌ Necesitas ${costo} para deshipotecarla y tienes ${jugador.GetDinero()}.");
-            return;
-        }
 
-        // VERIFICACIÓN RFID OBLIGATORIA
-        if (!AutorizarPagoRFID(jugador, costo, $"Deshipotecar '{propiedad.GetNombre()}'"))
-        {
-            jugador.EnviarMensaje("❌ Deshipoteca cancelada: no se autorizó el pago vía RFID.");
-            return;
-        }
+        AutorizarPagoRFID(jugador, costo, $"Deshipotecar '{propiedad.GetNombre()}'");
 
         new Transaccion(costo, GetTurnoActual(), "Pago al banco", jugador, null);
         propiedad.SetIsHipotecada(false);
 
-        jugador.EnviarMensaje($"🏦 Deshipotecaste '{propiedad.GetNombre()}' por ${costo}. Saldo: ${jugador.GetDinero()}");
-        Broadcast($"📢 {jugador.GetNombre()} deshipotecó '{propiedad.GetNombre()}'.", jugador);
+        jugador.EnviarMensaje($"[DESHIPOTECA] Deshipotecaste '{propiedad.GetNombre()}' por ${costo}. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"[AVISO] {jugador.GetNombre()} deshipoteco '{propiedad.GetNombre()}'.", jugador);
         GodotBroadcast($"jugador/{jugador.GetId()}/deshipotecar/casilla/{propiedad.GetPosicion()}");
         AnunciarDinero(jugador);
+
+        if (jugador.GetDinero() < 0)
+        {
+            jugador.EnviarMensaje("[BANCARROTA] No tenias suficiente dinero para deshipotecar.");
+            Broadcast($"[BANCARROTA] {jugador.GetNombre()} ha caido en bancarrota.", jugador);
+            NotificarEliminacion(jugador);
+        }
     }
 
-    // Mueve al jugador a una casilla específica por su índice numérico (0 a 31).
+    /**
+     * @brief Desplaza a un jugador directamente a un indice absoluto de casilla (0 a 31).
+     * @param jugador Participante a desplazar.
+     * @param posicionDestino Indice de casilla objetivo.
+     */
     public void MoverJugadorACasilla(Jugador jugador, int posicionDestino)
     {
         if (jugador.GetPosicion() == null)
@@ -866,12 +1118,16 @@ public class JuegoMonopoly
         }
 
         Casilla? actual = jugador.ObtenerCasillaActual();
-        jugador.EnviarMensaje($"📍 Te moviste a: {actual?.GetNombre()} ({actual?.GetTipo()})");
+        jugador.EnviarMensaje($"[POSICION] Te moviste a: {actual?.GetNombre()} ({actual?.GetTipo()})");
         AnunciarPosicion(jugador);
         actual?.Accion(jugador);
     }
 
-    // Mueve al jugador un número relativo de casillas (positivo hacia adelante, negativo hacia atrás).
+    /**
+     * @brief Desplaza al jugador una cantidad relativa de casillas hacia adelante o hacia atras.
+     * @param jugador Participante a mover.
+     * @param cantidad Cantidad positiva para avanzar o negativa para retroceder.
+     */
     public void MoverJugadorCasillas(Jugador jugador, int cantidad)
     {
         if (cantidad >= 0)
@@ -890,27 +1146,33 @@ public class JuegoMonopoly
         }
 
         Casilla? actual = jugador.ObtenerCasillaActual();
-        jugador.EnviarMensaje($"📍 Ahora estás en: {actual?.GetNombre()} ({actual?.GetTipo()})");
+        jugador.EnviarMensaje($"[POSICION] Ahora estas en: {actual?.GetNombre()} ({actual?.GetTipo()})");
         AnunciarPosicion(jugador);
         actual?.Accion(jugador);
     }
 
-    // Envía a un jugador directamente a la Cárcel (Casilla 8).
+    /**
+     * @brief Envia al jugador a prision (Casilla 8) y activa su bandera de condena.
+     * @param jugador Participante recluido.
+     */
     public void EnviarACarcel(Jugador jugador)
     {
         jugador.SetEnCarcel(true);
         jugador.SetTurnosEnCarcel(0);
-        MoverJugadorACasilla(jugador, 8); // Casilla 8 es la Cárcel
-        jugador.EnviarMensaje("🔒 Has sido encerrado en la Cárcel.");
-        Broadcast($"🚨 {jugador.GetNombre()} fue enviado a la Cárcel.", jugador);
+        MoverJugadorACasilla(jugador, 8);
+        jugador.EnviarMensaje("[CARCEL] Has sido encerrado en la Carcel.");
+        Broadcast($"[AVISO] {jugador.GetNombre()} fue enviado a la Carcel.", jugador);
     }
 
-    // Salir de la cárcel pagando fianza o usando carta.
+    /**
+     * @brief Gestiona la liberacion de prision mediante pago de fianza o uso de carta de salida.
+     * @param jugador Participante preso.
+     */
     public void SalirDeCarcelConPago(Jugador jugador)
     {
         if (!jugador.GetEnCarcel())
         {
-            jugador.EnviarMensaje("ℹ️ No estás en la Cárcel.");
+            jugador.EnviarMensaje("[INFO] No estas en la Carcel.");
             return;
         }
 
@@ -919,34 +1181,34 @@ public class JuegoMonopoly
             jugador.SetCartasSalirDeCarcel(jugador.GetCartasSalirDeCarcel() - 1);
             jugador.SetEnCarcel(false);
             jugador.SetTurnosEnCarcel(0);
-            jugador.EnviarMensaje("🎟️ ¡Usaste tu carta de Salir de la Cárcel Gratis y quedas en libertad!");
-            Broadcast($"📢 {jugador.GetNombre()} usó una carta y salió de la Cárcel.", jugador);
+            jugador.EnviarMensaje("[CARCEL] Usaste tu carta de Salir de la Carcel Gratis y quedas en libertad.");
+            Broadcast($"[AVISO] {jugador.GetNombre()} uso una carta y salio de la Carcel.", jugador);
             return;
         }
 
         int fianza = 50;
-        if (jugador.GetDinero() < fianza)
-        {
-            jugador.EnviarMensaje($"❌ No tienes suficiente dinero (${jugador.GetDinero()}) para pagar la fianza (${fianza}).");
-            return;
-        }
 
-        // VERIFICACIÓN RFID OBLIGATORIA
-        if (!AutorizarPagoRFID(jugador, fianza, "Fianza para salir de la Cárcel"))
-        {
-            jugador.EnviarMensaje("❌ Salida cancelada: no se autorizó el pago de la fianza vía RFID.");
-            return;
-        }
+        AutorizarPagoRFID(jugador, fianza, "Fianza para salir de la Carcel");
 
         new Transaccion(fianza, GetTurnoActual(), "Pago al banco", jugador, null);
         jugador.SetEnCarcel(false);
         jugador.SetTurnosEnCarcel(0);
-        jugador.EnviarMensaje($"💵 Pagaste ${fianza} de fianza y has salido de la Cárcel. Saldo: ${jugador.GetDinero()}");
-        Broadcast($"📢 {jugador.GetNombre()} pagó la fianza y salió de la Cárcel.", jugador);
+        jugador.EnviarMensaje($"[CARCEL] Pagaste ${fianza} de fianza y has salido de la Carcel. Saldo: ${jugador.GetDinero()}");
+        Broadcast($"[AVISO] {jugador.GetNombre()} pago la fianza y salio de la Carcel.", jugador);
         AnunciarDinero(jugador);
+
+        if (jugador.GetDinero() < 0)
+        {
+            jugador.EnviarMensaje("[BANCARROTA] No tenias suficiente dinero para la fianza.");
+            Broadcast($"[BANCARROTA] {jugador.GetNombre()} ha caido en bancarrota.", jugador);
+            NotificarEliminacion(jugador);
+        }
     }
 
-    // Consultar estado del jugador y recorrer su lista enlazada de propiedades.
+    /**
+     * @brief Imprime en la consola el desglose patrimonial, fondos y propiedades del jugador.
+     * @param jugador Participante a consultar.
+     */
     public void VerEstado(Jugador jugador)
     {
         Casilla? actual = jugador.ObtenerCasillaActual();
@@ -954,11 +1216,11 @@ public class JuegoMonopoly
         jugador.EnviarMensaje($"\n=== ESTADO DE {jugador.GetNombre()} ===");
         jugador.EnviarMensaje($"Dinero: ${jugador.GetDinero()}");
         jugador.EnviarMensaje($"Casilla actual: {actual?.GetNombre() ?? "Ninguna"}");
-        jugador.EnviarMensaje($"En Cárcel: {(jugador.GetEnCarcel() ? $"Sí ({jugador.GetTurnosEnCarcel()}/3)" : "No")}");
-        jugador.EnviarMensaje($"Cartas Salir de Cárcel: {jugador.GetCartasSalirDeCarcel()}");
+        jugador.EnviarMensaje($"En Carcel: {(jugador.GetEnCarcel() ? $"Si ({jugador.GetTurnosEnCarcel()}/3)" : "No")}");
+        jugador.EnviarMensaje($"Cartas Salir de Carcel: {jugador.GetCartasSalirDeCarcel()}");
         jugador.EnviarMensaje($"Propiedades compradas ({jugador.GetPropiedades().Size()}):");
 
-        // Recorrido de la lista enlazada de propiedades del jugador
+        // Recorrido secuencial de la lista enlazada de propiedades del jugador
         Node? temp = jugador.GetPropiedades().GetHead();
         int totalPropiedades = jugador.GetPropiedades().Size();
         for (int i = 0; i < totalPropiedades; i++)
@@ -976,7 +1238,10 @@ public class JuegoMonopoly
         }
     }
 
-    // Mostrar el tablero recorriendo la lista circular.
+    /**
+     * @brief Recorre la lista circular del tablero e imprime cada una de sus casillas y propietarios.
+     * @param jugador Participante que solicita la visualizacion.
+     */
     public void VerTablero(Jugador jugador)
     {
         jugador.EnviarMensaje("\n=== TABLERO (LISTA CIRCULAR) ===");
@@ -984,7 +1249,6 @@ public class JuegoMonopoly
         Node? actual = this.tablero.GetHead();
         int total = this.tablero.Size();
 
-        // Recorremos la lista circular una sola vuelta (total nodos)
         for (int i = 0; i < total; i++)
         {
             if (actual?.GetData() is Casilla c)
