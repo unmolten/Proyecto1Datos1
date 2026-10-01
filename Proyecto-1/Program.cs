@@ -221,7 +221,7 @@ internal class Program
             {
                 Console.WriteLine("  8. Gestionar mis propiedades (construir/vender/hipotecar/deshipotecar)");
             }
-            Console.WriteLine("  9. Buscar transacciones (comando: buscar <todos|origen|destino|tipo> [valor])");
+            Console.WriteLine("  9. Buscar transacciones (comando: buscar <todos|origen|destino|tipo> [valor] [antiguo|reciente])");
             Console.WriteLine(" 10. Imprimir transacciones en Reporte.txt");
             Console.WriteLine(" 11. Imprimir todas las transacciones en terminal");
             Console.Write("Esperando accion (Consola, Godot o boton en la Pico)...: ");
@@ -421,21 +421,44 @@ internal class Program
 
     /**
      * @brief Busca transacciones usando un comando de una sola linea recibido por consola.
-     * @param comando Texto con formato "buscar <campo> <valor>" o "9 <campo> <valor>".
+     * @param comando Texto con formato "buscar <campo> [valor] [antiguo|reciente]" o "9 <campo> [valor] [antiguo|reciente]".
      */
     private static void BuscarTransacciones(string comando)
     {
-        string[] partes = comando.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
+        string[] partes = comando.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (partes.Length < 2)
         {
-            Console.WriteLine("Uso: buscar <todos|origen|destino|tipo> [valor]");
+            Console.WriteLine("Uso: buscar <todos|origen|destino|tipo> [valor] [antiguo|reciente]");
             return;
         }
 
         string campo = partes[1].ToLowerInvariant();
+        string ordenar = "RecienteAAntiguo";
+        int cantidadArgumentos = partes.Length;
+        if (partes.Length > 2)
+        {
+            string ordenSolicitado = partes[^1].ToLowerInvariant();
+            if (ordenSolicitado is "antiguo" or "antiguoareciente" or "antiguo-a-reciente")
+            {
+                ordenar = "AntiguoAReciente";
+                cantidadArgumentos--;
+            }
+            else if (ordenSolicitado is "reciente" or "recienteaantiguo" or "reciente-a-antiguo")
+            {
+                ordenar = "RecienteAAntiguo";
+                cantidadArgumentos--;
+            }
+        }
+
         if (campo == "todos")
         {
-            Transaccion.BuscarTransaccion(null, "", "RecienteAAntiguo");
+            if (cantidadArgumentos != 2)
+            {
+                Console.WriteLine("Uso: buscar todos [antiguo|reciente]");
+                return;
+            }
+
+            Transaccion.BuscarTransaccion(null, "", ordenar);
             return;
         }
 
@@ -447,13 +470,14 @@ internal class Program
             _ => null
         };
 
-        if (atributo == null || partes.Length < 3)
+        if (atributo == null || cantidadArgumentos < 3)
         {
-            Console.WriteLine("Uso: buscar <todos|origen|destino|tipo> [valor]");
+            Console.WriteLine("Uso: buscar <todos|origen|destino|tipo> [valor] [antiguo|reciente]");
             return;
         }
 
-        Transaccion.BuscarTransaccion(atributo, partes[2], "RecienteAAntiguo");
+        string valor = string.Join(' ', partes[2..cantidadArgumentos]);
+        Transaccion.BuscarTransaccion(atributo, valor, ordenar);
     }
 
     /**

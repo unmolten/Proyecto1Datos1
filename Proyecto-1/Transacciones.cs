@@ -24,9 +24,6 @@ class Transaccion
     /** @brief Ruta relativa al archivo de reporte formateado para lectura humana. */
     private const string rutaReporte = "../../../Reporte.txt";
 
-    /** @brief Contador atomico para la generacion incremental de identificadores unicos. */
-    private static int refID = 0;
-
     /** @brief Identificador secuencial unico de la transaccion. */
     private int transaccionID;
 
