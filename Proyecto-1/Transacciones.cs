@@ -19,10 +19,10 @@ using Microsoft.VisualBasic;
 class Transaccion
 {
     /** @brief Ruta relativa al archivo donde se almacenan las transacciones en crudo. */
-    private const string rutaAlmacenamiento = "../../../Almacenamiento.txt";
+    private const string rutaAlmacenamiento = "Almacenamiento.txt";
 
-    /** @brief Ruta relativa al archivo de reporte formateado para lectura humana. */
-    private const string rutaReporte = "../../../Reporte.txt";
+    /** @brief Ruta relativa al archivo de reporte formateado para lectura humana. */ 
+    private const string rutaReporte = "Reporte.txt";
 
     /** @brief Identificador secuencial unico de la transaccion. */
     private int transaccionID;
