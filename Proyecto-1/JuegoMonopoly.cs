@@ -441,6 +441,10 @@ public class JuegoMonopoly
             {
                 return accion;
             }
+            else
+            {
+                Console.WriteLine($"[COLA] Descartada accion '{accion.Tipo}' del jugador {accion.JugadorId} (turno actual: {jugador.GetNombre()}).");
+            }
         }
     }
 
@@ -458,14 +462,32 @@ public class JuegoMonopoly
                 return null;
             }
 
+            // Scan the queue for a matching action; discard stale actions from other players
             Node? nodo = colaAcciones.GetHead();
-            if (nodo?.GetData() is AccionTurno accion)
+            int total = colaAcciones.Size();
+            for (int i = 0; i < total; i++)
             {
-                if (accion.JugadorId == 0 || accion.JugadorId == jugador.GetId())
+                if (nodo?.GetData() is AccionTurno accion)
                 {
-                    colaAcciones.DeleteFirst();
-                    return accion;
+                    if (accion.JugadorId == 0 || accion.JugadorId == jugador.GetId())
+                    {
+                        // Found a valid action — remove it and return
+                        colaAcciones.Delete(accion);
+                        return accion;
+                    }
+                    else
+                    {
+                        // Stale action from a different player — discard it to prevent head-blocking
+                        Node? siguiente = nodo.GetNext();
+                        colaAcciones.Delete(accion);
+                        Console.WriteLine($"[COLA] Descartada accion '{accion.Tipo}' del jugador {accion.JugadorId} (turno actual: {jugador.GetNombre()}).");
+                        nodo = siguiente;
+                        total--;
+                        i--;
+                        continue;
+                    }
                 }
+                nodo = nodo?.GetNext();
             }
 
             return null;
