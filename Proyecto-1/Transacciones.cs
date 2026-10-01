@@ -205,7 +205,7 @@ class Transaccion
      */
     public Transaccion(int monto, int turno, string tipo, Jugador? jugadorOrigen, Jugador? jugadorDestino)
     {   
-        this.transaccionID = Interlocked.Increment(ref refID);
+        this.transaccionID = leerUltimoID() + 1;
         this.monto = monto;
         this.turno = turno;
         this.fechaYHora = DateAndTime.Now.ToString("dd/MM/yyyy-hh:mm:ss");
@@ -342,6 +342,40 @@ class Transaccion
     }
 
     /**
+     * @brief Lee el ultimo ID registrado en el archivo de almacenamiento para generar un nuevo ID unico.
+     * @return Entero con el ultimo ID encontrado, o 0 si no hay registros.
+     */
+    private int leerUltimoID()
+    {
+        try
+        {
+            if (!File.Exists(rutaAlmacenamiento))
+            {
+                return 0;
+            }
+
+            string[] lineas = File.ReadAllLines(rutaAlmacenamiento);
+            if (lineas.Length == 0)
+            {
+                return 0;
+            }
+
+            string ultimaLinea = lineas[lineas.Length - 1];
+            string[] datos = ultimaLinea.Split('.');
+            if (datos.Length > 0 && int.TryParse(datos[0], out int ultimoID))
+            {
+                return ultimoID;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al leer el ultimo ID: {ex.Message}");
+        }
+
+        return 0;
+    }
+
+    /**
      * @brief Escribe una linea con formato delimitado por puntos en 'Almacenamiento.txt'.
      */
     public void AlmacenarTransaccion()
@@ -454,6 +488,11 @@ class Transaccion
     {
         try
         {
+            if (File.Exists(rutaReporte))
+            {
+                File.Delete(rutaReporte);
+            }
+
             string[] lineas = File.ReadAllLines(rutaAlmacenamiento);
 
             foreach (var linea in lineas)
