@@ -385,7 +385,7 @@ class Transaccion
      * @param ordenar Criterio de ordenacion ("AntiguoAReciente" o "RecienteAAntiguo").
      * @param imprimirYEsperar Si es true, pausa tras cada registro solicitando confirmacion al usuario.
      */
-    public static void BuscarTransaccion(string atributo, string valor, string ordenar = "AntiguoAReciente", bool imprimirYEsperar = false)
+    public static void BuscarTransaccion(string? atributo, string valor, string ordenar = "AntiguoAReciente", bool imprimirYEsperar = false)
     {
         try
         {

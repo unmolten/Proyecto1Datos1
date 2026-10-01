@@ -106,9 +106,10 @@ internal class Program
         try
         {
             int turnoGlobal = 1;
+            int turnoGlobalMax = 20;
 
-            // Bucle principal de la partida mientras queden al menos dos competidores con saldo
-            while (ContarJugadoresActivos(juego) > 1)
+            // Bucle principal de la partida mientras queden al menos dos competidores con saldo o se llegue al maximo de turnos definidos
+            while (ContarJugadoresActivos(juego) > 1 || turnoGlobal >= turnoGlobalMax)
             {
                 juego.SetTurnoActual(turnoGlobal);
 
@@ -220,6 +221,9 @@ internal class Program
             {
                 Console.WriteLine("  8. Gestionar mis propiedades (construir/vender/hipotecar/deshipotecar)");
             }
+            Console.WriteLine("  9. Buscar transacciones (comando: buscar <todos|origen|destino|tipo> [valor])");
+            Console.WriteLine(" 10. Imprimir transacciones en Reporte.txt");
+            Console.WriteLine(" 11. Imprimir todas las transacciones en terminal");
             Console.Write("Esperando accion (Consola, Godot o boton en la Pico)...: ");
 
             AccionTurno? accion = null;
@@ -243,7 +247,10 @@ internal class Program
 
             Console.WriteLine($"\n[ACCION RECIBIDA: {accion.Tipo.ToUpper()}]");
 
-            switch (accion.Tipo.ToLower())
+            string tipoAccion = accion.Tipo.Trim();
+            string[] partesAccion = tipoAccion.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+            string comandoAccion = partesAccion.Length > 0 ? partesAccion[0].ToLowerInvariant() : "";
+            switch (comandoAccion)
             {
                 case "1":
                 case "tirar":
@@ -378,6 +385,20 @@ internal class Program
                     GestionarPropiedades(juego, jugador);
                     break;
 
+                case "9":
+                case "buscar":
+                    BuscarTransacciones(tipoAccion);
+                    break;
+
+                case "10":
+                    Transaccion.ImprimirTransacciones();
+                    Console.WriteLine("[REPORTE] Transacciones agregadas a 'Reporte.txt'.");
+                    break;
+
+                case "11":
+                    Transaccion.BuscarTransaccion(null, "", "RecienteAAntiguo");
+                    break;
+
                 default:
                     Console.WriteLine("Opcion no valida.");
                     break;
@@ -396,6 +417,43 @@ internal class Program
 
         dadosHardware?.LimpiarTiradasPrevias();
         juego.LimpiarColaAcciones();
+    }
+
+    /**
+     * @brief Busca transacciones usando un comando de una sola linea recibido por consola.
+     * @param comando Texto con formato "buscar <campo> <valor>" o "9 <campo> <valor>".
+     */
+    private static void BuscarTransacciones(string comando)
+    {
+        string[] partes = comando.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length < 2)
+        {
+            Console.WriteLine("Uso: buscar <todos|origen|destino|tipo> [valor]");
+            return;
+        }
+
+        string campo = partes[1].ToLowerInvariant();
+        if (campo == "todos")
+        {
+            Transaccion.BuscarTransaccion(null, "", "RecienteAAntiguo");
+            return;
+        }
+
+        string? atributo = campo switch
+        {
+            "origen" or "jugadororigen" => "jugadorOrigen",
+            "destino" or "jugadordestino" => "jugadorDestino",
+            "tipo" => "tipo",
+            _ => null
+        };
+
+        if (atributo == null || partes.Length < 3)
+        {
+            Console.WriteLine("Uso: buscar <todos|origen|destino|tipo> [valor]");
+            return;
+        }
+
+        Transaccion.BuscarTransaccion(atributo, partes[2], "RecienteAAntiguo");
     }
 
     /**
