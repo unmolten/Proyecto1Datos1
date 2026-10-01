@@ -109,7 +109,7 @@ internal class Program
             int turnoGlobalMax = 20;
 
             // Bucle principal de la partida mientras queden al menos dos competidores con saldo o se llegue al maximo de turnos definidos
-            while (ContarJugadoresActivos(juego) > 1 || turnoGlobal >= turnoGlobalMax)
+            while (ContarJugadoresActivos(juego) > 1 && turnoGlobal <= turnoGlobalMax)
             {
                 juego.SetTurnoActual(turnoGlobal);
 
